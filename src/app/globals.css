@@ -1,26 +1,196 @@
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --px-bg: #0b0b0d;
+  --px-surface: #121317;
+  --px-card: #1a1c21;
+  --px-card-strong: #20232a;
+  --px-border: #2a2d36;
+  --px-muted: #9aa0aa;
+  --px-text: #f2f3f5;
+  --px-accent: #ff6a00;
+  --px-accent-2: #ff8a00;
+  --px-success: #43d17a;
+  --px-warning: #ffb020;
+  --px-danger: #ff5c5c;
+  --px-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  --px-shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.35);
+  --px-font-sans: "Manrope", system-ui, -apple-system, sans-serif;
+  --px-font-display: "Bebas Neue", "Manrope", sans-serif;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--px-bg);
+  --color-foreground: var(--px-text);
+  --font-sans: var(--px-font-sans);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--px-bg);
+  color: var(--px-text);
+  font-family: var(--px-font-sans);
+  min-height: 100vh;
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(255, 106, 0, 0.18), transparent 45%),
+    radial-gradient(circle at 80% 10%, rgba(255, 138, 0, 0.12), transparent 40%),
+    radial-gradient(circle at 20% 70%, rgba(255, 255, 255, 0.06), transparent 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.02), transparent 55%);
+  background-attachment: fixed;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+body::before {
+  background-image: linear-gradient(120deg, rgba(255, 106, 0, 0.08), transparent 40%);
+  opacity: 0.6;
+}
+
+body::after {
+  background-image: radial-gradient(circle at 70% 50%, rgba(255, 255, 255, 0.08), transparent 55%);
+  opacity: 0.35;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--px-font-display);
+  letter-spacing: 0.03em;
+  text-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+::selection {
+  background: rgba(255, 106, 0, 0.35);
+  color: #fff;
+}
+
+a {
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+@layer components {
+  .px-container {
+    @apply mx-auto w-full max-w-6xl px-4;
+  }
+
+  .px-card {
+    @apply rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-card)]/92 shadow-[var(--px-shadow)];
+    background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
+  }
+
+  .px-card-strong {
+    @apply rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-card-strong)]/96 shadow-[var(--px-shadow)];
+    background-image: linear-gradient(155deg, rgba(255, 106, 0, 0.12), rgba(0, 0, 0, 0.1));
+  }
+
+  .px-glass {
+    @apply rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.35)];
+  }
+
+  .px-input {
+    @apply h-11 w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30;
+  }
+
+  .px-select {
+    @apply h-11 w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30;
+  }
+
+  .px-button {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-black transition hover:translate-y-[-1px];
+    background: linear-gradient(120deg, var(--px-accent), var(--px-accent-2));
+    box-shadow: 0 12px 30px rgba(255, 106, 0, 0.35);
+  }
+
+  .px-button-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-[color:var(--px-border)] bg-transparent px-5 py-3 text-sm font-semibold text-white/80 transition hover:border-[color:var(--px-accent)] hover:text-white;
+  }
+
+  .px-pill {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70;
+  }
+
+  .px-badge {
+    @apply inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/70;
+  }
+
+  .px-section {
+    @apply rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-6 shadow-[var(--px-shadow-soft)];
+  }
+
+  .px-outline {
+    @apply rounded-2xl border border-white/10 bg-white/5;
+  }
+
+  .px-divider {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent;
+  }
+}
+
+@layer utilities {
+  .px-fade-in {
+    animation: pxFadeIn 0.6s ease both;
+  }
+
+  .px-fade-up {
+    animation: pxFadeUp 0.7s ease both;
+  }
+}
+
+@keyframes pxFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pxFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 106, 0, 0.7), rgba(255, 255, 255, 0.15));
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 18px;
+  width: 18px;
+  border-radius: 999px;
+  background: #fff;
+  border: 3px solid var(--px-accent);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+input[type="range"]::-moz-range-thumb {
+  height: 18px;
+  width: 18px;
+  border-radius: 999px;
+  background: #fff;
+  border: 3px solid var(--px-accent);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
 }

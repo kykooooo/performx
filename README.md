@@ -20,6 +20,31 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Monitoring & Analytics
+
+Sentry is enabled when the environment variable `NEXT_PUBLIC_SENTRY_DSN` is set.
+
+Optional variables:
+- `NEXT_PUBLIC_SENTRY_ENV` (ex: `production`, `staging`)
+
+Analytics is automatically injected if one of these is set:
+- `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` (ex: `performx.com`)
+- `NEXT_PUBLIC_GA_ID` (ex: `G-XXXXXXX`)
+
+## Tests
+
+Run tests with:
+
+```bash
+npm run test
+```
+
+Watch mode:
+
+```bash
+npm run test:watch
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
