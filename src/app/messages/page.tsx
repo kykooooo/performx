@@ -92,6 +92,13 @@ export default function MessagesPage() {
 
     const conversationList: Conversation[] = (convoLinks ?? []).map((link) => {
       const conversationId = link.conversation_id as string;
+      const conversationMeta = Array.isArray(link.conversations)
+        ? link.conversations[0]
+        : link.conversations;
+      const createdAt =
+        conversationMeta && typeof conversationMeta === "object" && "created_at" in conversationMeta
+          ? ((conversationMeta as { created_at?: string }).created_at ?? "")
+          : "";
       const participantsForConversation = (participants ?? []).filter(
         (row) => row.conversation_id === conversationId,
       );
@@ -102,7 +109,7 @@ export default function MessagesPage() {
         : "Conversation";
       return {
         id: conversationId,
-        created_at: (link.conversations as { created_at: string } | null)?.created_at ?? "",
+        created_at: createdAt,
         otherUserId: other?.user_id ?? null,
         otherName,
       };
