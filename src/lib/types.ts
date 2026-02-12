@@ -62,6 +62,10 @@ export type Player = {
   name: string;
   city: string;
   level: string;
+  position: string;
+  objectives?: string;
+  rating: number;
+  reviews: number;
 };
 
 export type Review = {

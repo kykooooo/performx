@@ -12,6 +12,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { label: "Accueil", href: "/", icon: <HomeIcon className="h-4 w-4" /> },
   { label: "Coach", href: "/coach", icon: <WhistleIcon className="h-4 w-4" /> },
+  { label: "Joueurs", href: "/players", icon: <UserIcon className="h-4 w-4" /> },
   { label: "Mes séances", href: "/sessions", icon: <CalendarIcon className="h-4 w-4" /> },
   { label: "Messages", href: "/messages", icon: <ChatIcon className="h-4 w-4" /> },
   { label: "Dashboard", href: "/dashboard", icon: <GridIcon className="h-4 w-4" /> },

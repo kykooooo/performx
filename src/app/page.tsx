@@ -1,6 +1,7 @@
 import Link from "next/link";
 import AppShell from "@/components/app-shell";
 import { BoltIcon } from "@/components/icons";
+import PublicStats from "@/components/public-stats";
 
 export default function HomePage() {
   return (
@@ -25,22 +26,14 @@ export default function HomePage() {
               <BoltIcon className="h-4 w-4" />
               Trouver un coach
             </Link>
+            <Link href="/players" className="px-button-ghost">
+              Trouver un joueur
+            </Link>
             <Link href="/auth/register" className="px-button-ghost">
               Créer un compte
             </Link>
           </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {[
-              { label: "Sessions", value: "+2 400" },
-              { label: "Villes couvertes", value: "36" },
-              { label: "Note moyenne", value: "4.8" },
-            ].map((stat) => (
-              <div key={stat.label} className="px-outline p-4">
-                <p className="text-xs uppercase tracking-[0.3em] text-white/40">{stat.label}</p>
-                <p className="text-2xl font-semibold text-white">{stat.value}</p>
-              </div>
-            ))}
-          </div>
+          <PublicStats />
         </div>
         <div className="px-card px-fade-up flex flex-col gap-4 p-6" style={{ animationDelay: "120ms" }}>
           <h3 className="text-2xl text-white">Fonctionnalités clés</h3>
