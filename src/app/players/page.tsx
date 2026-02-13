@@ -1,10 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import AppShell from "@/components/app-shell";
 import PlayerCard from "@/components/player-card";
-import { SearchIcon } from "@/components/icons";
+import { SkeletonPlayerCard } from "@/components/skeleton";
+import ScrollReveal from "@/components/scroll-reveal";
+import {
+  SearchIcon,
+  FilterIcon,
+  UsersIcon,
+  StarIcon,
+  BoltIcon,
+  ArrowRightIcon,
+} from "@/components/icons";
 import { supabase } from "@/lib/supabase";
+import { mockPlayers } from "@/lib/mock-data";
 
 type PlayerRow = {
   user_id: string;
@@ -19,12 +30,30 @@ type PlayerRow = {
   reviews_count: number | null;
 };
 
+const LEVEL_CHIPS = ["Tous", "Débutant", "Intermédiaire", "Avancé"];
+
+function mapMockToRow(player: (typeof mockPlayers)[number]): PlayerRow {
+  const [firstName, ...rest] = player.name.split(" ");
+  return {
+    user_id: player.id,
+    first_name: firstName,
+    last_name: rest.join(" "),
+    city: player.city,
+    level: player.level,
+    position: player.position,
+    objectives: player.objectives ?? null,
+    avatar_url: null,
+    rating: player.rating,
+    reviews_count: player.reviews,
+  };
+}
+
 export default function PlayersPage() {
   const [players, setPlayers] = useState<PlayerRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [levelFilter, setLevelFilter] = useState("all");
+  const [activeLevel, setActiveLevel] = useState("Tous");
   const [positionFilter, setPositionFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("all");
 
@@ -38,12 +67,12 @@ export default function PlayersPage() {
         .order("rating", { ascending: false });
 
       if (!mounted) return;
-      if (error) {
-        setError(error.message);
-        setPlayers([]);
+      if (error || !data || data.length === 0) {
+        setError(null);
+        setPlayers(mockPlayers.map(mapMockToRow));
       } else {
         setError(null);
-        setPlayers(data ?? []);
+        setPlayers(data);
       }
       setLoading(false);
     };
@@ -54,16 +83,12 @@ export default function PlayersPage() {
     };
   }, []);
 
-  const levels = useMemo(
-    () => Array.from(new Set(players.map((player) => player.level).filter(Boolean))) as string[],
-    [players],
-  );
   const positions = useMemo(
-    () => Array.from(new Set(players.map((player) => player.position).filter(Boolean))) as string[],
+    () => Array.from(new Set(players.map((p) => p.position).filter(Boolean))) as string[],
     [players],
   );
   const cities = useMemo(
-    () => Array.from(new Set(players.map((player) => player.city).filter(Boolean))) as string[],
+    () => Array.from(new Set(players.map((p) => p.city).filter(Boolean))) as string[],
     [players],
   );
 
@@ -74,98 +99,261 @@ export default function PlayersPage() {
       const city = (player.city ?? "").toLowerCase();
       const position = (player.position ?? "").toLowerCase();
       const level = (player.level ?? "").toLowerCase();
-      const matchesQuery = !normalized || [name, city, position, level].some((value) => value.includes(normalized));
-      const matchesLevel = levelFilter === "all" || player.level === levelFilter;
-      const matchesPosition = positionFilter === "all" || player.position === positionFilter;
+      const matchesQuery =
+        !normalized || [name, city, position, level].some((v) => v.includes(normalized));
+      const matchesLevel =
+        activeLevel === "Tous" || player.level === activeLevel;
+      const matchesPosition =
+        positionFilter === "all" || player.position === positionFilter;
       const matchesCity = cityFilter === "all" || player.city === cityFilter;
       return matchesQuery && matchesLevel && matchesPosition && matchesCity;
     });
-  }, [players, query, levelFilter, positionFilter, cityFilter]);
+  }, [players, query, activeLevel, positionFilter, cityFilter]);
+
+  const avgRating = useMemo(() => {
+    const ratings = players.map((p) => p.rating ?? 0).filter((r) => r > 0);
+    if (ratings.length === 0) return 0;
+    return ratings.reduce((a, b) => a + b, 0) / ratings.length;
+  }, [players]);
 
   return (
-    <AppShell
-      active="/players"
-      title="Trouver un joueur"
-      description="Parcourir les profils joueurs, leurs objectifs et leurs avis."
-    >
-      <div className="px-card px-fade-up flex flex-col gap-4 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-white">Recherche joueurs</p>
-            <p className="text-xs text-white/50">Filtre par niveau, poste ou localisation.</p>
-          </div>
-          <div className="relative">
-            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-            <input
-              className="px-input pl-9"
-              placeholder="Rechercher..."
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </div>
-        </div>
-        <div className="grid gap-3 lg:grid-cols-3">
-          <div className="px-outline p-3">
-            <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Niveau</label>
-            <select className="px-select mt-2" value={levelFilter} onChange={(event) => setLevelFilter(event.target.value)}>
-              <option value="all">Tous les niveaux</option>
-              {levels.map((level) => (
-                <option key={level} value={level}>
-                  {level}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="px-outline p-3">
-            <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Poste</label>
-            <select className="px-select mt-2" value={positionFilter} onChange={(event) => setPositionFilter(event.target.value)}>
-              <option value="all">Tous les postes</option>
-              {positions.map((position) => (
-                <option key={position} value={position}>
-                  {position}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="px-outline p-3">
-            <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Ville</label>
-            <select className="px-select mt-2" value={cityFilter} onChange={(event) => setCityFilter(event.target.value)}>
-              <option value="all">Toutes les villes</option>
-              {cities.map((city) => (
-                <option key={city} value={city}>
-                  {city}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {loading && <p className="text-sm text-white/50">Chargement des joueurs...</p>}
-      {error && <p className="text-sm text-[color:var(--px-danger)]">{error}</p>}
-      {!loading && filteredPlayers.length === 0 && !error && (
-        <p className="text-sm text-white/50">Aucun joueur disponible pour le moment.</p>
-      )}
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {filteredPlayers.map((player, index) => {
-          const name = [player.first_name, player.last_name].filter(Boolean).join(" ") || "Joueur";
-          return (
-            <div key={player.user_id} className="px-fade-up" style={{ animationDelay: `${index * 60}ms` }}>
-              <PlayerCard
-                profileHref={`/players/${player.user_id}`}
-                avatarUrl={player.avatar_url}
-                name={name}
-                level={player.level ?? "Niveau"}
-                position={player.position ?? "Poste"}
-                city={player.city ?? ""}
-                objectives={player.objectives ?? ""}
-                rating={player.rating ?? 0}
-                reviews={player.reviews_count ?? 0}
-              />
+    <AppShell active="/players" hideTitle>
+      {/* ── Hero header ── */}
+      <section className="relative py-8 lg:py-12">
+        <div className="grid items-center gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-6">
+            <div className="flex items-center gap-3 px-fade-up">
+              <span className="px-badge px-pulse">Communauté</span>
+              <span className="px-pill">+{players.length} joueurs inscrits</span>
             </div>
-          );
-        })}
-      </div>
+
+            <h1
+              className="px-fade-up text-4xl leading-[1.1] text-white sm:text-5xl lg:text-6xl"
+              style={{ animationDelay: "80ms" }}
+            >
+              Explore les{" "}
+              <span className="px-gradient-text">talents.</span>
+            </h1>
+
+            <p
+              className="px-fade-up max-w-lg text-base text-white/60"
+              style={{ animationDelay: "160ms" }}
+            >
+              Découvre les profils joueurs, leurs objectifs et leur progression.
+              Trouve le partenaire d&apos;entraînement idéal.
+            </p>
+
+            <div
+              className="px-fade-up flex items-center gap-4"
+              style={{ animationDelay: "240ms" }}
+            >
+              <Link href="/auth/register/player" className="px-button text-sm px-6 py-3">
+                <BoltIcon className="h-4 w-4" />
+                Créer mon profil
+              </Link>
+              <Link href="#players" className="px-button-ghost text-sm px-6 py-3">
+                Explorer
+                <ArrowRightIcon className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Stats sidebar */}
+          <div
+            className="px-fade-up hidden lg:flex flex-col gap-4"
+            style={{ animationDelay: "200ms" }}
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <div className="px-card p-4 text-center">
+                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">
+                  <UsersIcon className="h-5 w-5" />
+                </div>
+                <p className="text-2xl font-semibold text-white">{players.length}</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/40">Joueurs</p>
+              </div>
+              <div className="px-card p-4 text-center">
+                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">
+                  <StarIcon className="h-5 w-5" />
+                </div>
+                <p className="text-2xl font-semibold text-white">{avgRating.toFixed(1)}</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/40">Note moy.</p>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-4">
+              <p className="text-xs text-white/50 leading-relaxed">
+                <span className="font-semibold text-white/70">{cities.length} villes</span>{" "}
+                représentées. Des joueurs de tous niveaux prêts à progresser ensemble.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Filtres ── */}
+      <ScrollReveal>
+        <section id="players" className="space-y-6">
+          <div className="px-card p-4 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-white">Recherche joueurs</p>
+                <p className="text-xs text-white/50">Filtre par niveau, poste ou localisation.</p>
+              </div>
+              <div className="relative">
+                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                <input
+                  className="px-input pl-9"
+                  placeholder="Rechercher un joueur..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Level chips */}
+            <div className="flex flex-wrap gap-2">
+              {LEVEL_CHIPS.map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => setActiveLevel(chip)}
+                  className={`rounded-full border px-4 py-1.5 text-xs font-medium transition ${
+                    activeLevel === chip
+                      ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]"
+                      : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white"
+                  }`}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+
+            {/* Select filters */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="px-outline p-3">
+                <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Poste</label>
+                <select
+                  className="px-select mt-2"
+                  value={positionFilter}
+                  onChange={(e) => setPositionFilter(e.target.value)}
+                >
+                  <option value="all">Tous les postes</option>
+                  {positions.map((position) => (
+                    <option key={position} value={position}>
+                      {position}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="px-outline p-3">
+                <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Ville</label>
+                <select
+                  className="px-select mt-2"
+                  value={cityFilter}
+                  onChange={(e) => setCityFilter(e.target.value)}
+                >
+                  <option value="all">Toutes les villes</option>
+                  {cities.map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Résultat count */}
+          {!loading && filteredPlayers.length > 0 && (
+            <div className="flex items-center gap-2">
+              <FilterIcon className="h-4 w-4 text-white/30" />
+              <p className="text-sm text-white/40">
+                {filteredPlayers.length} joueur{filteredPlayers.length > 1 ? "s" : ""} trouvé
+                {filteredPlayers.length > 1 ? "s" : ""}
+              </p>
+            </div>
+          )}
+        </section>
+      </ScrollReveal>
+
+      {/* ── Loading ── */}
+      {loading && (
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <SkeletonPlayerCard key={index} />
+          ))}
+        </div>
+      )}
+
+      {/* ── Error ── */}
+      {error && <p className="text-sm text-[color:var(--px-danger)]">{error}</p>}
+
+      {/* ── Empty ── */}
+      {!loading && filteredPlayers.length === 0 && !error && (
+        <div className="px-card flex flex-col items-center gap-4 p-10 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5">
+            <SearchIcon className="h-7 w-7 text-white/30" />
+          </div>
+          <p className="text-white/70">Aucun joueur ne correspond à ta recherche.</p>
+          <button
+            type="button"
+            className="px-button-ghost text-sm"
+            onClick={() => {
+              setQuery("");
+              setActiveLevel("Tous");
+              setPositionFilter("all");
+              setCityFilter("all");
+            }}
+          >
+            Réinitialiser les filtres
+          </button>
+        </div>
+      )}
+
+      {/* ── Players grid ── */}
+      {!loading && filteredPlayers.length > 0 && (
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {filteredPlayers.map((player, index) => {
+            const name = [player.first_name, player.last_name].filter(Boolean).join(" ") || "Joueur";
+            return (
+              <ScrollReveal key={player.user_id} delay={index * 60}>
+                <PlayerCard
+                  profileHref={`/players/${player.user_id}`}
+                  avatarUrl={player.avatar_url}
+                  name={name}
+                  level={player.level ?? "Niveau"}
+                  position={player.position ?? "Poste"}
+                  city={player.city ?? ""}
+                  objectives={player.objectives ?? ""}
+                  rating={player.rating ?? 0}
+                  reviews={player.reviews_count ?? 0}
+                />
+              </ScrollReveal>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── CTA bottom ── */}
+      <ScrollReveal>
+        <section className="py-12">
+          <div className="relative overflow-hidden rounded-3xl border border-white/10 p-8 text-center sm:p-12">
+            <div className="absolute inset-0 bg-gradient-to-br from-[color:var(--px-accent)]/15 via-transparent to-[color:var(--px-accent-2)]/8" />
+            <div className="relative">
+              <h2 className="text-3xl text-white sm:text-4xl">
+                Prêt à progresser ?{" "}
+                <span className="px-gradient-text">Crée ton profil.</span>
+              </h2>
+              <p className="mx-auto mt-3 max-w-md text-sm text-white/50">
+                Inscris-toi gratuitement, définis tes objectifs et trouve le coach qui te fera passer au niveau supérieur.
+              </p>
+              <Link href="/auth/register/player" className="px-button mt-6 inline-flex text-sm px-6 py-3">
+                <BoltIcon className="h-4 w-4" />
+                Créer mon profil joueur
+              </Link>
+            </div>
+          </div>
+        </section>
+      </ScrollReveal>
     </AppShell>
   );
 }

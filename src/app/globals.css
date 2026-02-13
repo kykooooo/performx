@@ -85,13 +85,23 @@ a {
   }
 
   .px-card {
-    @apply rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-card)]/92 shadow-[var(--px-shadow)];
+    @apply rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-card)]/92 shadow-[var(--px-shadow)] transition-all duration-300;
     background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
   }
 
+  .px-card:hover {
+    border-color: rgba(255, 106, 0, 0.2);
+    box-shadow: 0 0 20px rgba(255, 106, 0, 0.08), 0 20px 60px rgba(0, 0, 0, 0.45);
+  }
+
   .px-card-strong {
-    @apply rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-card-strong)]/96 shadow-[var(--px-shadow)];
+    @apply rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-card-strong)]/96 shadow-[var(--px-shadow)] transition-all duration-300;
     background-image: linear-gradient(155deg, rgba(255, 106, 0, 0.12), rgba(0, 0, 0, 0.1));
+  }
+
+  .px-card-strong:hover {
+    border-color: rgba(255, 106, 0, 0.3);
+    box-shadow: 0 0 25px rgba(255, 106, 0, 0.12), 0 20px 60px rgba(0, 0, 0, 0.45);
   }
 
   .px-glass {
@@ -145,6 +155,60 @@ a {
   .px-fade-up {
     animation: pxFadeUp 0.7s ease both;
   }
+
+  .px-gradient-text {
+    background: linear-gradient(135deg, #fff 0%, var(--px-accent) 50%, var(--px-accent-2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .px-pulse {
+    animation: pxPulse 2s ease-in-out infinite;
+  }
+
+  .px-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .px-reveal.px-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .px-glow {
+    transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+  }
+
+  .px-glow:hover {
+    box-shadow: 0 0 30px rgba(255, 106, 0, 0.15), 0 20px 60px rgba(0, 0, 0, 0.45);
+    transform: translateY(-2px);
+    border-color: rgba(255, 106, 0, 0.3);
+  }
+
+  .px-skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.06) 25%,
+      rgba(255, 255, 255, 0.12) 50%,
+      rgba(255, 255, 255, 0.06) 75%
+    );
+    background-size: 200% 100%;
+    animation: pxShimmer 1.5s ease-in-out infinite;
+    border-radius: 0.75rem;
+  }
+
+  .px-float {
+    animation: pxFloat 3s ease-in-out infinite;
+  }
+
+  .px-stagger-1 { animation-delay: 0ms; }
+  .px-stagger-2 { animation-delay: 80ms; }
+  .px-stagger-3 { animation-delay: 160ms; }
+  .px-stagger-4 { animation-delay: 240ms; }
+  .px-stagger-5 { animation-delay: 320ms; }
 }
 
 @keyframes pxFadeIn {
@@ -164,6 +228,35 @@ a {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes pxPulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(255, 106, 0, 0.4);
+  }
+  50% {
+    opacity: 0.85;
+    box-shadow: 0 0 0 8px rgba(255, 106, 0, 0);
+  }
+}
+
+@keyframes pxShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pxFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
   }
 }
 
