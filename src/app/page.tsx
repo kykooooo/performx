@@ -78,6 +78,24 @@ const TESTIMONIALS = [
   },
 ];
 
+const IMMERSIVE_GALLERY = [
+  {
+    src: "https://images.pexels.com/photos/274422/pexels-photo-274422.jpeg?auto=compress&cs=tinysrgb&w=1400",
+    alt: "Footballeur en action pendant un entrainement",
+    label: "Travail technique",
+  },
+  {
+    src: "https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=1400",
+    alt: "Coach qui dirige une seance terrain",
+    label: "Coaching personnalise",
+  },
+  {
+    src: "https://images.pexels.com/photos/918798/pexels-photo-918798.jpeg?auto=compress&cs=tinysrgb&w=1400",
+    alt: "Joueurs de football en preparation avant seance",
+    label: "Suivi des progres",
+  },
+];
+
 export default function HomePage() {
   return (
     <AppShell active="/" hideTitle>
@@ -235,6 +253,39 @@ export default function HomePage() {
                   </div>
                   <h3 className="mb-3 text-2xl text-white">{step.title}</h3>
                   <p className="text-sm leading-relaxed text-white/50">{step.description}</p>
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </section>
+      </ScrollReveal>
+
+      {/* ── Galerie terrain ── */}
+      <ScrollReveal>
+        <section className="py-12">
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-3 flex items-center justify-center gap-3 text-xs uppercase tracking-[0.35em] text-white/40">
+              <span className="h-[2px] w-10 rounded-full bg-[color:var(--px-accent)]" />
+              Experience terrain
+              <span className="h-[2px] w-10 rounded-full bg-[color:var(--px-accent)]" />
+            </div>
+            <h2 className="text-4xl text-white sm:text-5xl">Le foot au coeur de la plateforme</h2>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {IMMERSIVE_GALLERY.map((item, index) => (
+              <ScrollReveal key={item.src} delay={index * 100}>
+                <div className="group relative h-56 overflow-hidden rounded-2xl border border-white/10">
+                  <img
+                    src={item.src}
+                    alt={item.alt}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <p className="absolute bottom-3 left-3 text-xs uppercase tracking-[0.2em] text-white/90">
+                    {item.label}
+                  </p>
                 </div>
               </ScrollReveal>
             ))}
