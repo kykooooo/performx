@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import AppShell from "@/components/app-shell";
 import { MapPinIcon, StarIcon } from "@/components/icons";
 import { getAvailableSlots } from "@/lib/booking";
+import { getCoachAvatarUrl } from "@/lib/coach-avatars";
 import { formatLongDate } from "@/lib/date";
 import { getAverageRating, getReviewTotal } from "@/lib/reviews";
 import { supabase } from "@/lib/supabase";
@@ -113,6 +114,7 @@ export default function CoachProfilePage() {
 
   const reviewsTotal = getReviewTotal(reviews, coach?.reviews_count ?? 0);
   const computedRating = getAverageRating(reviews, coach?.rating ?? 0);
+  const coachAvatar = coach ? getCoachAvatarUrl(coach.avatar_url, `${coach.name}-${coach.id}`) : null;
 
   const availableSlots = useMemo(() => {
     if (!Array.isArray(coach?.availability)) return [] as AvailabilitySlot[];
@@ -160,8 +162,8 @@ export default function CoachProfilePage() {
               <p className="text-xs uppercase tracking-[0.3em] text-white/40">Spécialité</p>
               <div className="mt-3 flex items-center gap-3">
                 <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-black/60 text-base font-semibold text-white">
-                  {coach.avatar_url ? (
-                    <img src={coach.avatar_url} alt={coach.name} className="h-full w-full object-cover" />
+                  {coachAvatar ? (
+                    <img src={coachAvatar} alt={coach.name} className="h-full w-full object-cover" />
                   ) : (
                     coach.name
                       .split(" ")

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MapPinIcon, StarIcon, BoltIcon } from "./icons";
+import { getCoachAvatarUrl } from "@/lib/coach-avatars";
 
 type CoachCardProps = {
   reserveHref: string;
@@ -32,6 +33,7 @@ export default function CoachCard({
     .slice(0, 2)
     .join("")
     .toUpperCase();
+  const resolvedAvatar = getCoachAvatarUrl(avatarUrl, `${name}-${speciality}`);
 
   return (
     <div className="px-card group flex h-full flex-col gap-4 p-4 transition-transform duration-300 hover:translate-y-[-3px]">
@@ -43,8 +45,8 @@ export default function CoachCard({
         {/* Avatar + info */}
         <div className="absolute left-4 top-4 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-white/20 bg-black/60 text-sm font-semibold text-white shadow-lg">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
+            {resolvedAvatar ? (
+              <img src={resolvedAvatar} alt={name} className="h-full w-full object-cover" />
             ) : (
               initials
             )}
