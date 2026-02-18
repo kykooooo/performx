@@ -41,7 +41,7 @@ const STEPS = [
 const FEATURES = [
   {
     icon: <ShieldIcon className="h-5 w-5" />,
-    text: "Comptes joueurs, coachs et clubs",
+    text: "Comptes joueurs, coachs et parents",
   },
   {
     icon: <CalendarIcon className="h-5 w-5" />,
@@ -72,9 +72,9 @@ const TESTIMONIALS = [
   },
   {
     name: "Thomas D.",
-    role: "Responsable club – FC Avenir",
+    role: "Parent d'un joueur U15",
     quote:
-      "Le dashboard club nous donne une vue complète sur l'activité de nos joueurs et les coachs partenaires. Très pratique.",
+      "Je peux suivre les seances, les retours des coachs et reserver rapidement pour mon fils. C'est clair et efficace.",
   },
 ];
 
@@ -86,7 +86,7 @@ export default function HomePage() {
         <div className="grid items-center gap-10 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="space-y-8">
             <div className="flex items-center gap-3 px-fade-up">
-              <span className="px-badge px-pulse">Nouveau</span>
+              <span className="px-badge px-pulse">Version demo</span>
               <span className="px-pill">+120 coachs actifs</span>
               <span className="px-pill hidden sm:inline-flex">Réservation instantanée</span>
             </div>
@@ -104,7 +104,7 @@ export default function HomePage() {
               style={{ animationDelay: "160ms" }}
             >
               Trouve un coach près de chez toi, réserve une séance individuelle en
-              quelques clics et suis ta progression dans un espace dédié.
+              quelques clics et suis la progression du joueur dans un espace dédié parents.
             </p>
 
             <div
@@ -127,12 +127,60 @@ export default function HomePage() {
             <div className="px-fade-up" style={{ animationDelay: "320ms" }}>
               <PublicStats />
             </div>
+
+            <div className="px-fade-up grid gap-3 sm:grid-cols-2 lg:hidden" style={{ animationDelay: "360ms" }}>
+              <div className="relative h-32 overflow-hidden rounded-2xl border border-white/10">
+                <img
+                  src="https://images.pexels.com/photos/46798/the-ball-stadion-football-the-pitch-46798.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                  alt="Ballon de football sur un terrain"
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              </div>
+              <div className="relative h-32 overflow-hidden rounded-2xl border border-white/10">
+                <img
+                  src="https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                  alt="Coach de football donnant des consignes"
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              </div>
+            </div>
           </div>
 
           <div
             className="px-fade-up hidden flex-col gap-4 lg:flex"
             style={{ animationDelay: "200ms" }}
           >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="relative h-40 overflow-hidden rounded-2xl border border-white/10">
+                <img
+                  src="https://images.pexels.com/photos/46798/the-ball-stadion-football-the-pitch-46798.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                  alt="Ballon de football sur un terrain"
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                <p className="absolute bottom-3 left-3 text-xs uppercase tracking-[0.2em] text-white/80">
+                  Entrainement individuel
+                </p>
+              </div>
+              <div className="relative h-40 overflow-hidden rounded-2xl border border-white/10">
+                <img
+                  src="https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                  alt="Coach de football donnant des consignes"
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                <p className="absolute bottom-3 left-3 text-xs uppercase tracking-[0.2em] text-white/80">
+                  Coach certifie
+                </p>
+              </div>
+            </div>
+
             <div className="px-card space-y-4 p-6">
               <h3 className="text-2xl text-white">Fonctionnalités clés</h3>
               {FEATURES.map((feature) => (
@@ -150,8 +198,8 @@ export default function HomePage() {
 
             <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-4">
               <p className="text-xs text-white/50 leading-relaxed">
-                MVP gratuit aujourd&apos;hui. Auth Supabase + paiement Stripe seront
-                intégrés dans la prochaine version.
+                Il s&apos;agit d&apos;une version demo. Les parcours, statistiques et réservations sont
+                présentés pour valider l&apos;expérience avant lancement officiel.
               </p>
             </div>
           </div>
@@ -293,8 +341,8 @@ export default function HomePage() {
                 <span className="px-gradient-text">niveau supérieur</span> ?
               </h2>
               <p className="mx-auto mt-4 max-w-lg text-white/50">
-                Rejoins PerformX gratuitement et commence à réserver des séances dès
-                aujourd&apos;hui.
+                Version demo en ligne pour valider les usages joueurs, coachs et parents
+                avant la mise en production.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-4">
                 <Link href="/auth/register" className="px-button text-base px-8 py-4">

@@ -25,9 +25,9 @@ const DASHBOARD_ITEMS = [
     ],
   },
   {
-    title: "Dashboard Club",
+    title: "Dashboard Parent",
     description:
-      "Suivi des joueurs, sessions collectives et coachs partenaires. Vue globale de l'activité.",
+      "Suivi des joueurs, séances programmées et coachs partenaires. Vue globale pour les parents.",
     href: "/dashboard/club",
     icon: <ShieldIcon className="h-6 w-6" />,
     primary: false,

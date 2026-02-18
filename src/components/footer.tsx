@@ -9,7 +9,7 @@ export default function Footer() {
           <div className="space-y-4">
             <Logo />
             <p className="max-w-xs text-sm text-white/50">
-              La plateforme qui connecte joueurs, coachs et clubs de football pour des
+              Version demo de la plateforme qui connecte joueurs, coachs et parents pour des
               s&eacute;ances individuelles et un suivi personnalis&eacute;.
             </p>
           </div>
@@ -65,7 +65,7 @@ export default function Footer() {
 
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 md:flex-row">
           <p className="text-xs text-white/30">
-            &copy; 2025 PerformX. Tous droits r&eacute;serv&eacute;s.
+            &copy; 2025 PerformX. Version de demonstration.
           </p>
           <p className="text-xs text-white/30">
             Built with Next.js + Supabase + Vercel

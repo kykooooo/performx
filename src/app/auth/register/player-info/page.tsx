@@ -29,7 +29,7 @@ export default function PlayerInfoPage() {
             <option>Intermédiaire</option>
             <option>Confirmé</option>
           </select>
-          <input className="px-input" placeholder="Club actuel (optionnel)" />
+          <input className="px-input" placeholder="Structure actuelle (optionnel)" />
         </div>
         <input className="px-input" placeholder="Localisation" />
         <select className="px-select">

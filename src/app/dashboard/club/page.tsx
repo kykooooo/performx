@@ -36,7 +36,7 @@ export default function ClubDashboardPage() {
       setLoading(true);
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
-        setError("Connecte-toi pour accéder au dashboard club.");
+        setError("Connecte-toi pour accéder au dashboard parent.");
         setLoading(false);
         return;
       }
@@ -49,7 +49,7 @@ export default function ClubDashboardPage() {
 
       const role = profileData?.role ?? null;
       if (role !== "club") {
-        setError("Accès réservé aux comptes club.");
+        setError("Accès réservé aux comptes parent.");
         setLoading(false);
         return;
       }
@@ -92,8 +92,8 @@ export default function ClubDashboardPage() {
   return (
     <AppShell
       active="/dashboard"
-      title="Dashboard Club"
-      description="Suivi des joueurs, séances collectives et coachs partenaires."
+      title="Dashboard Parent"
+      description="Suivi des joueurs, séances réservées et coachs partenaires."
     >
       {error && (
         <div className="px-card p-6">
@@ -120,7 +120,7 @@ export default function ClubDashboardPage() {
           </div>
 
           <div className="px-card p-6">
-            <h3 className="text-lg text-white">Séances collectives à venir</h3>
+            <h3 className="text-lg text-white">Séances à venir</h3>
             <div className="mt-4 space-y-3">
               {loading && <p className="text-xs text-white/50">Chargement...</p>}
               {!loading && sessions.length === 0 && (
@@ -180,10 +180,10 @@ export default function ClubDashboardPage() {
             </div>
           </div>
           <div className="px-card p-6">
-            <h3 className="text-lg text-white">Actions club</h3>
+            <h3 className="text-lg text-white">Actions parent</h3>
             <div className="mt-4 grid gap-3">
-              <button className="px-button" type="button">Créer une séance club</button>
-              <button className="px-button-ghost" type="button">Inviter un coach</button>
+              <button className="px-button" type="button">Réserver une nouvelle séance</button>
+              <button className="px-button-ghost" type="button">Contacter un coach</button>
             </div>
           </div>
         </div>

@@ -12,6 +12,14 @@ type PublicStatsData = {
   playerRating: number;
 };
 
+const DEMO_FALLBACK: PublicStatsData = {
+  coaches: 128,
+  players: 642,
+  sessions: 2410,
+  coachRating: 4.8,
+  playerRating: 4.6,
+};
+
 const average = (values: number[]) => {
   if (values.length === 0) return 0;
   const total = values.reduce((sum, value) => sum + value, 0);
@@ -129,26 +137,34 @@ export default function PublicStats() {
     };
   }, []);
 
+  const resolvedStats = {
+    coaches: stats?.coaches && stats.coaches > 0 ? stats.coaches : DEMO_FALLBACK.coaches,
+    players: stats?.players && stats.players > 0 ? stats.players : DEMO_FALLBACK.players,
+    sessions: stats?.sessions && stats.sessions > 0 ? stats.sessions : DEMO_FALLBACK.sessions,
+    coachRating: stats?.coachRating && stats.coachRating > 0 ? stats.coachRating : DEMO_FALLBACK.coachRating,
+    playerRating: stats?.playerRating && stats.playerRating > 0 ? stats.playerRating : DEMO_FALLBACK.playerRating,
+  };
+
   const items = [
     {
       icon: <WhistleIcon className="h-5 w-5" />,
       label: "Coachs actifs",
-      value: stats?.coaches ?? 0,
+      value: resolvedStats.coaches,
     },
     {
       icon: <UsersIcon className="h-5 w-5" />,
       label: "Joueurs inscrits",
-      value: stats?.players ?? 0,
+      value: resolvedStats.players,
     },
     {
       icon: <CalendarIcon className="h-5 w-5" />,
       label: "Séances réservées",
-      value: stats?.sessions ?? 0,
+      value: resolvedStats.sessions,
     },
     {
       icon: <StarIcon className="h-5 w-5" />,
       label: "Note moyenne",
-      value: stats?.coachRating ?? 0,
+      value: resolvedStats.coachRating,
       suffix: "/ 5",
       decimals: 1,
     },
