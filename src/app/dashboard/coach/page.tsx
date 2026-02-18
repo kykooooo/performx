@@ -62,6 +62,7 @@ export default function CoachDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
   const [slotNotice, setSlotNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [sessionNotice, setSessionNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [slotDate, setSlotDate] = useState("");
   const [slotTime, setSlotTime] = useState("");
   const [slotDuration, setSlotDuration] = useState(60);
@@ -278,6 +279,32 @@ export default function CoachDashboardPage() {
     setCoach({ ...coach, availability: updated });
   };
 
+  const handleSessionStatusChange = async (
+    sessionId: string,
+    status: "completed" | "cancelled",
+  ) => {
+    if (!isDemo) {
+      const { error } = await supabase
+        .from("sessions")
+        .update({ status })
+        .eq("id", sessionId);
+      if (error) {
+        setSessionNotice({ type: "error", text: error.message });
+        return;
+      }
+    }
+
+    setSessions((prev) =>
+      prev.map((session) =>
+        session.id === sessionId ? { ...session, status } : session,
+      ),
+    );
+    setSessionNotice({
+      type: "success",
+      text: status === "completed" ? "Séance marquée terminée." : "Séance annulée.",
+    });
+  };
+
   return (
     <AppShell active="/dashboard" hideTitle>
       {/* ── Hero header ── */}
@@ -364,9 +391,35 @@ export default function CoachDashboardPage() {
                       <p className="text-sm font-medium text-white">{session.title}</p>
                       <p className="text-xs text-white/50">{formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}</p>
                     </div>
-                    <span className="rounded-full border border-[color:var(--px-success)]/30 bg-[color:var(--px-success)]/15 px-2.5 py-1 text-[10px] font-semibold uppercase text-[color:var(--px-success)]">Confirmé</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        className="rounded-lg border border-[color:var(--px-success)]/25 bg-[color:var(--px-success)]/12 px-2.5 py-1 text-[10px] font-semibold uppercase text-[color:var(--px-success)]"
+                        type="button"
+                        onClick={() => handleSessionStatusChange(session.id, "completed")}
+                      >
+                        Terminée
+                      </button>
+                      <button
+                        className="rounded-lg border border-[color:var(--px-danger)]/30 bg-[color:var(--px-danger)]/10 px-2.5 py-1 text-[10px] font-semibold uppercase text-[color:var(--px-danger)]"
+                        type="button"
+                        onClick={() => handleSessionStatusChange(session.id, "cancelled")}
+                      >
+                        Annuler
+                      </button>
+                    </div>
                   </div>
                 ))}
+                {sessionNotice && (
+                  <div
+                    className={`rounded-xl border px-3 py-2 text-xs ${
+                      sessionNotice.type === "success"
+                        ? "border-[color:var(--px-success)]/40 bg-[color:var(--px-success)]/15 text-[color:var(--px-success)]"
+                        : "border-[color:var(--px-danger)]/40 bg-[color:var(--px-danger)]/15 text-[color:var(--px-danger)]"
+                    }`}
+                  >
+                    {sessionNotice.text}
+                  </div>
+                )}
                 {completed.length > 0 && (
                   <div className="border-t border-white/10 pt-3">
                     <p className="mb-2 text-[11px] uppercase tracking-[0.2em] text-white/30">Terminées</p>

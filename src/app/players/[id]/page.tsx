@@ -24,11 +24,21 @@ type PlayerRow = {
 
 type ReviewRow = {
   id: string;
+  session_id?: string | null;
   coach_name: string | null;
   rating: number;
   comment: string | null;
   date: string | null;
 };
+
+type EligibleSessionRow = {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+};
+
+const normalizeTime = (value: string) => (value.length >= 5 ? value.slice(0, 5) : value);
 
 const renderStars = (rating: number) => {
   const full = Math.round(rating);
@@ -49,6 +59,8 @@ export default function PlayerProfilePage() {
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [coachId, setCoachId] = useState<string | null>(null);
+  const [eligibleReviewSessions, setEligibleReviewSessions] = useState<EligibleSessionRow[]>([]);
+  const [selectedReviewSessionId, setSelectedReviewSessionId] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewNotice, setReviewNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -79,9 +91,43 @@ export default function PlayerProfilePage() {
           .select("id")
           .eq("user_id", userData.user.id)
           .single();
+        const resolvedCoachId = coachData?.id ?? null;
         if (mounted) {
-          setCoachId(coachData?.id ?? null);
+          setCoachId(resolvedCoachId);
         }
+
+        if (resolvedCoachId) {
+          const { data: completedSessions } = await supabase
+            .from("sessions")
+            .select("id, title, date, time")
+            .eq("coach_id", resolvedCoachId)
+            .eq("player_id", playerId)
+            .eq("status", "completed")
+            .order("date", { ascending: false });
+
+          const { data: existingReviews } = await supabase
+            .from("player_reviews")
+            .select("session_id")
+            .eq("coach_id", resolvedCoachId)
+            .eq("player_id", playerId)
+            .not("session_id", "is", null);
+
+          const reviewedSessionIds = new Set(
+            (existingReviews ?? [])
+              .map((row) => row.session_id as string | null)
+              .filter((id): id is string => Boolean(id)),
+          );
+          const filteredSessions = (completedSessions ?? []).filter(
+            (session) => !reviewedSessionIds.has(session.id),
+          );
+          if (mounted) {
+            setEligibleReviewSessions(filteredSessions);
+            setSelectedReviewSessionId(filteredSessions[0]?.id ?? "");
+          }
+        }
+      } else if (mounted) {
+        setEligibleReviewSessions([]);
+        setSelectedReviewSessionId("");
       }
 
       if (!mounted) return;
@@ -110,9 +156,14 @@ export default function PlayerProfilePage() {
       setReviewNotice({ type: "error", text: "Connexion coach requise pour noter." });
       return;
     }
+    if (!selectedReviewSessionId) {
+      setReviewNotice({ type: "error", text: "Aucune séance terminée à noter." });
+      return;
+    }
     const { error } = await supabase.from("player_reviews").insert({
       player_id: player.user_id,
       coach_id: coachId,
+      session_id: selectedReviewSessionId,
       rating: reviewRating,
       comment: reviewComment,
     });
@@ -125,6 +176,7 @@ export default function PlayerProfilePage() {
     setReviews((prev) => [
       {
         id: `local-${Date.now()}`,
+        session_id: selectedReviewSessionId,
         coach_name: "Coach",
         rating: reviewRating,
         comment: reviewComment,
@@ -132,6 +184,11 @@ export default function PlayerProfilePage() {
       },
       ...prev,
     ]);
+    const remainingSessions = eligibleReviewSessions.filter(
+      (session) => session.id !== selectedReviewSessionId,
+    );
+    setEligibleReviewSessions(remainingSessions);
+    setSelectedReviewSessionId(remainingSessions[0]?.id ?? "");
     setReviewComment("");
     setReviewRating(5);
     setReviewNotice({ type: "success", text: "Avis ajouté." });
@@ -220,6 +277,22 @@ export default function PlayerProfilePage() {
           <h3 className="text-2xl text-white">Avis coaches</h3>
           {coachId && (
             <form className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4" onSubmit={handleReviewSubmit}>
+              <label className="text-xs text-white/60">Séance terminée</label>
+              <select
+                className="px-select"
+                value={selectedReviewSessionId}
+                onChange={(event) => setSelectedReviewSessionId(event.target.value)}
+                required
+              >
+                {eligibleReviewSessions.length === 0 && (
+                  <option value="">Aucune séance terminée disponible</option>
+                )}
+                {eligibleReviewSessions.map((session) => (
+                  <option key={session.id} value={session.id}>
+                    {formatLongDate(new Date(`${session.date}T12:00`))} · {normalizeTime(session.time)}
+                  </option>
+                ))}
+              </select>
               <label className="text-xs text-white/60">Note</label>
               <select
                 className="px-select"

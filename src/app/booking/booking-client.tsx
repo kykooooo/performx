@@ -28,6 +28,12 @@ type BookingRow = {
   payment_status: string;
 };
 
+type BookingRpcRow = {
+  session_id: string;
+  booking_id: string;
+  conversation_id: string;
+};
+
 export default function BookingClient() {
   const searchParams = useSearchParams();
   const initialCoachId = searchParams.get("coach");
@@ -40,6 +46,7 @@ export default function BookingClient() {
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [lastBookedCoachId, setLastBookedCoachId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -149,57 +156,38 @@ export default function BookingClient() {
       return;
     }
 
-    const { data: sessionData, error: sessionError } = await supabase
-      .from("sessions")
-      .insert({
-        coach_id: selectedCoach.id,
-        player_id: userId,
-        title: `Séance privée · ${selectedCoach.speciality}`,
-        date: selectedSlot.date,
-        time: normalizeTime(selectedSlot.time),
-        duration_minutes: selectedSlot.durationMinutes,
-        status: "upcoming",
+    const { data: bookingPath, error: bookingPathError } = await supabase
+      .rpc("create_booking_with_conversation", {
+        p_coach_id: selectedCoach.id,
+        p_date: selectedSlot.date,
+        p_time: normalizeTime(selectedSlot.time),
+        p_duration_minutes: selectedSlot.durationMinutes,
       })
-      .select()
       .single();
 
-    if (sessionError || !sessionData) {
+    if (bookingPathError || !bookingPath) {
       const text =
-        sessionError?.message?.includes("sessions_unique_slot")
+        bookingPathError?.message?.includes("SLOT_ALREADY_BOOKED")
           ? "Ce créneau vient d'être réservé. Choisis un autre horaire."
-          : sessionError?.message ?? "Impossible de réserver.";
+          : bookingPathError?.message ?? "Impossible de réserver.";
       setNotice({ type: "error", text });
       return;
     }
 
-    const { error: bookingError, data: bookingData } = await supabase
-      .from("bookings")
-      .insert({
-        session_id: sessionData.id,
-        player_id: userId,
-        coach_id: selectedCoach.id,
-        price: selectedCoach.price_per_session ?? 0,
-        payment_status: "paid",
-      })
-      .select("id, payment_status")
-      .single();
-
-    if (bookingError || !bookingData) {
-      setNotice({ type: "error", text: bookingError?.message ?? "Paiement non validé." });
-      return;
-    }
+    const rpcData = bookingPath as BookingRpcRow;
 
     setSessions((prev) => [
       {
-        date: sessionData.date,
-        time: normalizeTime(sessionData.time),
-        status: sessionData.status,
+        date: selectedSlot.date,
+        time: normalizeTime(selectedSlot.time),
+        status: "upcoming",
       },
       ...prev,
     ]);
-    setBookings((prev) => [bookingData, ...prev]);
+    setBookings((prev) => [{ id: rpcData.booking_id, payment_status: "paid" }, ...prev]);
+    setLastBookedCoachId(selectedCoach.id);
     setSelectedSlot(null);
-    setNotice({ type: "success", text: "Séance réservée automatiquement." });
+    setNotice({ type: "success", text: "Séance réservée. Conversation ouverte avec le coach." });
   };
 
   return (
@@ -312,6 +300,11 @@ export default function BookingClient() {
             >
               Confirmer la réservation
             </button>
+            {lastBookedCoachId && (
+              <Link href={`/messages?coach=${lastBookedCoachId}`} className="px-button-ghost mt-3 w-full text-center">
+                Ouvrir la conversation
+              </Link>
+            )}
             <p className="mt-3 text-xs text-white/50">
               Paiement direct : le coach est payé immédiatement après confirmation.
             </p>

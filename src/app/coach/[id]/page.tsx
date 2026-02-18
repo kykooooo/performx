@@ -27,11 +27,21 @@ type CoachRow = {
 
 type ReviewRow = {
   id: string;
+  session_id?: string | null;
   player_name: string | null;
   rating: number;
   comment: string | null;
   date: string | null;
 };
+
+type EligibleSessionRow = {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+};
+
+const normalizeTime = (value: string) => (value.length >= 5 ? value.slice(0, 5) : value);
 
 const renderStars = (rating: number) => {
   const full = Math.round(rating);
@@ -54,6 +64,8 @@ export default function CoachProfilePage() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
+  const [selectedReviewSessionId, setSelectedReviewSessionId] = useState("");
+  const [eligibleReviewSessions, setEligibleReviewSessions] = useState<EligibleSessionRow[]>([]);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewNotice, setReviewNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -83,6 +95,39 @@ export default function CoachProfilePage() {
       const { data: userData } = await supabase.auth.getUser();
       if (!mounted) return;
       setUserId(userData.user?.id ?? null);
+
+      if (userData.user?.id) {
+        const { data: completedSessions } = await supabase
+          .from("sessions")
+          .select("id, title, date, time")
+          .eq("player_id", userData.user.id)
+          .eq("coach_id", coachId)
+          .eq("status", "completed")
+          .order("date", { ascending: false });
+
+        const { data: existingReviews } = await supabase
+          .from("reviews")
+          .select("session_id")
+          .eq("player_id", userData.user.id)
+          .eq("coach_id", coachId)
+          .not("session_id", "is", null);
+
+        const reviewedSessionIds = new Set(
+          (existingReviews ?? [])
+            .map((row) => row.session_id as string | null)
+            .filter((id): id is string => Boolean(id)),
+        );
+        const filteredSessions = (completedSessions ?? []).filter(
+          (session) => !reviewedSessionIds.has(session.id),
+        );
+        if (mounted) {
+          setEligibleReviewSessions(filteredSessions);
+          setSelectedReviewSessionId(filteredSessions[0]?.id ?? "");
+        }
+      } else if (mounted) {
+        setEligibleReviewSessions([]);
+        setSelectedReviewSessionId("");
+      }
 
       if (!mounted) return;
       setCoach(coachData ?? null);
@@ -262,6 +307,10 @@ export default function CoachProfilePage() {
                 setReviewNotice({ type: "error", text: "Connecte-toi pour publier un avis." });
                 return;
               }
+              if (!selectedReviewSessionId) {
+                setReviewNotice({ type: "error", text: "Termine une séance avec ce coach avant de noter." });
+                return;
+              }
               const { data: profileData } = await supabase
                 .from("profiles")
                 .select("first_name, last_name")
@@ -274,6 +323,7 @@ export default function CoachProfilePage() {
               const { error } = await supabase.from("reviews").insert({
                 coach_id: coach.id,
                 player_id: userId,
+                session_id: selectedReviewSessionId,
                 player_name: playerName,
                 rating: reviewRating,
                 comment: reviewComment,
@@ -287,6 +337,7 @@ export default function CoachProfilePage() {
               setReviews((prev) => [
                 {
                   id: `local-${Date.now()}`,
+                  session_id: selectedReviewSessionId,
                   player_name: playerName,
                   rating: reviewRating,
                   comment: reviewComment,
@@ -294,10 +345,30 @@ export default function CoachProfilePage() {
                 },
                 ...prev,
               ]);
+              const remainingSessions = eligibleReviewSessions.filter(
+                (session) => session.id !== selectedReviewSessionId,
+              );
+              setEligibleReviewSessions(remainingSessions);
+              setSelectedReviewSessionId(remainingSessions[0]?.id ?? "");
               setReviewComment("");
               setReviewNotice({ type: "success", text: "Merci pour ton avis !" });
             }}
           >
+            <select
+              className="px-select"
+              value={selectedReviewSessionId}
+              onChange={(event) => setSelectedReviewSessionId(event.target.value)}
+              required
+            >
+              {eligibleReviewSessions.length === 0 && (
+                <option value="">Aucune séance terminée à noter</option>
+              )}
+              {eligibleReviewSessions.map((session) => (
+                <option key={session.id} value={session.id}>
+                  {formatLongDate(new Date(`${session.date}T12:00`))} · {normalizeTime(session.time)}
+                </option>
+              ))}
+            </select>
             <select
               className="px-select"
               value={reviewRating}

@@ -83,6 +83,7 @@ create table if not exists reviews (
   id uuid primary key default gen_random_uuid(),
   coach_id uuid references coaches(id) on delete cascade,
   player_id uuid references auth.users(id) on delete set null,
+  session_id uuid references sessions(id) on delete set null,
   player_name text,
   rating integer not null check (rating between 1 and 5),
   comment text,
@@ -94,11 +95,23 @@ create table if not exists player_reviews (
   id uuid primary key default gen_random_uuid(),
   player_id uuid references auth.users(id) on delete cascade,
   coach_id uuid references coaches(id) on delete set null,
+  session_id uuid references sessions(id) on delete set null,
   rating integer not null check (rating between 1 and 5),
   comment text,
   date date default current_date,
   created_at timestamptz not null default now()
 );
+
+alter table reviews add column if not exists session_id uuid references sessions(id) on delete set null;
+alter table player_reviews add column if not exists session_id uuid references sessions(id) on delete set null;
+
+create unique index if not exists reviews_unique_session
+  on reviews (session_id)
+  where session_id is not null;
+
+create unique index if not exists player_reviews_unique_session
+  on player_reviews (session_id)
+  where session_id is not null;
 
 create table if not exists conversations (
   id uuid primary key default gen_random_uuid(),
@@ -261,6 +274,108 @@ begin
 end;
 $$ language plpgsql;
 
+create or replace function create_booking_with_conversation(
+  p_coach_id uuid,
+  p_date date,
+  p_time time,
+  p_duration_minutes integer default 60
+)
+returns table (
+  session_id uuid,
+  booking_id uuid,
+  conversation_id uuid
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_player_id uuid;
+  v_coach_user_id uuid;
+  v_price integer;
+  v_session_id uuid;
+  v_booking_id uuid;
+  v_conversation_id uuid;
+begin
+  v_player_id := auth.uid();
+  if v_player_id is null then
+    raise exception 'AUTH_REQUIRED';
+  end if;
+
+  select user_id, price_per_session
+    into v_coach_user_id, v_price
+    from coaches
+    where id = p_coach_id;
+
+  if v_coach_user_id is null then
+    raise exception 'COACH_NOT_FOUND';
+  end if;
+
+  begin
+    insert into sessions (
+      coach_id,
+      player_id,
+      title,
+      date,
+      time,
+      duration_minutes,
+      status
+    )
+    values (
+      p_coach_id,
+      v_player_id,
+      'Séance privée',
+      p_date,
+      p_time,
+      greatest(coalesce(p_duration_minutes, 60), 30),
+      'upcoming'
+    )
+    returning id into v_session_id;
+  exception
+    when unique_violation then
+      raise exception 'SLOT_ALREADY_BOOKED';
+  end;
+
+  insert into bookings (session_id, player_id, coach_id, price, payment_status)
+  values (v_session_id, v_player_id, p_coach_id, coalesce(v_price, 0), 'paid')
+  returning id into v_booking_id;
+
+  select cp_self.conversation_id
+    into v_conversation_id
+    from conversation_participants cp_self
+    join conversation_participants cp_other
+      on cp_self.conversation_id = cp_other.conversation_id
+    where cp_self.user_id = v_player_id
+      and cp_other.user_id = v_coach_user_id
+    limit 1;
+
+  if v_conversation_id is null then
+    insert into conversations (created_by)
+    values (v_player_id)
+    returning id into v_conversation_id;
+
+    insert into conversation_participants (conversation_id, user_id)
+    values
+      (v_conversation_id, v_player_id),
+      (v_conversation_id, v_coach_user_id);
+  end if;
+
+  insert into messages (conversation_id, sender_id, body)
+  values (
+    v_conversation_id,
+    v_player_id,
+    format(
+      'Nouvelle réservation confirmée: %s à %s.',
+      to_char(p_date, 'DD/MM/YYYY'),
+      to_char(p_time, 'HH24:MI')
+    )
+  );
+
+  return query
+  select v_session_id, v_booking_id, v_conversation_id;
+end;
+$$;
+
 drop trigger if exists set_profiles_updated_at on profiles;
 create trigger set_profiles_updated_at
 before update on profiles
@@ -392,7 +507,18 @@ create policy "Reviews are public" on reviews
 
 drop policy if exists "Players can create reviews" on reviews;
 create policy "Players can create reviews" on reviews
-  for insert with check (auth.uid() = player_id);
+  for insert with check (
+    auth.uid() = player_id
+    and session_id is not null
+    and exists (
+      select 1
+      from sessions s
+      where s.id = reviews.session_id
+        and s.status = 'completed'
+        and s.player_id = auth.uid()
+        and s.coach_id = reviews.coach_id
+    )
+  );
 
 -- Player reviews: public read, coaches write
 drop policy if exists "Player reviews are public" on player_reviews;
@@ -402,7 +528,16 @@ create policy "Player reviews are public" on player_reviews
 drop policy if exists "Coaches can create player reviews" on player_reviews;
 create policy "Coaches can create player reviews" on player_reviews
   for insert with check (
-    auth.uid() = (select user_id from coaches where id = coach_id)
+    session_id is not null
+    and auth.uid() = (select user_id from coaches where id = coach_id)
+    and exists (
+      select 1
+      from sessions s
+      where s.id = player_reviews.session_id
+        and s.status = 'completed'
+        and s.coach_id = player_reviews.coach_id
+        and s.player_id = player_reviews.player_id
+    )
   );
 
 -- Conversations & messages
@@ -472,13 +607,14 @@ create or replace view public_coaches as
   from coaches;
 
 create or replace view public_reviews as
-  select id, coach_id, player_name, rating, comment, date
+  select id, coach_id, session_id, player_name, rating, comment, date
   from reviews;
 
 create or replace view public_player_reviews as
   select pr.id,
          pr.player_id,
          pr.coach_id,
+         pr.session_id,
          co.name as coach_name,
          pr.rating,
          pr.comment,
@@ -489,6 +625,8 @@ create or replace view public_player_reviews as
 grant select on public_coaches to anon, authenticated;
 grant select on public_reviews to anon, authenticated;
 grant select on public_player_reviews to anon, authenticated;
+revoke all on function create_booking_with_conversation(uuid, date, time, integer) from public;
+grant execute on function create_booking_with_conversation(uuid, date, time, integer) to authenticated;
 drop policy if exists "Public sessions are readable" on public_sessions;
 create policy "Public sessions are readable" on public_sessions
   for select using (true);
