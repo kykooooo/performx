@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/app-shell";
+import { FeedbackState, LoadingState } from "@/components/feedback-state";
+import { AlertIcon, ChatIcon, InboxIcon } from "@/components/icons";
 import { supabase } from "@/lib/supabase";
 
 type Conversation = {
@@ -24,6 +26,12 @@ type ProfileRow = {
   first_name: string | null;
   last_name: string | null;
 };
+
+const formatMessageTime = (value: string) =>
+  new Intl.DateTimeFormat("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
 
 export default function MessagesClient() {
   const searchParams = useSearchParams();
@@ -285,31 +293,44 @@ export default function MessagesClient() {
       description="Discute avec les coachs et organise tes séances."
     >
       {error && (
-        <div className="px-card p-6">
-          <p className="text-sm text-[color:var(--px-danger)]">{error}</p>
-        </div>
+        <FeedbackState
+          tone="error"
+          icon={<AlertIcon className="h-7 w-7 text-[color:var(--px-danger)]" />}
+          title="Messagerie indisponible"
+          description={error}
+          actionLabel="Réessayer"
+          onAction={() => window.location.reload()}
+        />
       )}
       {notice && (
-        <div className="px-card p-4">
+        <div className="px-card p-4 transition duration-200">
           <p className="text-xs text-white/70">{notice}</p>
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+      <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
         <aside className="px-card p-4">
           <h3 className="text-lg text-white">Conversations</h3>
           <div className="mt-4 space-y-2">
-            {loading && <p className="text-xs text-white/50">Chargement...</p>}
+            {loading && (
+              <LoadingState title="Chargement des conversations" description="Synchronisation de la messagerie..." />
+            )}
             {!loading && conversations.length === 0 && (
-              <p className="text-xs text-white/50">Aucune conversation.</p>
+              <FeedbackState
+                icon={<InboxIcon className="h-7 w-7 text-white/35" />}
+                title="Aucune conversation"
+                description="Commence par réserver une séance pour ouvrir une discussion."
+                actionLabel="Réserver une séance"
+                actionHref="/booking"
+              />
             )}
             {conversations.map((conversation) => (
               <button
                 key={conversation.id}
-                className={`w-full rounded-xl border px-3 py-3 text-left text-sm transition ${
+                className={`w-full rounded-xl border px-3 py-3 text-left text-sm transition duration-200 ${
                   conversation.id === activeConversationId
                     ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-white"
-                    : "border-white/10 bg-white/5 text-white/70 hover:border-[color:var(--px-accent)]"
+                    : "border-white/10 bg-white/5 text-white/70 hover:border-[color:var(--px-accent)] hover:bg-white/10"
                 }`}
                 onClick={() => {
                   setActiveConversationId(conversation.id);
@@ -338,19 +359,24 @@ export default function MessagesClient() {
           </div>
           <div className="flex-1 overflow-y-auto py-4">
             {messages.length === 0 && (
-              <p className="text-xs text-white/50">Aucun message.</p>
+              <FeedbackState
+                icon={<ChatIcon className="h-7 w-7 text-white/35" />}
+                title="Aucun message"
+                description="Envoie le premier message pour lancer la discussion."
+              />
             )}
             <div className="space-y-3">
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`max-w-[70%] rounded-2xl px-3 py-2 text-sm ${
+                  className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm transition duration-200 ${
                     message.sender_id === userId
                       ? "ml-auto bg-[color:var(--px-accent)]/20 text-white"
                       : "bg-white/10 text-white/80"
                   }`}
                 >
-                  {message.body}
+                  <p>{message.body}</p>
+                  <p className="mt-1 text-[10px] text-white/45">{formatMessageTime(message.created_at)}</p>
                 </div>
               ))}
               <div ref={messagesEndRef} />

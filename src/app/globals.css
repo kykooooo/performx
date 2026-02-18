@@ -16,6 +16,12 @@
   --px-danger: #ff5c5c;
   --px-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
   --px-shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.35);
+  --px-space-1: 8px;
+  --px-space-2: 16px;
+  --px-space-3: 24px;
+  --px-space-4: 32px;
+  --px-space-5: 40px;
+  --px-space-6: 48px;
   --px-font-sans: "Manrope", system-ui, -apple-system, sans-serif;
   --px-font-display: "Bebas Neue", "Manrope", sans-serif;
 }
@@ -84,6 +90,14 @@ a {
     @apply mx-auto w-full max-w-6xl px-4;
   }
 
+  .px-main-stack {
+    @apply flex-1 py-10;
+  }
+
+  .px-main-stack > * + * {
+    margin-top: var(--px-space-5);
+  }
+
   .px-card {
     @apply rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-card)]/92 shadow-[var(--px-shadow)] transition-all duration-300;
     background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
@@ -117,13 +131,21 @@ a {
   }
 
   .px-button {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-black transition hover:translate-y-[-1px];
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-black transition duration-200 hover:translate-y-[-1px];
     background: linear-gradient(120deg, var(--px-accent), var(--px-accent-2));
     box-shadow: 0 12px 30px rgba(255, 106, 0, 0.35);
   }
 
+  .px-button:active {
+    transform: translateY(0) scale(0.98);
+  }
+
   .px-button-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-[color:var(--px-border)] bg-transparent px-5 py-3 text-sm font-semibold text-white/80 transition hover:border-[color:var(--px-accent)] hover:text-white;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-[color:var(--px-border)] bg-transparent px-5 py-3 text-sm font-semibold text-white/80 transition duration-200 hover:border-[color:var(--px-accent)] hover:text-white;
+  }
+
+  .px-button-ghost:active {
+    transform: scale(0.98);
   }
 
   .px-pill {
@@ -145,9 +167,59 @@ a {
   .px-divider {
     @apply h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent;
   }
+
+  .px-chip {
+    @apply rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-white/60 transition-all duration-200 hover:border-white/20 hover:text-white;
+  }
+
+  .px-chip[data-active="true"] {
+    @apply border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)];
+  }
+
+  .px-chip:active {
+    transform: scale(0.98);
+  }
+
+  .px-feedback {
+    @apply relative overflow-hidden rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-card)]/92 p-6 text-center shadow-[var(--px-shadow)] transition-all duration-300;
+    background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
+  }
+
+  .px-feedback::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at 50% -20%, rgba(255, 106, 0, 0.2), transparent 45%);
+  }
 }
 
 @layer utilities {
+  .px-stack-1 > * + * {
+    margin-top: var(--px-space-1);
+  }
+
+  .px-stack-2 > * + * {
+    margin-top: var(--px-space-2);
+  }
+
+  .px-stack-3 > * + * {
+    margin-top: var(--px-space-3);
+  }
+
+  .px-stack-4 > * + * {
+    margin-top: var(--px-space-4);
+  }
+
+  .px-spinner {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-top-color: var(--px-accent);
+    animation: pxSpin 0.8s linear infinite;
+  }
+
   .px-fade-in {
     animation: pxFadeIn 0.6s ease both;
   }
@@ -257,6 +329,12 @@ a {
   }
   50% {
     transform: translateY(-6px);
+  }
+}
+
+@keyframes pxSpin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

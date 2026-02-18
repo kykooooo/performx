@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/app-shell";
+import { FeedbackState, LoadingState } from "@/components/feedback-state";
 import SessionCalendar from "@/components/session-calendar";
+import { CalendarIcon, InboxIcon } from "@/components/icons";
 import { addDays, formatLongDate, startOfWeek } from "@/lib/date";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@/lib/types";
@@ -89,18 +91,19 @@ export default function SessionsPage() {
   return (
     <AppShell active="/sessions" title="Mes séances" description="Suivi de tes réservations et de ton planning.">
       {!userId && !loading && (
-        <div className="px-card p-6">
-          <p className="text-sm text-white/60">Connecte-toi pour voir tes séances.</p>
-          <Link href="/auth/login" className="px-button mt-4">
-            Se connecter
-          </Link>
-        </div>
+        <FeedbackState
+          icon={<InboxIcon className="h-7 w-7 text-white/40" />}
+          title="Connexion requise"
+          description="Connecte-toi pour accéder à tes réservations et à ton planning."
+          actionLabel="Se connecter"
+          actionHref="/auth/login"
+        />
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-        <div className="space-y-6">
+      <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
+        <div className="px-stack-3">
           <div className="px-card-strong px-fade-up p-4">
-            <h3 className="text-lg text-white">Réserver une nouvelle séance</h3>
+            <h3 className="text-lg text-white">Réserver une séance</h3>
             <p className="mt-2 text-xs text-white/60">
               Accède à la réservation automatique et choisis un coach disponible.
             </p>
@@ -111,12 +114,18 @@ export default function SessionsPage() {
           <div className="px-card px-fade-up p-4" style={{ animationDelay: "80ms" }}>
             <h3 className="text-lg text-white">Mes prochaines séances</h3>
             <div className="mt-4 space-y-3">
-              {loading && <p className="text-xs text-white/50">Chargement...</p>}
+              {loading && <LoadingState title="Chargement des séances" description="Récupération des prochaines séances..." />}
               {!loading && upcomingSessions.length === 0 && (
-                <p className="text-xs text-white/50">Aucune séance à venir.</p>
+                <FeedbackState
+                  icon={<CalendarIcon className="h-7 w-7 text-white/35" />}
+                  title="Aucune séance à venir"
+                  description="Tu n'as pas encore de réservation future."
+                  actionLabel="Réserver maintenant"
+                  actionHref="/booking"
+                />
               )}
               {upcomingSessions.map((session) => (
-                <div key={session.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div key={session.id} className="rounded-xl border border-white/10 bg-white/5 p-3 transition duration-200 hover:border-[color:var(--px-accent)]/30">
                   <p className="text-sm font-semibold text-white">{session.title}</p>
                   <p className="text-xs text-white/60">{coachLookup[session.coachId] ?? "Coach"}</p>
                   <div className="mt-2 flex items-center justify-between text-xs text-white/50">
@@ -131,10 +140,14 @@ export default function SessionsPage() {
             <h3 className="text-lg text-white">Mes séances passées</h3>
             <div className="mt-4 space-y-3">
               {!loading && pastSessions.length === 0 && (
-                <p className="text-xs text-white/50">Aucune séance passée.</p>
+                <FeedbackState
+                  icon={<InboxIcon className="h-7 w-7 text-white/35" />}
+                  title="Aucune séance passée"
+                  description="Tes séances terminées apparaîtront ici."
+                />
               )}
               {pastSessions.map((session) => (
-                <div key={session.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div key={session.id} className="rounded-xl border border-white/10 bg-white/5 p-3 transition duration-200 hover:border-[color:var(--px-accent)]/30">
                   <p className="text-sm font-semibold text-white">{session.title}</p>
                   <p className="text-xs text-white/60">Le {formatLongDate(new Date(`${session.date}T12:00`))}</p>
                   <div className="mt-2 flex items-center gap-1 text-xs text-[color:var(--px-accent)]">
@@ -145,7 +158,7 @@ export default function SessionsPage() {
             </div>
           </div>
         </div>
-        <div className="space-y-4 px-fade-up" style={{ animationDelay: "120ms" }}>
+        <div className="px-stack-2 px-fade-up" style={{ animationDelay: "120ms" }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-white/70">
               <button

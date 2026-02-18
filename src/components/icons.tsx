@@ -169,3 +169,22 @@ export function UsersIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function InboxIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" {...props}>
+      <path d="M4 4h16v12h-4l-2 3h-4l-2-3H4V4z" />
+      <path d="M8 10h8" />
+    </svg>
+  );
+}
+
+export function AlertIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" {...props}>
+      <path d="M12 3l9 16H3L12 3z" />
+      <path d="M12 9v5" />
+      <circle cx="12" cy="17" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}

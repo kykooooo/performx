@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AppShell from "@/components/app-shell";
+import { FeedbackState, LoadingState } from "@/components/feedback-state";
+import { AlertIcon, CalendarIcon, CheckCircleIcon, WhistleIcon } from "@/components/icons";
 import { formatLongDate } from "@/lib/date";
 import { supabase } from "@/lib/supabase";
 import type { AvailabilitySlot } from "@/lib/types";
@@ -149,6 +151,11 @@ export default function BookingClient() {
   }, [availableSlots, initialDate, initialTime]);
 
   const effectiveSelectedSlot = selectedSlot ?? preselectedSlot;
+  const bookingStep = useMemo(() => {
+    if (!selectedCoachId) return 1;
+    if (!effectiveSelectedSlot) return 2;
+    return 3;
+  }, [selectedCoachId, effectiveSelectedSlot]);
 
   const handleBook = async () => {
     if (!selectedCoach || !effectiveSelectedSlot) return;
@@ -215,8 +222,34 @@ export default function BookingClient() {
       title="Réservation"
       description="Choisis un coach, un créneau disponible et confirme ta séance."
     >
-      <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="space-y-6">
+      <section className="px-card px-stack-2 p-4 sm:p-6">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg text-white">Parcours de réservation</h2>
+          <span className="px-pill">Étape {bookingStep} / 3</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[
+            { id: 1, label: "Coach", icon: <WhistleIcon className="h-4 w-4" /> },
+            { id: 2, label: "Créneau", icon: <CalendarIcon className="h-4 w-4" /> },
+            { id: 3, label: "Validation", icon: <CheckCircleIcon className="h-4 w-4" /> },
+          ].map((step) => (
+            <div
+              key={step.id}
+              className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition ${
+                bookingStep >= step.id
+                  ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-white"
+                  : "border-white/10 bg-white/5 text-white/50"
+              }`}
+            >
+              {step.icon}
+              {step.label}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="px-stack-3">
           <div className="px-card-strong p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -233,6 +266,7 @@ export default function BookingClient() {
               onChange={(event) => handleCoachChange(event.target.value)}
               disabled={loading}
             >
+              {coaches.length === 0 && <option value="">Aucun coach disponible</option>}
               {coaches.map((coach) => (
                 <option key={coach.id} value={coach.id}>
                   {coach.name} · {coach.speciality}
@@ -240,8 +274,27 @@ export default function BookingClient() {
               ))}
             </select>
             <div className="mt-4 space-y-2">
-              {availableSlots.length === 0 && !loading && (
-                <p className="text-sm text-white/50">Aucun créneau disponible pour ce coach.</p>
+              {loading && (
+                <LoadingState
+                  title="Chargement des disponibilités"
+                  description="Nous récupérons les créneaux de ce coach."
+                />
+              )}
+              {!loading && coaches.length === 0 && (
+                <FeedbackState
+                  icon={<AlertIcon className="h-7 w-7 text-[color:var(--px-warning)]" />}
+                  title="Aucun coach disponible"
+                  description="Ajoute des coachs dans la base pour activer la réservation."
+                  actionLabel="Voir les coachs"
+                  actionHref="/coach"
+                />
+              )}
+              {availableSlots.length === 0 && !loading && coaches.length > 0 && (
+                <FeedbackState
+                  icon={<CalendarIcon className="h-7 w-7 text-white/35" />}
+                  title="Aucun créneau disponible"
+                  description="Ce coach n'a plus de créneau libre pour le moment."
+                />
               )}
               {availableSlots.map((slot) => {
                 const isSelected =
@@ -250,10 +303,10 @@ export default function BookingClient() {
                   <button
                     key={`${slot.date}-${slot.time}`}
                     type="button"
-                    className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-sm transition ${
+                    className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-sm transition duration-200 ${
                       isSelected
                         ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-white"
-                        : "border-white/10 bg-white/5 text-white/80 hover:border-[color:var(--px-accent)]"
+                        : "border-white/10 bg-white/5 text-white/80 hover:border-[color:var(--px-accent)] hover:bg-white/10"
                     }`}
                     onClick={() => setSelectedSlot(slot)}
                   >
@@ -279,16 +332,23 @@ export default function BookingClient() {
             <h3 className="text-lg text-white">Dernières réservations</h3>
             <p className="mt-1 text-xs text-white/60">{bookings.length} réservations confirmées.</p>
             <div className="mt-4 space-y-3">
+              {bookings.length === 0 && (
+                <FeedbackState
+                  icon={<CalendarIcon className="h-7 w-7 text-white/35" />}
+                  title="Aucune réservation"
+                  description="Tes réservations confirmées apparaîtront ici."
+                />
+              )}
               {bookings.slice(0, 3).map((booking) => (
-                <div key={booking.id} className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm">
+                <div key={booking.id} className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm transition duration-200 hover:border-[color:var(--px-accent)]/30">
                   <p className="text-white">Réservation #{booking.id}</p>
-                  <p className="text-xs text-white/50">Paiement: {booking.payment_status}</p>
+                  <p className="text-xs text-white/50">Paiement : {booking.payment_status}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
-        <div className="space-y-6">
+        <div className="px-stack-3">
           <div className="px-card-strong p-6">
             <h3 className="text-xl text-white">Récapitulatif</h3>
             <div className="mt-4 space-y-3 text-sm text-white/70">
@@ -316,7 +376,7 @@ export default function BookingClient() {
               className="px-button mt-5 w-full"
               type="button"
               onClick={handleBook}
-              disabled={!effectiveSelectedSlot}
+              disabled={!effectiveSelectedSlot || !selectedCoach}
             >
               Confirmer la réservation
             </button>

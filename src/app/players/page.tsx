@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/app-shell";
+import { FeedbackState } from "@/components/feedback-state";
 import PlayerCard from "@/components/player-card";
 import { SkeletonPlayerCard } from "@/components/skeleton";
 import ScrollReveal from "@/components/scroll-reveal";
@@ -13,6 +14,7 @@ import {
   StarIcon,
   BoltIcon,
   ArrowRightIcon,
+  AlertIcon,
 } from "@/components/icons";
 import { supabase } from "@/lib/supabase";
 import { mockPlayers } from "@/lib/mock-data";
@@ -121,7 +123,7 @@ export default function PlayersPage() {
       {/* ── Hero header ── */}
       <section className="relative py-8 lg:py-12">
         <div className="grid items-center gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="space-y-6">
+          <div className="px-stack-3">
             <div className="flex items-center gap-3 px-fade-up">
               <span className="px-badge px-pulse">Communauté</span>
               <span className="px-pill">+{players.length} joueurs inscrits</span>
@@ -176,7 +178,7 @@ export default function PlayersPage() {
                   <StarIcon className="h-5 w-5" />
                 </div>
                 <p className="text-2xl font-semibold text-white">{avgRating.toFixed(1)}</p>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/40">Note moy.</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/40">Note moyenne</p>
               </div>
             </div>
             <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-4">
@@ -191,8 +193,8 @@ export default function PlayersPage() {
 
       {/* ── Filtres ── */}
       <ScrollReveal>
-        <section id="players" className="space-y-6">
-          <div className="px-card p-4 space-y-4">
+        <section id="players" className="px-stack-3">
+          <div className="px-card p-4 px-stack-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-white">Recherche joueurs</p>
@@ -216,11 +218,8 @@ export default function PlayersPage() {
                   key={chip}
                   type="button"
                   onClick={() => setActiveLevel(chip)}
-                  className={`rounded-full border px-4 py-1.5 text-xs font-medium transition ${
-                    activeLevel === chip
-                      ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]"
-                      : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white"
-                  }`}
+                  data-active={activeLevel === chip}
+                  className="px-chip"
                 >
                   {chip}
                 </button>
@@ -285,28 +284,31 @@ export default function PlayersPage() {
       )}
 
       {/* ── Error ── */}
-      {error && <p className="text-sm text-[color:var(--px-danger)]">{error}</p>}
+      {error && (
+        <FeedbackState
+          tone="error"
+          icon={<AlertIcon className="h-7 w-7 text-[color:var(--px-danger)]" />}
+          title="Impossible de charger les joueurs"
+          description={error}
+          actionLabel="Réessayer"
+          onAction={() => window.location.reload()}
+        />
+      )}
 
       {/* ── Empty ── */}
       {!loading && filteredPlayers.length === 0 && !error && (
-        <div className="px-card flex flex-col items-center gap-4 p-10 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5">
-            <SearchIcon className="h-7 w-7 text-white/30" />
-          </div>
-          <p className="text-white/70">Aucun joueur ne correspond à ta recherche.</p>
-          <button
-            type="button"
-            className="px-button-ghost text-sm"
-            onClick={() => {
-              setQuery("");
-              setActiveLevel("Tous");
-              setPositionFilter("all");
-              setCityFilter("all");
-            }}
-          >
-            Réinitialiser les filtres
-          </button>
-        </div>
+        <FeedbackState
+          icon={<SearchIcon className="h-7 w-7 text-white/40" />}
+          title="Aucun joueur trouvé"
+          description="Aucun joueur ne correspond à tes filtres actuels."
+          actionLabel="Réinitialiser les filtres"
+          onAction={() => {
+            setQuery("");
+            setActiveLevel("Tous");
+            setPositionFilter("all");
+            setCityFilter("all");
+          }}
+        />
       )}
 
       {/* ── Players grid ── */}

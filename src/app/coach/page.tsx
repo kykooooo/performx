@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/app-shell";
 import CoachCard from "@/components/coach-card";
+import { FeedbackState } from "@/components/feedback-state";
 import { SkeletonCard } from "@/components/skeleton";
 import ScrollReveal from "@/components/scroll-reveal";
 import {
@@ -13,6 +14,7 @@ import {
   StarIcon,
   BoltIcon,
   ArrowRightIcon,
+  AlertIcon,
 } from "@/components/icons";
 import { buildCoachAvatarMap } from "@/lib/coach-avatars";
 import { supabase } from "@/lib/supabase";
@@ -122,7 +124,7 @@ export default function CoachPage() {
       {/* ── Hero header ── */}
       <section className="relative py-8 lg:py-12">
         <div className="grid items-center gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="space-y-6">
+          <div className="px-stack-3">
             <div className="flex items-center gap-3 px-fade-up">
               <span className="px-badge px-pulse">Annuaire</span>
               <span className="px-pill">+{coaches.length} coachs actifs</span>
@@ -177,7 +179,7 @@ export default function CoachPage() {
                   <StarIcon className="h-5 w-5" />
                 </div>
                 <p className="text-2xl font-semibold text-white">{avgRating.toFixed(1)}</p>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/40">Note moy.</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/40">Note moyenne</p>
               </div>
             </div>
             <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-4">
@@ -192,8 +194,8 @@ export default function CoachPage() {
 
       {/* ── Filtres ── */}
       <ScrollReveal>
-        <section id="coaches" className="space-y-6">
-          <div className="px-card p-4 space-y-4">
+        <section id="coaches" className="px-stack-3">
+          <div className="px-card p-4 px-stack-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-white">Filtres rapides</p>
@@ -217,11 +219,8 @@ export default function CoachPage() {
                   key={chip}
                   type="button"
                   onClick={() => setActiveChip(chip)}
-                  className={`rounded-full border px-4 py-1.5 text-xs font-medium transition ${
-                    activeChip === chip
-                      ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]"
-                      : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white"
-                  }`}
+                  data-active={activeChip === chip}
+                  className="px-chip"
                 >
                   {chip}
                 </button>
@@ -252,26 +251,29 @@ export default function CoachPage() {
       )}
 
       {/* ── Error ── */}
-      {error && <p className="text-sm text-[color:var(--px-danger)]">{error}</p>}
+      {error && (
+        <FeedbackState
+          tone="error"
+          icon={<AlertIcon className="h-7 w-7 text-[color:var(--px-danger)]" />}
+          title="Impossible de charger les coachs"
+          description={error}
+          actionLabel="Réessayer"
+          onAction={() => window.location.reload()}
+        />
+      )}
 
       {/* ── Empty ── */}
       {!loading && filteredCoaches.length === 0 && !error && (
-        <div className="px-card flex flex-col items-center gap-4 p-10 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5">
-            <SearchIcon className="h-7 w-7 text-white/30" />
-          </div>
-          <p className="text-white/70">Aucun coach ne correspond à ta recherche.</p>
-          <button
-            type="button"
-            className="px-button-ghost text-sm"
-            onClick={() => {
-              setQuery("");
-              setActiveChip("Tous");
-            }}
-          >
-            Réinitialiser les filtres
-          </button>
-        </div>
+        <FeedbackState
+          icon={<SearchIcon className="h-7 w-7 text-white/40" />}
+          title="Aucun coach trouvé"
+          description="Aucun coach ne correspond à tes filtres actuels."
+          actionLabel="Réinitialiser les filtres"
+          onAction={() => {
+            setQuery("");
+            setActiveChip("Tous");
+          }}
+        />
       )}
 
       {/* ── Coach grid ── */}
