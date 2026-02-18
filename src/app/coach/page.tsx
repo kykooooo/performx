@@ -14,6 +14,7 @@ import {
   BoltIcon,
   ArrowRightIcon,
 } from "@/components/icons";
+import { buildCoachAvatarMap } from "@/lib/coach-avatars";
 import { supabase } from "@/lib/supabase";
 import { mockCoaches } from "@/lib/mock-data";
 
@@ -108,6 +109,8 @@ export default function CoachPage() {
     if (ratings.length === 0) return 0;
     return ratings.reduce((a, b) => a + b, 0) / ratings.length;
   }, [coaches]);
+
+  const coachAvatarMap = useMemo(() => buildCoachAvatarMap(filteredCoaches), [filteredCoaches]);
 
   const totalReviews = useMemo(
     () => coaches.reduce((sum, c) => sum + (c.reviews_count ?? 0), 0),
@@ -279,7 +282,7 @@ export default function CoachPage() {
               <CoachCard
                 reserveHref={`/booking?coach=${coach.id}`}
                 profileHref={`/coach/${coach.id}`}
-                avatarUrl={coach.avatar_url}
+                avatarUrl={coachAvatarMap.get(coach.id) ?? coach.avatar_url}
                 name={coach.name}
                 speciality={coach.speciality}
                 description={coach.bio ?? ""}

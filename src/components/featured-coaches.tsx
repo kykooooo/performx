@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CoachCard from "./coach-card";
 import { SkeletonCard } from "./skeleton";
 import { supabase } from "@/lib/supabase";
+import { buildCoachAvatarMap } from "@/lib/coach-avatars";
 
 type CoachRow = {
   id: string;
@@ -20,6 +21,7 @@ type CoachRow = {
 export default function FeaturedCoaches() {
   const [coaches, setCoaches] = useState<CoachRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const coachAvatarMap = useMemo(() => buildCoachAvatarMap(coaches), [coaches]);
 
   useEffect(() => {
     let mounted = true;
@@ -64,7 +66,7 @@ export default function FeaturedCoaches() {
           <CoachCard
             reserveHref={`/booking?coach=${coach.id}`}
             profileHref={`/coach/${coach.id}`}
-            avatarUrl={coach.avatar_url}
+            avatarUrl={coachAvatarMap.get(coach.id) ?? coach.avatar_url}
             name={coach.name}
             speciality={coach.speciality}
             description={coach.bio ?? ""}

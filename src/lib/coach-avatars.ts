@@ -23,3 +23,39 @@ export function getCoachAvatarUrl(avatarUrl: string | null | undefined, identity
   const index = hashString(identity) % COACH_AVATAR_POOL.length;
   return COACH_AVATAR_POOL[index];
 }
+
+type CoachAvatarInput = {
+  id: string;
+  name?: string | null;
+  speciality?: string | null;
+  avatar_url?: string | null;
+};
+
+export function buildCoachAvatarMap(items: CoachAvatarInput[]) {
+  const map = new Map<string, string>();
+  const usedFallbacks = new Set<string>();
+
+  items.forEach((item) => {
+    if (item.avatar_url && item.avatar_url.trim().length > 0) {
+      map.set(item.id, item.avatar_url);
+      return;
+    }
+
+    const identity = `${item.name ?? ""}-${item.speciality ?? ""}-${item.id}`;
+    const baseIndex = hashString(identity) % COACH_AVATAR_POOL.length;
+    let selected = COACH_AVATAR_POOL[baseIndex];
+
+    for (let offset = 0; offset < COACH_AVATAR_POOL.length; offset += 1) {
+      const candidate = COACH_AVATAR_POOL[(baseIndex + offset) % COACH_AVATAR_POOL.length];
+      if (!usedFallbacks.has(candidate)) {
+        selected = candidate;
+        break;
+      }
+    }
+
+    usedFallbacks.add(selected);
+    map.set(item.id, selected);
+  });
+
+  return map;
+}
