@@ -119,7 +119,7 @@ export default function RegisterPlayerPage() {
                 checked={acceptedTerms}
                 onChange={(e) => setAcceptedTerms(e.target.checked)}
               />
-              J'accepte la politique de confidentialité et les conditions d'utilisation.
+              J&apos;accepte la politique de confidentialité et les conditions d&apos;utilisation.
             </label>
             {notice && (
               <div

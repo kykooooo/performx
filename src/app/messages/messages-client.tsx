@@ -171,6 +171,9 @@ export default function MessagesClient() {
     }
 
     setActiveConversationId(activeId ?? null);
+    if (!activeId) {
+      setMessages([]);
+    }
     setLoading(false);
   };
 
@@ -178,6 +181,7 @@ export default function MessagesClient() {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) {
         setUserId(null);
+        setMessages([]);
         setError("Connecte-toi pour accéder à la messagerie.");
         setLoading(false);
         return;
@@ -191,10 +195,7 @@ export default function MessagesClient() {
   }, [coachId]);
 
   useEffect(() => {
-    if (!activeConversationId) {
-      setMessages([]);
-      return;
-    }
+    if (!activeConversationId) return;
 
     const fetchMessages = async () => {
       const { data } = await supabase

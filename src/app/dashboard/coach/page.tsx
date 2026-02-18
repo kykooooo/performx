@@ -37,23 +37,25 @@ type SessionRow = {
 };
 
 function useMockFallback() {
-  const coach = mockCoaches[0];
-  const coachRow: CoachRow = {
-    id: coach.id,
-    user_id: "user_10",
-    name: coach.name,
-    rating: coach.rating,
-    price_per_session: coach.pricePerSession,
-    availability: coach.availability,
-  };
-  const sessionRows: SessionRow[] = mockSessions.map((s) => ({
-    id: s.id,
-    title: s.title,
-    date: s.date,
-    time: s.time,
-    status: s.status,
-  }));
-  return { coachRow, sessionRows };
+  return useMemo(() => {
+    const coach = mockCoaches[0];
+    const coachRow: CoachRow = {
+      id: coach.id,
+      user_id: "user_10",
+      name: coach.name,
+      rating: coach.rating,
+      price_per_session: coach.pricePerSession,
+      availability: coach.availability,
+    };
+    const sessionRows: SessionRow[] = mockSessions.map((s) => ({
+      id: s.id,
+      title: s.title,
+      date: s.date,
+      time: s.time,
+      status: s.status,
+    }));
+    return { coachRow, sessionRows };
+  }, []);
 }
 
 export default function CoachDashboardPage() {
@@ -125,7 +127,7 @@ export default function CoachDashboardPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [mock]);
 
   const upcoming = useMemo(
     () => sessions.filter((session) => session.status === "upcoming"),

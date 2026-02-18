@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useParams } from "next/navigation";
 import AppShell from "@/components/app-shell";
@@ -205,7 +206,7 @@ export default function PlayerProfilePage() {
   if (!player) {
     return (
       <AppShell active="/players" title="Profil joueur" description="Joueur introuvable.">
-        <p className="text-sm text-white/50">Ce joueur n'existe pas ou n'est plus disponible.</p>
+        <p className="text-sm text-white/50">Ce joueur n&apos;existe pas ou n&apos;est plus disponible.</p>
         <Link href="/players" className="px-button mt-4">
           Retour aux joueurs
         </Link>
@@ -225,9 +226,9 @@ export default function PlayerProfilePage() {
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-white/40">Profil joueur</p>
               <div className="mt-3 flex items-center gap-3">
-                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-black/60 text-base font-semibold text-white">
+                <div className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-black/60 text-base font-semibold text-white">
                   {player.avatar_url ? (
-                    <img src={player.avatar_url} alt={playerName} className="h-full w-full object-cover" />
+                    <Image src={player.avatar_url} alt={playerName} fill sizes="56px" className="object-cover" />
                   ) : (
                     playerName
                       .split(" ")
@@ -323,7 +324,7 @@ export default function PlayerProfilePage() {
                 </div>
               )}
               <button className="px-button w-full" type="submit">
-                Publier l'avis
+                Publier l&apos;avis
               </button>
             </form>
           )}

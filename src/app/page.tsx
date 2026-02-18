@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import AppShell from "@/components/app-shell";
 import {
   BoltIcon,
@@ -163,20 +164,22 @@ export default function HomePage() {
 
             <div className="px-fade-up grid gap-3 sm:grid-cols-2 lg:hidden" style={{ animationDelay: "360ms" }}>
               <div className="relative h-32 overflow-hidden rounded-2xl border border-white/10">
-                <img
+                <Image
                   src="https://images.pexels.com/photos/46798/the-ball-stadion-football-the-pitch-46798.jpeg?auto=compress&cs=tinysrgb&w=1200"
                   alt="Ballon de football sur un terrain"
-                  className="h-full w-full object-cover"
-                  loading="lazy"
+                  fill
+                  sizes="(max-width: 640px) 100vw, 320px"
+                  className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
               </div>
               <div className="relative h-32 overflow-hidden rounded-2xl border border-white/10">
-                <img
+                <Image
                   src="https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=1200"
                   alt="Coach de football donnant des consignes"
-                  className="h-full w-full object-cover"
-                  loading="lazy"
+                  fill
+                  sizes="(max-width: 640px) 100vw, 320px"
+                  className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
               </div>
@@ -189,11 +192,12 @@ export default function HomePage() {
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="relative h-40 overflow-hidden rounded-2xl border border-white/10">
-                <img
+                <Image
                   src="https://images.pexels.com/photos/46798/the-ball-stadion-football-the-pitch-46798.jpeg?auto=compress&cs=tinysrgb&w=1200"
                   alt="Ballon de football sur un terrain"
-                  className="h-full w-full object-cover"
-                  loading="lazy"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 360px"
+                  className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                 <p className="absolute bottom-3 left-3 text-xs uppercase tracking-[0.2em] text-white/80">
@@ -201,11 +205,12 @@ export default function HomePage() {
                 </p>
               </div>
               <div className="relative h-40 overflow-hidden rounded-2xl border border-white/10">
-                <img
+                <Image
                   src="https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=1200"
                   alt="Coach de football donnant des consignes"
-                  className="h-full w-full object-cover"
-                  loading="lazy"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 360px"
+                  className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                 <p className="absolute bottom-3 left-3 text-xs uppercase tracking-[0.2em] text-white/80">
@@ -291,11 +296,12 @@ export default function HomePage() {
             {IMMERSIVE_GALLERY.map((item, index) => (
               <ScrollReveal key={item.src} delay={index * 100}>
                 <div className="group relative h-56 overflow-hidden rounded-2xl border border-white/10">
-                  <img
+                  <Image
                     src={item.src}
                     alt={item.alt}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <p className="absolute bottom-3 left-3 text-xs uppercase tracking-[0.2em] text-white/90">
@@ -322,11 +328,11 @@ export default function HomePage() {
                   Une experience rassurante et lisible
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm text-white/60">
-                  Cette version demo met l'accent sur le parcours parent: reservation, suivi et echanges coach-joueur.
+                  Cette version demo met l&apos;accent sur le parcours parent: reservation, suivi et echanges coach-joueur.
                 </p>
               </div>
               <Link href="/dashboard/club" className="px-button-ghost">
-                Voir l'espace parent
+                Voir l&apos;espace parent
               </Link>
             </div>
             <div className="grid gap-4 md:grid-cols-3">

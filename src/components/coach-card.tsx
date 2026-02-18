@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { MapPinIcon, StarIcon, BoltIcon } from "./icons";
 import { getCoachAvatarUrl } from "@/lib/coach-avatars";
 
@@ -44,9 +45,9 @@ export default function CoachCard({
 
         {/* Avatar + info */}
         <div className="absolute left-4 top-4 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-white/20 bg-black/60 text-sm font-semibold text-white shadow-lg">
+          <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-white/20 bg-black/60 text-sm font-semibold text-white shadow-lg">
             {resolvedAvatar ? (
-              <img src={resolvedAvatar} alt={name} className="h-full w-full object-cover" />
+              <Image src={resolvedAvatar} alt={name} fill sizes="48px" className="object-cover" />
             ) : (
               initials
             )}

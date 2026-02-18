@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import AppShell from "@/components/app-shell";
 import ScrollReveal from "@/components/scroll-reveal";
 import {
@@ -229,9 +230,9 @@ export default function CoachProfileEditPage() {
                   {/* Avatar */}
                   <div className="flex items-center gap-5 mb-6">
                     <div className="relative">
-                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border-2 border-white/20 bg-gradient-to-br from-[color:var(--px-accent)]/20 to-transparent text-white shadow-lg">
+                      <div className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border-2 border-white/20 bg-gradient-to-br from-[color:var(--px-accent)]/20 to-transparent text-white shadow-lg">
                         {avatarUrl ? (
-                          <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                          <Image src={avatarUrl} alt="Avatar" fill sizes="80px" className="object-cover" />
                         ) : (
                           <WhistleIcon className="h-8 w-8 text-white/40" />
                         )}
@@ -411,9 +412,9 @@ export default function CoachProfileEditPage() {
                   </div>
 
                   <div className="relative -mt-10 px-5 pb-5">
-                    <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border-2 border-[color:var(--px-card)] bg-gradient-to-br from-[color:var(--px-accent)]/20 to-transparent shadow-lg">
+                    <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border-2 border-[color:var(--px-card)] bg-gradient-to-br from-[color:var(--px-accent)]/20 to-transparent shadow-lg">
                       {avatarUrl ? (
-                        <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                        <Image src={avatarUrl} alt="Avatar" fill sizes="64px" className="object-cover" />
                       ) : (
                         <WhistleIcon className="h-7 w-7 text-white/40" />
                       )}

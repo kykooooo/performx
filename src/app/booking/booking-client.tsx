@@ -98,7 +98,6 @@ export default function BookingClient() {
 
   useEffect(() => {
     if (!selectedCoachId) return;
-    setSelectedSlot(null);
     const fetchSessions = async () => {
       const { data, error } = await supabase
         .from("public_sessions")
@@ -138,20 +137,21 @@ export default function BookingClient() {
           session.status !== "cancelled",
       );
     });
-  }, [selectedCoach, selectedCoachId, sessions]);
+  }, [selectedCoach, sessions]);
 
-  useEffect(() => {
-    if (!initialDate || !initialTime) return;
-    const preselected = availableSlots.find(
-      (slot) => slot.date === initialDate && normalizeTime(slot.time) === normalizeTime(initialTime),
+  const preselectedSlot = useMemo(() => {
+    if (!initialDate || !initialTime) return null;
+    return (
+      availableSlots.find(
+        (slot) => slot.date === initialDate && normalizeTime(slot.time) === normalizeTime(initialTime),
+      ) ?? null
     );
-    if (preselected) {
-      setSelectedSlot(preselected);
-    }
   }, [availableSlots, initialDate, initialTime]);
 
+  const effectiveSelectedSlot = selectedSlot ?? preselectedSlot;
+
   const handleBook = async () => {
-    if (!selectedCoach || !selectedSlot) return;
+    if (!selectedCoach || !effectiveSelectedSlot) return;
     if (!userId) {
       setNotice({ type: "error", text: "Connecte-toi pour réserver une séance." });
       return;
@@ -160,9 +160,9 @@ export default function BookingClient() {
     const { data: bookingPath, error: bookingPathError } = await supabase
       .rpc("create_booking_with_conversation", {
         p_coach_id: selectedCoach.id,
-        p_date: selectedSlot.date,
-        p_time: normalizeTime(selectedSlot.time),
-        p_duration_minutes: selectedSlot.durationMinutes,
+        p_date: effectiveSelectedSlot.date,
+        p_time: normalizeTime(effectiveSelectedSlot.time),
+        p_duration_minutes: effectiveSelectedSlot.durationMinutes,
       })
       .single();
 
@@ -179,8 +179,8 @@ export default function BookingClient() {
 
     setSessions((prev) => [
       {
-        date: selectedSlot.date,
-        time: normalizeTime(selectedSlot.time),
+        date: effectiveSelectedSlot.date,
+        time: normalizeTime(effectiveSelectedSlot.time),
         status: "upcoming",
       },
       ...prev,
@@ -193,8 +193,8 @@ export default function BookingClient() {
     const nextParams = new URLSearchParams({
       coach: selectedCoach.id,
       coachName: selectedCoach.name,
-      date: selectedSlot.date,
-      time: normalizeTime(selectedSlot.time),
+      date: effectiveSelectedSlot.date,
+      time: normalizeTime(effectiveSelectedSlot.time),
       price: String(selectedCoach.price_per_session ?? 0),
       bookingId: rpcData.booking_id,
     });
@@ -202,6 +202,11 @@ export default function BookingClient() {
       nextParams.set("conversationId", rpcData.conversation_id);
     }
     router.push(`/booking/confirmation?${nextParams.toString()}`);
+  };
+
+  const handleCoachChange = (coachId: string) => {
+    setSelectedCoachId(coachId);
+    setSelectedSlot(null);
   };
 
   return (
@@ -225,7 +230,7 @@ export default function BookingClient() {
             <select
               className="px-select mt-4"
               value={selectedCoachId}
-              onChange={(event) => setSelectedCoachId(event.target.value)}
+              onChange={(event) => handleCoachChange(event.target.value)}
               disabled={loading}
             >
               {coaches.map((coach) => (
@@ -239,7 +244,8 @@ export default function BookingClient() {
                 <p className="text-sm text-white/50">Aucun créneau disponible pour ce coach.</p>
               )}
               {availableSlots.map((slot) => {
-                const isSelected = selectedSlot?.date === slot.date && selectedSlot?.time === slot.time;
+                const isSelected =
+                  effectiveSelectedSlot?.date === slot.date && effectiveSelectedSlot?.time === slot.time;
                 return (
                   <button
                     key={`${slot.date}-${slot.time}`}
@@ -293,12 +299,12 @@ export default function BookingClient() {
               <div className="flex items-center justify-between">
                 <span>Créneau</span>
                 <span className="text-white">
-                  {selectedSlot ? formatSlotLabel(selectedSlot) : "Sélectionne un créneau"}
+                  {effectiveSelectedSlot ? formatSlotLabel(effectiveSelectedSlot) : "Sélectionne un créneau"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Durée</span>
-                <span className="text-white">{selectedSlot?.durationMinutes ?? "-"} min</span>
+                <span className="text-white">{effectiveSelectedSlot?.durationMinutes ?? "-"} min</span>
               </div>
               <div className="px-divider" />
               <div className="flex items-center justify-between text-base">
@@ -310,7 +316,7 @@ export default function BookingClient() {
               className="px-button mt-5 w-full"
               type="button"
               onClick={handleBook}
-              disabled={!selectedSlot}
+              disabled={!effectiveSelectedSlot}
             >
               Confirmer la réservation
             </button>

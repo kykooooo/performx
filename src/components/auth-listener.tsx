@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/profile-sync";
@@ -9,7 +9,7 @@ export default function AuthListener() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const redirectByRole = async (userId: string, roleHint?: string | null) => {
+  const redirectByRole = useCallback(async (userId: string, roleHint?: string | null) => {
     let role = roleHint ?? null;
     if (!role) {
       const { data } = await supabase.from("profiles").select("role").eq("user_id", userId).single();
@@ -27,7 +27,7 @@ export default function AuthListener() {
         router.replace("/dashboard/player/profile");
         break;
     }
-  };
+  }, [router]);
 
   useEffect(() => {
     let mounted = true;
@@ -57,7 +57,7 @@ export default function AuthListener() {
       mounted = false;
       data.subscription.unsubscribe();
     };
-  }, [pathname]);
+  }, [pathname, redirectByRole]);
 
   return null;
 }
