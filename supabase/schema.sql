@@ -307,7 +307,7 @@ begin
     from coaches
     where id = p_coach_id;
 
-  if v_coach_user_id is null then
+  if not exists (select 1 from coaches where id = p_coach_id) then
     raise exception 'COACH_NOT_FOUND';
   end if;
 
@@ -340,36 +340,38 @@ begin
   values (v_session_id, v_player_id, p_coach_id, coalesce(v_price, 0), 'paid')
   returning id into v_booking_id;
 
-  select cp_self.conversation_id
-    into v_conversation_id
-    from conversation_participants cp_self
-    join conversation_participants cp_other
-      on cp_self.conversation_id = cp_other.conversation_id
-    where cp_self.user_id = v_player_id
-      and cp_other.user_id = v_coach_user_id
-    limit 1;
+  if v_coach_user_id is not null then
+    select cp_self.conversation_id
+      into v_conversation_id
+      from conversation_participants cp_self
+      join conversation_participants cp_other
+        on cp_self.conversation_id = cp_other.conversation_id
+      where cp_self.user_id = v_player_id
+        and cp_other.user_id = v_coach_user_id
+      limit 1;
 
-  if v_conversation_id is null then
-    insert into conversations (created_by)
-    values (v_player_id)
-    returning id into v_conversation_id;
+    if v_conversation_id is null then
+      insert into conversations (created_by)
+      values (v_player_id)
+      returning id into v_conversation_id;
 
-    insert into conversation_participants (conversation_id, user_id)
-    values
-      (v_conversation_id, v_player_id),
-      (v_conversation_id, v_coach_user_id);
+      insert into conversation_participants (conversation_id, user_id)
+      values
+        (v_conversation_id, v_player_id),
+        (v_conversation_id, v_coach_user_id);
+    end if;
+
+    insert into messages (conversation_id, sender_id, body)
+    values (
+      v_conversation_id,
+      v_player_id,
+      format(
+        'Nouvelle réservation confirmée: %s à %s.',
+        to_char(p_date, 'DD/MM/YYYY'),
+        to_char(p_time, 'HH24:MI')
+      )
+    );
   end if;
-
-  insert into messages (conversation_id, sender_id, body)
-  values (
-    v_conversation_id,
-    v_player_id,
-    format(
-      'Nouvelle réservation confirmée: %s à %s.',
-      to_char(p_date, 'DD/MM/YYYY'),
-      to_char(p_time, 'HH24:MI')
-    )
-  );
 
   return query
   select v_session_id, v_booking_id, v_conversation_id;

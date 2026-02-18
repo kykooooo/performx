@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import AppShell from "@/components/app-shell";
 import { formatLongDate } from "@/lib/date";
 import { supabase } from "@/lib/supabase";
@@ -35,6 +35,7 @@ type BookingRpcRow = {
 };
 
 export default function BookingClient() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialCoachId = searchParams.get("coach");
   const initialDate = searchParams.get("date");
@@ -187,7 +188,20 @@ export default function BookingClient() {
     setBookings((prev) => [{ id: rpcData.booking_id, payment_status: "paid" }, ...prev]);
     setLastBookedCoachId(selectedCoach.id);
     setSelectedSlot(null);
-    setNotice({ type: "success", text: "Séance réservée. Conversation ouverte avec le coach." });
+    setNotice({ type: "success", text: "Séance réservée. Redirection vers la confirmation..." });
+
+    const nextParams = new URLSearchParams({
+      coach: selectedCoach.id,
+      coachName: selectedCoach.name,
+      date: selectedSlot.date,
+      time: normalizeTime(selectedSlot.time),
+      price: String(selectedCoach.price_per_session ?? 0),
+      bookingId: rpcData.booking_id,
+    });
+    if (rpcData.conversation_id) {
+      nextParams.set("conversationId", rpcData.conversation_id);
+    }
+    router.push(`/booking/confirmation?${nextParams.toString()}`);
   };
 
   return (

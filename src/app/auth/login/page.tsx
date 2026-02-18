@@ -7,6 +7,11 @@ import { syncProfile } from "@/lib/profile-sync";
 import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
+  const demoCoachEmail = process.env.NEXT_PUBLIC_DEMO_COACH_EMAIL ?? "";
+  const demoCoachPassword = process.env.NEXT_PUBLIC_DEMO_COACH_PASSWORD ?? "";
+  const demoPlayerEmail = process.env.NEXT_PUBLIC_DEMO_PLAYER_EMAIL ?? "";
+  const demoPlayerPassword = process.env.NEXT_PUBLIC_DEMO_PLAYER_PASSWORD ?? "";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,6 +42,16 @@ export default function LoginPage() {
       setNotice({ type: "error", text: error.message });
       setLoading(false);
     }
+  };
+
+  const applyDemoCredentials = (role: "coach" | "player") => {
+    if (role === "coach") {
+      setEmail(demoCoachEmail);
+      setPassword(demoCoachPassword);
+      return;
+    }
+    setEmail(demoPlayerEmail);
+    setPassword(demoPlayerPassword);
   };
 
   return (
@@ -81,6 +96,29 @@ export default function LoginPage() {
         <button className="px-button w-full" type="submit" disabled={loading}>
           {loading ? "Connexion..." : "Se connecter"}
         </button>
+        {(demoCoachEmail || demoPlayerEmail) && (
+          <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/40">Comptes demo</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <button
+                className="px-button-ghost text-xs"
+                type="button"
+                onClick={() => applyDemoCredentials("coach")}
+                disabled={!demoCoachEmail || !demoCoachPassword}
+              >
+                Remplir coach demo
+              </button>
+              <button
+                className="px-button-ghost text-xs"
+                type="button"
+                onClick={() => applyDemoCredentials("player")}
+                disabled={!demoPlayerEmail || !demoPlayerPassword}
+              >
+                Remplir joueur demo
+              </button>
+            </div>
+          </div>
+        )}
         <p className="text-center text-xs text-white/50">Ou se connecter avec</p>
         <div className="grid grid-cols-2 gap-3">
           <button className="px-button-ghost" type="button" onClick={() => handleOAuth("google")}>

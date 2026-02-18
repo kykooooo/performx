@@ -96,6 +96,21 @@ const IMMERSIVE_GALLERY = [
   },
 ];
 
+const PARENT_BENEFITS = [
+  {
+    title: "Suivi simple",
+    text: "Visualisez les seances reservees, terminees et les prochaines etapes depuis un seul espace.",
+  },
+  {
+    title: "Paiement clair",
+    text: "Montants, coach et horaires valides avant confirmation pour eviter les surprises.",
+  },
+  {
+    title: "Communication directe",
+    text: "Messagerie integree avec le coach pour preparer la seance et suivre le debrief.",
+  },
+];
+
 export default function HomePage() {
   return (
     <AppShell active="/" hideTitle>
@@ -289,6 +304,39 @@ export default function HomePage() {
                 </div>
               </ScrollReveal>
             ))}
+          </div>
+        </section>
+      </ScrollReveal>
+
+      {/* ── Pour les parents ── */}
+      <ScrollReveal>
+        <section className="py-12">
+          <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-8 sm:p-10">
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <div className="mb-3 flex items-center gap-3 text-xs uppercase tracking-[0.35em] text-white/40">
+                  <span className="h-[2px] w-10 rounded-full bg-[color:var(--px-accent)]" />
+                  Pour les parents
+                </div>
+                <h2 className="text-3xl text-white sm:text-4xl">
+                  Une experience rassurante et lisible
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm text-white/60">
+                  Cette version demo met l'accent sur le parcours parent: reservation, suivi et echanges coach-joueur.
+                </p>
+              </div>
+              <Link href="/dashboard/club" className="px-button-ghost">
+                Voir l'espace parent
+              </Link>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              {PARENT_BENEFITS.map((item) => (
+                <div key={item.title} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                  <h3 className="text-lg text-white">{item.title}</h3>
+                  <p className="mt-2 text-sm text-white/60">{item.text}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       </ScrollReveal>
