@@ -200,7 +200,7 @@ export default function PlayersPage() {
                 <p className="text-sm font-semibold text-white">Recherche joueurs</p>
                 <p className="text-xs text-white/50">Filtre par niveau, poste ou localisation.</p>
               </div>
-              <div className="relative">
+              <div className="relative w-full sm:w-[320px]">
                 <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
                 <input
                   className="px-input pl-9"

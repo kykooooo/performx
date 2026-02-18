@@ -46,6 +46,7 @@ export default function MessagesClient() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const [mobileChatOpen, setMobileChatOpen] = useState(Boolean(coachId));
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const conversationsRef = useRef<Conversation[]>([]);
 
@@ -179,6 +180,9 @@ export default function MessagesClient() {
     }
 
     setActiveConversationId(activeId ?? null);
+    if (preferredCoachId && activeId) {
+      setMobileChatOpen(true);
+    }
     if (!activeId) {
       setMessages([]);
     }
@@ -309,7 +313,7 @@ export default function MessagesClient() {
       )}
 
       <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
-        <aside className="px-card p-4">
+        <aside className={`px-card p-4 ${mobileChatOpen ? "hidden lg:block" : ""}`}>
           <h3 className="text-lg text-white">Conversations</h3>
           <div className="mt-4 space-y-2">
             {loading && (
@@ -335,6 +339,7 @@ export default function MessagesClient() {
                 onClick={() => {
                   setActiveConversationId(conversation.id);
                   setUnreadCounts((prev) => ({ ...prev, [conversation.id]: 0 }));
+                  setMobileChatOpen(true);
                 }}
                 type="button"
               >
@@ -352,8 +357,15 @@ export default function MessagesClient() {
           </div>
         </aside>
 
-        <section className="px-card-strong flex h-[560px] flex-col p-4">
+        <section className={`px-card-strong h-[72vh] min-h-[420px] flex-col p-4 md:h-[560px] ${mobileChatOpen ? "flex" : "hidden lg:flex"}`}>
           <div className="border-b border-white/10 pb-3">
+            <button
+              type="button"
+              className="px-button-ghost mb-3 px-3 py-2 text-xs lg:hidden"
+              onClick={() => setMobileChatOpen(false)}
+            >
+              Retour aux conversations
+            </button>
             <p className="text-sm text-white/60">Discussion avec</p>
             <h3 className="text-lg text-white">{activeConversation?.otherName ?? "Sélectionne une conversation"}</h3>
           </div>
@@ -383,7 +395,7 @@ export default function MessagesClient() {
             </div>
           </div>
           <div className="border-t border-white/10 pt-3">
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 className="px-input"
                 placeholder="Écrire un message..."
@@ -396,7 +408,7 @@ export default function MessagesClient() {
                   }
                 }}
               />
-              <button className="px-button" type="button" onClick={handleSend}>
+              <button className="px-button sm:w-auto" type="button" onClick={handleSend}>
                 Envoyer
               </button>
             </div>

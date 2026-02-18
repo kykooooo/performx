@@ -95,7 +95,7 @@ export default function TopNav({ active }: { active?: string }) {
 
       {/* Mobile drawer */}
       <div
-        className={`fixed right-0 top-0 z-50 flex h-full w-72 flex-col border-l border-white/10 bg-[color:var(--px-bg)] transition-transform duration-300 lg:hidden ${
+        className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-[320px] flex-col border-l border-white/10 bg-[color:var(--px-bg)] transition-transform duration-300 lg:hidden ${
           mobileOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -132,7 +132,7 @@ export default function TopNav({ active }: { active?: string }) {
           })}
         </nav>
 
-        <div className="border-t border-white/10 p-4">
+        <div className="border-t border-white/10 p-4 pb-6">
           <Link
             href="/auth/login"
             className="px-button w-full text-center"
