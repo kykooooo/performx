@@ -1,9 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Logo from "./logo";
+import { supabase } from "@/lib/supabase";
 import {
   CalendarIcon,
   ChatIcon,
@@ -31,7 +33,25 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 export default function TopNav({ active }: { active?: string }) {
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setLoggedIn(!!data.user);
+    });
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      setLoggedIn(!!session?.user);
+    });
+    return () => { data.subscription.unsubscribe(); };
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setLoggedIn(false);
+    router.push("/");
+  };
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-black/60 backdrop-blur-xl">
@@ -69,10 +89,20 @@ export default function TopNav({ active }: { active?: string }) {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link href="/auth/login" className="px-button-ghost hidden text-sm sm:inline-flex">
-            <UserIcon className="h-4 w-4" />
-            Compte
-          </Link>
+          {loggedIn ? (
+            <button
+              className="px-button-ghost hidden text-sm sm:inline-flex"
+              type="button"
+              onClick={handleLogout}
+            >
+              Déconnexion
+            </button>
+          ) : (
+            <Link href="/auth/login" className="px-button-ghost hidden text-sm sm:inline-flex">
+              <UserIcon className="h-4 w-4" />
+              Connexion
+            </Link>
+          )}
 
           {/* Mobile hamburger */}
           <button
@@ -142,14 +172,24 @@ export default function TopNav({ active }: { active?: string }) {
         </nav>
 
         <div className="border-t border-white/10 p-4 pb-6">
-          <Link
-            href="/auth/login"
-            className="px-button w-full text-center"
-            onClick={() => setMobileOpen(false)}
-          >
-            <UserIcon className="h-4 w-4" />
-            Mon compte
-          </Link>
+          {loggedIn ? (
+            <button
+              className="px-button-ghost w-full text-center"
+              type="button"
+              onClick={() => { setMobileOpen(false); handleLogout(); }}
+            >
+              Déconnexion
+            </button>
+          ) : (
+            <Link
+              href="/auth/login"
+              className="px-button w-full text-center"
+              onClick={() => setMobileOpen(false)}
+            >
+              <UserIcon className="h-4 w-4" />
+              Connexion
+            </Link>
+          )}
         </div>
       </div>
     </header>

@@ -224,42 +224,47 @@ export default function MessagesClient() {
 
   useEffect(() => {
     if (!userId) return;
-    const channel = supabase
-      .channel("messages-feed")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages" },
-        (payload) => {
-          const message = payload.new as MessageRow & { conversation_id: string };
-          if (!message) return;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel("messages-feed")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "messages" },
+          (payload) => {
+            const message = payload.new as MessageRow & { conversation_id: string };
+            if (!message) return;
 
-          const knownConversation = conversationsRef.current.some(
-            (conversation) => conversation.id === message.conversation_id,
-          );
-          if (!knownConversation && userId) {
-            loadConversations(userId).catch(() => null);
-          }
-
-          if (message.conversation_id === activeConversationId) {
-            setMessages((prev) => {
-              if (prev.some((item) => item.id === message.id)) return prev;
-              return [...prev, message];
-            });
-            if (message.sender_id !== userId) {
-              setNotice("Nouveau message reçu.");
+            const knownConversation = conversationsRef.current.some(
+              (conversation) => conversation.id === message.conversation_id,
+            );
+            if (!knownConversation && userId) {
+              loadConversations(userId).catch(() => null);
             }
-          } else {
-            setUnreadCounts((prev) => ({
-              ...prev,
-              [message.conversation_id]: (prev[message.conversation_id] ?? 0) + 1,
-            }));
-          }
-        },
-      )
-      .subscribe();
+
+            if (message.conversation_id === activeConversationId) {
+              setMessages((prev) => {
+                if (prev.some((item) => item.id === message.id)) return prev;
+                return [...prev, message];
+              });
+              if (message.sender_id !== userId) {
+                setNotice("Nouveau message reçu.");
+              }
+            } else {
+              setUnreadCounts((prev) => ({
+                ...prev,
+                [message.conversation_id]: (prev[message.conversation_id] ?? 0) + 1,
+              }));
+            }
+          },
+        )
+        .subscribe();
+    } catch {
+      // WebSocket may fail on localhost (HTTP), works fine on HTTPS in production
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [userId, activeConversationId]);
 
