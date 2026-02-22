@@ -4,7 +4,7 @@ import AuthShell from "@/components/auth-shell";
 
 export const metadata: Metadata = {
   title: "Inscription",
-  description: "Crée ton compte PerformX en tant que joueur ou coach.",
+  description: "Crée ton compte PerformX en tant que joueur, coach ou parent.",
 };
 
 export default function RegisterChoicePage() {
@@ -23,6 +23,13 @@ export default function RegisterChoicePage() {
           <p className="mt-2 text-sm text-white/60">Propose tes disponibilités et reçois des réservations.</p>
           <Link href="/auth/register/coach" className="px-button mt-4 w-full">
             Créer un compte coach
+          </Link>
+        </div>
+        <div className="px-card p-5">
+          <h3 className="text-xl text-white">Je suis parent</h3>
+          <p className="mt-2 text-sm text-white/60">Suis la progression de ton enfant et réserve ses séances.</p>
+          <Link href="/auth/register/parent" className="px-button mt-4 w-full">
+            Créer un compte parent
           </Link>
         </div>
         <p className="text-center text-xs text-white/60">

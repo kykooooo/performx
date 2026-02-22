@@ -13,6 +13,8 @@ export default function LoginPage() {
   const demoCoachPassword = process.env.NEXT_PUBLIC_DEMO_COACH_PASSWORD ?? "";
   const demoPlayerEmail = process.env.NEXT_PUBLIC_DEMO_PLAYER_EMAIL ?? "";
   const demoPlayerPassword = process.env.NEXT_PUBLIC_DEMO_PLAYER_PASSWORD ?? "";
+  const demoParentEmail = process.env.NEXT_PUBLIC_DEMO_PARENT_EMAIL ?? "";
+  const demoParentPassword = process.env.NEXT_PUBLIC_DEMO_PARENT_PASSWORD ?? "";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -59,15 +61,18 @@ export default function LoginPage() {
     }
   };
 
-  const applyDemoCredentials = (role: "coach" | "player") => {
+  const applyDemoCredentials = (role: "coach" | "player" | "parent") => {
     setErrors({});
     if (role === "coach") {
       setEmail(demoCoachEmail);
       setPassword(demoCoachPassword);
-      return;
+    } else if (role === "parent") {
+      setEmail(demoParentEmail);
+      setPassword(demoParentPassword);
+    } else {
+      setEmail(demoPlayerEmail);
+      setPassword(demoPlayerPassword);
     }
-    setEmail(demoPlayerEmail);
-    setPassword(demoPlayerPassword);
   };
 
   return (
@@ -123,25 +128,33 @@ export default function LoginPage() {
         <button className="px-button w-full" type="submit" disabled={loading}>
           {loading ? <><span className="px-spinner mr-2" /> Connexion...</> : "Se connecter"}
         </button>
-        {(demoCoachEmail || demoPlayerEmail) && (
+        {(demoCoachEmail || demoPlayerEmail || demoParentEmail) && (
           <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-white/40">Comptes demo</p>
-            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-              <button
-                className="px-button-ghost text-xs"
-                type="button"
-                onClick={() => applyDemoCredentials("coach")}
-                disabled={!demoCoachEmail || !demoCoachPassword}
-              >
-                Remplir coach demo
-              </button>
+            <p className="text-xs uppercase tracking-[0.2em] text-white/40">Comptes démo</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-3">
               <button
                 className="px-button-ghost text-xs"
                 type="button"
                 onClick={() => applyDemoCredentials("player")}
                 disabled={!demoPlayerEmail || !demoPlayerPassword}
               >
-                Remplir joueur demo
+                Joueur
+              </button>
+              <button
+                className="px-button-ghost text-xs"
+                type="button"
+                onClick={() => applyDemoCredentials("coach")}
+                disabled={!demoCoachEmail || !demoCoachPassword}
+              >
+                Coach
+              </button>
+              <button
+                className="px-button-ghost text-xs"
+                type="button"
+                onClick={() => applyDemoCredentials("parent")}
+                disabled={!demoParentEmail || !demoParentPassword}
+              >
+                Parent
               </button>
             </div>
           </div>

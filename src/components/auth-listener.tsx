@@ -24,7 +24,7 @@ export default function AuthListener() {
         break;
       case "player":
       default:
-        router.replace("/dashboard/player/profile");
+        router.replace("/dashboard/player");
         break;
     }
   }, [router]);

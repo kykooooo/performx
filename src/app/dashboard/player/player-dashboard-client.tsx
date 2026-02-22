@@ -11,45 +11,39 @@ import {
   ArrowRightIcon,
   UserIcon,
   WhistleIcon,
-  ShieldIcon,
+  TrophyIcon,
   ChatIcon,
 } from "@/components/icons";
 import { formatLongDate } from "@/lib/date";
 import { supabase } from "@/lib/supabase";
-import { mockCoaches, mockSessions } from "@/lib/mock-data";
+import { mockSessions, mockCoaches, mockBookings } from "@/lib/mock-data";
+
+type SessionRow = {
+  id: string;
+  coach_id: string;
+  title: string;
+  date: string;
+  time: string;
+  duration_minutes: number;
+  status: string;
+};
 
 type CoachRow = {
   id: string;
   name: string;
   speciality: string;
   rating: number | null;
+  price_per_session: number | null;
 };
 
-type SessionRow = {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-};
-
-type ChildInfo = {
-  firstName: string;
-  lastName: string;
-  birthDate: string;
-  level: string;
-  position: string;
-};
-
-export default function ClubDashboardPage() {
-  const [coachCount, setCoachCount] = useState<number>(0);
-  const [sessionCount, setSessionCount] = useState<number>(0);
+export default function PlayerDashboardPage() {
+  const [upcoming, setUpcoming] = useState<SessionRow[]>([]);
+  const [completed, setCompleted] = useState<SessionRow[]>([]);
   const [coaches, setCoaches] = useState<CoachRow[]>([]);
-  const [sessions, setSessions] = useState<SessionRow[]>([]);
-  const [childInfo, setChildInfo] = useState<ChildInfo | null>(null);
-  const [parentName, setParentName] = useState("");
+  const [coachMap, setCoachMap] = useState<Record<string, string>>({});
+  const [totalSpent, setTotalSpent] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -59,83 +53,91 @@ export default function ClubDashboardPage() {
       const { data: userData } = await supabase.auth.getUser();
 
       if (!userData.user) {
-        // Demo mode
+        // Demo mode with mock data
         if (!mounted) return;
-        setIsDemo(true);
-        setParentName("Marie Dupont");
-        setChildInfo({
-          firstName: "Léo",
-          lastName: "Dupont",
-          birthDate: "2013-05-22",
-          level: "Intermédiaire",
-          position: "Milieu offensif",
-        });
-        setCoachCount(mockCoaches.length);
-        setSessionCount(4);
+        const upcomingMock = mockSessions
+          .filter((s) => s.status === "upcoming")
+          .map((s) => ({
+            id: s.id,
+            coach_id: s.coachId,
+            title: s.title,
+            date: s.date,
+            time: s.time,
+            duration_minutes: s.durationMinutes,
+            status: s.status,
+          }));
+        const completedMock = mockSessions
+          .filter((s) => s.status === "completed")
+          .map((s) => ({
+            id: s.id,
+            coach_id: s.coachId,
+            title: s.title,
+            date: s.date,
+            time: s.time,
+            duration_minutes: s.durationMinutes,
+            status: s.status,
+          }));
+        const coachNames: Record<string, string> = {};
+        mockCoaches.forEach((c) => { coachNames[c.id] = c.name; });
+
+        setUpcoming(upcomingMock);
+        setCompleted(completedMock);
+        setCoachMap(coachNames);
         setCoaches(
           mockCoaches.slice(0, 4).map((c) => ({
             id: c.id,
             name: c.name,
             speciality: c.speciality,
             rating: c.rating,
+            price_per_session: c.pricePerSession,
           })),
         );
-        setSessions(
-          mockSessions
-            .filter((s) => s.status === "upcoming")
-            .slice(0, 3)
-            .map((s) => ({ id: s.id, title: s.title, date: s.date, time: s.time })),
-        );
+        setTotalSpent(mockBookings.reduce((sum, b) => sum + b.price, 0));
+        setIsDemo(true);
         setLoading(false);
         return;
       }
 
-      // Auth: check role
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("role, first_name, last_name")
-        .eq("user_id", userData.user.id)
-        .single();
+      const userId = userData.user.id;
 
-      const role = profileData?.role ?? null;
-      if (role !== "club") {
-        if (mounted) {
-          setError("Accès réservé aux comptes parent.");
-          setLoading(false);
-        }
-        return;
-      }
-
-      // Extract child info from user metadata
-      const meta = userData.user.user_metadata ?? {};
-      setParentName(
-        [profileData?.first_name, profileData?.last_name].filter(Boolean).join(" ") || "Parent",
-      );
-      if (meta.child_first_name) {
-        setChildInfo({
-          firstName: (meta.child_first_name as string) || "",
-          lastName: (meta.child_last_name as string) || "",
-          birthDate: (meta.child_birth_date as string) || "",
-          level: (meta.child_level as string) || "",
-          position: (meta.child_position as string) || "",
-        });
-      }
-
-      const { data: coachData, count: coachTotal } = await supabase
-        .from("public_coaches")
-        .select("id, name, speciality, rating", { count: "exact" });
-
-      const { data: sessionData, count: sessionTotal } = await supabase
+      // Fetch sessions
+      const { data: sessionData } = await supabase
         .from("sessions")
-        .select("id, title, date, time", { count: "exact" })
-        .order("date", { ascending: true })
-        .limit(3);
+        .select("id, coach_id, title, date, time, duration_minutes, status")
+        .eq("player_id", userId)
+        .order("date", { ascending: true });
+
+      // Fetch bookings for total spent
+      const { data: bookingData } = await supabase
+        .from("bookings")
+        .select("price")
+        .eq("player_id", userId)
+        .eq("payment_status", "paid");
+
+      // Fetch coaches for recommendations
+      const { data: coachData } = await supabase
+        .from("public_coaches")
+        .select("id, name, speciality, rating, price_per_session")
+        .order("rating", { ascending: false })
+        .limit(4);
 
       if (!mounted) return;
-      setCoachCount(coachTotal ?? coachData?.length ?? 0);
-      setSessionCount(sessionTotal ?? sessionData?.length ?? 0);
-      setCoaches((coachData ?? []).slice(0, 4));
-      setSessions(sessionData ?? []);
+
+      const sessions = sessionData ?? [];
+      const upcomingSessions = sessions.filter((s) => s.status === "upcoming");
+      const completedSessions = sessions.filter((s) => s.status === "completed");
+
+      // Build coach name map
+      const names: Record<string, string> = {};
+      if (coachData) {
+        coachData.forEach((c) => { names[c.id] = c.name; });
+      }
+
+      setUpcoming(upcomingSessions);
+      setCompleted(completedSessions);
+      setCoachMap(names);
+      setCoaches(coachData ?? []);
+      setTotalSpent(bookingData?.reduce((sum, b) => sum + (b.price ?? 0), 0) ?? 0);
       setLoading(false);
     };
 
@@ -143,9 +145,26 @@ export default function ClubDashboardPage() {
     return () => { mounted = false; };
   }, []);
 
-  const childAge = childInfo?.birthDate
-    ? Math.floor((Date.now() - new Date(childInfo.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-    : null;
+  const statCards = [
+    {
+      label: "Séances à venir",
+      value: upcoming.length,
+      icon: <CalendarIcon className="h-5 w-5" />,
+      color: "text-[color:var(--px-accent)]",
+    },
+    {
+      label: "Séances terminées",
+      value: completed.length,
+      icon: <TrophyIcon className="h-5 w-5" />,
+      color: "text-[color:var(--px-success)]",
+    },
+    {
+      label: "Total investi",
+      value: `${totalSpent} €`,
+      icon: <BoltIcon className="h-5 w-5" />,
+      color: "text-[color:var(--px-warning)]",
+    },
+  ];
 
   return (
     <AppShell active="/dashboard" hideTitle>
@@ -154,27 +173,27 @@ export default function ClubDashboardPage() {
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="space-y-4">
             <div className="flex items-center gap-3 px-fade-up">
-              <span className="px-badge px-pulse">Parent</span>
+              <span className="px-badge px-pulse">Dashboard</span>
               {isDemo && <span className="px-pill">Mode démo</span>}
             </div>
             <h1
               className="px-fade-up text-4xl leading-[1.1] text-white sm:text-5xl"
               style={{ animationDelay: "80ms" }}
             >
-              Bonjour{parentName ? `, ${parentName.split(" ")[0]}` : ""}{" "}
-              <span className="px-gradient-text">!</span>
+              Mon espace{" "}
+              <span className="px-gradient-text">joueur.</span>
             </h1>
             <p
               className="px-fade-up max-w-md text-base text-white/60"
               style={{ animationDelay: "160ms" }}
             >
-              Suis la progression de ton enfant et gère ses séances d&apos;entraînement.
+              Retrouve tes séances, tes stats et tes coachs préférés.
             </p>
           </div>
           <div className="px-fade-up flex gap-3" style={{ animationDelay: "200ms" }}>
-            <Link href="/coach" className="px-button-ghost text-sm">
-              <WhistleIcon className="h-4 w-4" />
-              Trouver un coach
+            <Link href="/dashboard/player/profile" className="px-button-ghost text-sm">
+              <UserIcon className="h-4 w-4" />
+              Mon profil
             </Link>
             <Link href="/booking" className="px-button text-sm">
               <BoltIcon className="h-4 w-4" />
@@ -183,15 +202,6 @@ export default function ClubDashboardPage() {
           </div>
         </div>
       </section>
-
-      {error && (
-        <div className="px-card p-6">
-          <p className="text-sm text-[color:var(--px-danger)]">{error}</p>
-          {error.includes("Connecte-toi") && (
-            <Link href="/auth/login" className="px-button mt-4">Se connecter</Link>
-          )}
-        </div>
-      )}
 
       {loading ? (
         <div className="grid gap-6 md:grid-cols-3">
@@ -203,49 +213,9 @@ export default function ClubDashboardPage() {
         </div>
       ) : (
         <>
-          {/* Child card */}
-          {childInfo && (
-            <ScrollReveal>
-              <div className="mb-6 px-card-strong p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">
-                    <ShieldIcon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg text-white">
-                      {childInfo.firstName} {childInfo.lastName}
-                    </h3>
-                    <p className="text-xs text-white/50">Joueur suivi</p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {childAge !== null && (
-                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60">
-                      {childAge} ans
-                    </span>
-                  )}
-                  {childInfo.level && (
-                    <span className="rounded-full border border-[color:var(--px-warning)]/30 bg-[color:var(--px-warning)]/10 px-3 py-1 text-xs text-[color:var(--px-warning)]">
-                      {childInfo.level}
-                    </span>
-                  )}
-                  {childInfo.position && (
-                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60">
-                      {childInfo.position}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </ScrollReveal>
-          )}
-
-          {/* Stats */}
+          {/* Stat cards */}
           <div className="grid gap-4 md:grid-cols-3">
-            {[
-              { label: "Séances programmées", value: sessionCount, icon: <CalendarIcon className="h-5 w-5" />, color: "text-[color:var(--px-accent)]" },
-              { label: "Coachs disponibles", value: coachCount, icon: <WhistleIcon className="h-5 w-5" />, color: "text-[color:var(--px-success)]" },
-              { label: "Note moy. coachs", value: coaches.length > 0 ? (coaches.reduce((s, c) => s + (c.rating ?? 0), 0) / coaches.length).toFixed(1) : "-", icon: <StarIcon className="h-5 w-5" />, color: "text-[color:var(--px-warning)]" },
-            ].map((stat, i) => (
+            {statCards.map((stat, i) => (
               <ScrollReveal key={stat.label} delay={i * 60}>
                 <div className="px-card flex items-center gap-4 p-5">
                   <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5 ${stat.color}`}>
@@ -261,17 +231,18 @@ export default function ClubDashboardPage() {
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            {/* Left */}
+            {/* Left column */}
             <div className="space-y-6">
+              {/* Upcoming sessions */}
               <ScrollReveal>
-                <div className="px-card p-6">
+                <div className="px-card-strong p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg text-white">Séances à venir</h3>
                     <Link href="/sessions" className="text-xs text-[color:var(--px-accent)] hover:underline">
                       Voir tout
                     </Link>
                   </div>
-                  {sessions.length === 0 ? (
+                  {upcoming.length === 0 ? (
                     <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
                       <CalendarIcon className="mx-auto h-8 w-8 text-white/20" />
                       <p className="mt-2 text-sm text-white/50">Aucune séance programmée</p>
@@ -281,7 +252,7 @@ export default function ClubDashboardPage() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {sessions.map((session) => (
+                      {upcoming.slice(0, 4).map((session) => (
                         <div
                           key={session.id}
                           className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4"
@@ -294,6 +265,7 @@ export default function ClubDashboardPage() {
                               <p className="text-sm font-medium text-white">{session.title}</p>
                               <p className="text-xs text-white/50">
                                 {formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}
+                                {coachMap[session.coach_id] && ` · ${coachMap[session.coach_id]}`}
                               </p>
                             </div>
                           </div>
@@ -306,14 +278,48 @@ export default function ClubDashboardPage() {
                   )}
                 </div>
               </ScrollReveal>
+
+              {/* Completed sessions */}
+              {completed.length > 0 && (
+                <ScrollReveal>
+                  <div className="px-card p-6">
+                    <h3 className="text-lg text-white mb-4">Séances terminées</h3>
+                    <div className="space-y-3">
+                      {completed.slice(0, 3).map((session) => (
+                        <div
+                          key={session.id}
+                          className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--px-success)]/15 text-[color:var(--px-success)]">
+                              <TrophyIcon className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-white">{session.title}</p>
+                              <p className="text-xs text-white/50">
+                                {formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}
+                                {coachMap[session.coach_id] && ` · ${coachMap[session.coach_id]}`}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="rounded-full border border-[color:var(--px-success)]/30 bg-[color:var(--px-success)]/10 px-2.5 py-1 text-[10px] font-semibold text-[color:var(--px-success)]">
+                            Terminée
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </ScrollReveal>
+              )}
             </div>
 
-            {/* Right */}
+            {/* Right column */}
             <div className="space-y-6">
+              {/* Top coaches */}
               <ScrollReveal>
-                <div className="px-card-strong p-6">
+                <div className="px-card p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg text-white">Top coachs</h3>
+                    <h3 className="text-lg text-white">Coachs recommandés</h3>
                     <Link href="/coach" className="text-xs text-[color:var(--px-accent)] hover:underline">
                       Voir tout
                     </Link>
@@ -334,9 +340,12 @@ export default function ClubDashboardPage() {
                             <p className="text-xs text-white/50">{coach.speciality}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <StarIcon className="h-3 w-3 text-[color:var(--px-accent)]" />
-                          <span className="text-xs text-white">{(coach.rating ?? 0).toFixed(1)}</span>
+                        <div className="text-right">
+                          <div className="flex items-center gap-1">
+                            <StarIcon className="h-3 w-3 text-[color:var(--px-accent)]" />
+                            <span className="text-xs text-white">{(coach.rating ?? 0).toFixed(1)}</span>
+                          </div>
+                          <p className="text-[10px] text-white/40">{coach.price_per_session ?? 0} €/séance</p>
                         </div>
                       </Link>
                     ))}
@@ -344,23 +353,29 @@ export default function ClubDashboardPage() {
                 </div>
               </ScrollReveal>
 
+              {/* Quick actions */}
               <ScrollReveal>
-                <div className="px-card p-6">
-                  <h3 className="text-lg text-white mb-4">Actions parent</h3>
+                <div className="px-card-strong p-6">
+                  <h3 className="text-lg text-white mb-4">Actions rapides</h3>
                   <div className="grid gap-3">
                     <Link href="/booking" className="px-button inline-flex items-center gap-2">
                       <BoltIcon className="h-4 w-4" />
                       Réserver une séance
                       <ArrowRightIcon className="ml-auto h-4 w-4" />
                     </Link>
-                    <Link href="/coach" className="px-button-ghost inline-flex items-center gap-2">
-                      <WhistleIcon className="h-4 w-4" />
-                      Trouver un coach
-                      <ArrowRightIcon className="ml-auto h-4 w-4" />
-                    </Link>
                     <Link href="/messages" className="px-button-ghost inline-flex items-center gap-2">
                       <ChatIcon className="h-4 w-4" />
-                      Contacter un coach
+                      Mes messages
+                      <ArrowRightIcon className="ml-auto h-4 w-4" />
+                    </Link>
+                    <Link href="/sessions" className="px-button-ghost inline-flex items-center gap-2">
+                      <CalendarIcon className="h-4 w-4" />
+                      Mon calendrier
+                      <ArrowRightIcon className="ml-auto h-4 w-4" />
+                    </Link>
+                    <Link href="/dashboard/player/profile" className="px-button-ghost inline-flex items-center gap-2">
+                      <UserIcon className="h-4 w-4" />
+                      Modifier mon profil
                       <ArrowRightIcon className="ml-auto h-4 w-4" />
                     </Link>
                   </div>

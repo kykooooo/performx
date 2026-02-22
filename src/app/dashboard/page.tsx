@@ -43,13 +43,16 @@ const DASHBOARD_ITEMS = [
     ],
   },
   {
-    title: "Profil Joueur",
+    title: "Dashboard Joueur",
     description:
-      "Mets à jour tes infos personnelles, ton avatar et ton profil visible par les coachs.",
-    href: "/dashboard/player/profile",
+      "Consulte tes séances, tes stats et réserve de nouvelles séances avec tes coachs.",
+    href: "/dashboard/player",
     icon: <UserIcon className="h-6 w-6" />,
     primary: false,
-    stats: [],
+    stats: [
+      { label: "Séances", value: "4", icon: <CalendarIcon className="h-3.5 w-3.5" /> },
+      { label: "Note", value: "4.2", icon: <StarIcon className="h-3.5 w-3.5" /> },
+    ],
   },
 ];
 
