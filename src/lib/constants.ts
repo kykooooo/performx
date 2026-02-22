@@ -43,6 +43,14 @@ export const COACH_DIPLOMAS = [
   "UEFA Pro",
 ] as const;
 
+// ── Niveaux joueur ──
+export const PLAYER_LEVELS = [
+  "Débutant",
+  "Intermédiaire",
+  "Confirmé",
+  "Élite",
+] as const;
+
 // ── Départements français ──
 export const DEPARTMENTS = [
   "01 – Ain",

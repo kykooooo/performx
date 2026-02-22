@@ -24,7 +24,7 @@ export default function RegisterCoachPage() {
   const [email, setEmail] = useState("");
   const [speciality, setSpeciality] = useState("");
   const [location, setLocation] = useState("");
-  const [price, setPrice] = useState<number>(0);
+  const [price, setPrice] = useState<number | "">("");
   const [bio, setBio] = useState("");
   const [selectedDiplomas, setSelectedDiplomas] = useState<string[]>([]);
   const [diplomaFile, setDiplomaFile] = useState<File | null>(null);
@@ -77,8 +77,11 @@ export default function RegisterCoachPage() {
     if (spErr) next.speciality = spErr;
     const locErr = validateRequired(location, "Le département");
     if (locErr) next.location = locErr;
-    const prErr = validatePrice(price);
-    if (prErr) next.price = prErr;
+    if (price === "" || price <= 0) next.price = "Le prix par séance est requis.";
+    else {
+      const prErr = validatePrice(price);
+      if (prErr) next.price = prErr;
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -87,6 +90,7 @@ export default function RegisterCoachPage() {
     const next: FieldErrors = {};
     if (selectedDiplomas.length === 0) next.diplomas = "Sélectionne au moins un diplôme.";
     if (!diplomaFile) next.diplomaFile = "Un justificatif est requis pour vérification.";
+    else if (diplomaFile.size > 10 * 1024 * 1024) next.diplomaFile = "Le fichier ne doit pas dépasser 10 Mo.";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -123,7 +127,7 @@ export default function RegisterCoachPage() {
           last_name: sanitizeInput(lastName),
           speciality,
           location,
-          price_per_session: price,
+          price_per_session: price === "" ? 0 : price,
           bio: sanitizeInput(bio),
           diplomas: selectedDiplomas.join(", "),
           diploma_file: diplomaFileUrl,
@@ -194,28 +198,34 @@ export default function RegisterCoachPage() {
           <>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
+                <label className="mb-1 block text-xs text-white/50">Prénom <span className="text-[color:var(--px-danger)]">*</span></label>
                 <input className={`px-input ${errors.firstName ? "border-[color:var(--px-danger)]" : ""}`} placeholder="Prénom" value={firstName} onChange={(e) => { setFirstName(e.target.value); clearField("firstName"); }} aria-invalid={!!errors.firstName} />
                 <FieldError error={errors.firstName} />
               </div>
               <div>
+                <label className="mb-1 block text-xs text-white/50">Nom <span className="text-[color:var(--px-danger)]">*</span></label>
                 <input className={`px-input ${errors.lastName ? "border-[color:var(--px-danger)]" : ""}`} placeholder="Nom" value={lastName} onChange={(e) => { setLastName(e.target.value); clearField("lastName"); }} aria-invalid={!!errors.lastName} />
                 <FieldError error={errors.lastName} />
               </div>
             </div>
             <div>
+              <label className="mb-1 block text-xs text-white/50">Adresse e-mail <span className="text-[color:var(--px-danger)]">*</span></label>
               <input className={`px-input ${errors.email ? "border-[color:var(--px-danger)]" : ""}`} type="email" placeholder="Adresse e-mail" value={email} onChange={(e) => { setEmail(e.target.value); clearField("email"); }} aria-invalid={!!errors.email} />
               <FieldError error={errors.email} />
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
+                <label className="mb-1 block text-xs text-white/50">Mot de passe <span className="text-[color:var(--px-danger)]">*</span></label>
                 <input className={`px-input ${errors.password ? "border-[color:var(--px-danger)]" : ""}`} type="password" placeholder="Mot de passe" value={password} onChange={(e) => { setPassword(e.target.value); clearField("password"); }} aria-invalid={!!errors.password} />
                 <FieldError error={errors.password} />
               </div>
               <div>
+                <label className="mb-1 block text-xs text-white/50">Confirmer <span className="text-[color:var(--px-danger)]">*</span></label>
                 <input className={`px-input ${errors.confirmPassword ? "border-[color:var(--px-danger)]" : ""}`} type="password" placeholder="Confirmer le mot de passe" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); clearField("confirmPassword"); }} aria-invalid={!!errors.confirmPassword} />
                 <FieldError error={errors.confirmPassword} />
               </div>
             </div>
+            <p className="text-[10px] text-white/30">Min. 8 caractères, 1 majuscule, 1 chiffre, 1 caractère spécial.</p>
             <div>
               <label className="flex items-center gap-2 text-xs text-white/60">
                 <input type="checkbox" className="h-4 w-4" checked={acceptedTerms} onChange={(e) => { setAcceptedTerms(e.target.checked); clearField("terms"); }} aria-invalid={!!errors.terms} />
@@ -235,13 +245,14 @@ export default function RegisterCoachPage() {
           <>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
+                <label className="mb-1 block text-xs text-white/50">Spécialité <span className="text-[color:var(--px-danger)]">*</span></label>
                 <select
                   className={`px-select ${errors.speciality ? "border-[color:var(--px-danger)]" : ""}`}
                   value={speciality}
                   onChange={(e) => { setSpeciality(e.target.value); clearField("speciality"); }}
                   aria-invalid={!!errors.speciality}
                 >
-                  <option value="">Spécialité</option>
+                  <option value="">Sélectionner</option>
                   {COACH_SPECIALITIES.map((s) => (
                     <option key={s} value={s}>{s}</option>
                   ))}
@@ -249,13 +260,14 @@ export default function RegisterCoachPage() {
                 <FieldError error={errors.speciality} />
               </div>
               <div>
+                <label className="mb-1 block text-xs text-white/50">Département <span className="text-[color:var(--px-danger)]">*</span></label>
                 <select
                   className={`px-select ${errors.location ? "border-[color:var(--px-danger)]" : ""}`}
                   value={location}
                   onChange={(e) => { setLocation(e.target.value); clearField("location"); }}
                   aria-invalid={!!errors.location}
                 >
-                  <option value="">Département</option>
+                  <option value="">Sélectionner un département</option>
                   {DEPARTMENTS.map((d) => (
                     <option key={d} value={d}>{d}</option>
                   ))}
@@ -265,17 +277,24 @@ export default function RegisterCoachPage() {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <input className={`px-input ${errors.price ? "border-[color:var(--px-danger)]" : ""}`} type="number" min={0} step={1} placeholder="Prix par séance (€)" value={price} onChange={(e) => { setPrice(Number(e.target.value)); clearField("price"); }} aria-invalid={!!errors.price} />
+                <label className="mb-1 block text-xs text-white/50">Prix par séance (€) <span className="text-[color:var(--px-danger)]">*</span></label>
+                <input className={`px-input ${errors.price ? "border-[color:var(--px-danger)]" : ""}`} type="number" min={0} step={1} placeholder="Ex: 45" value={price} onChange={(e) => { setPrice(e.target.value === "" ? "" : Number(e.target.value)); clearField("price"); }} aria-invalid={!!errors.price} />
                 <FieldError error={errors.price} />
               </div>
-              <input className="px-input" type="number" min={0} step={1} placeholder="Années d'expérience" value={experienceYears} onChange={(e) => setExperienceYears(e.target.value === "" ? "" : Number(e.target.value))} />
+              <div>
+                <label className="mb-1 block text-xs text-white/50">Années d&apos;expérience</label>
+                <input className="px-input" type="number" min={0} step={1} placeholder="Ex: 5" value={experienceYears} onChange={(e) => setExperienceYears(e.target.value === "" ? "" : Number(e.target.value))} />
+              </div>
             </div>
-            <textarea
-              className="min-h-[120px] w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30"
-              placeholder="Bio (présente-toi en quelques lignes)"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-            />
+            <div>
+              <label className="mb-1 block text-xs text-white/50">Bio</label>
+              <textarea
+                className="min-h-[100px] w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30"
+                placeholder="Présente-toi en quelques lignes..."
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+              />
+            </div>
             <Notice notice={notice} />
             <div className="flex gap-3">
               <button className="px-button-ghost w-full" type="button" onClick={() => setStep(1)}>

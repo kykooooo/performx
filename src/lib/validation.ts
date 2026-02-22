@@ -8,7 +8,10 @@ export function validateEmail(value: string): string | null {
 
 export function validatePassword(value: string): string | null {
   if (!value) return "Le mot de passe est requis.";
-  if (value.length < 6) return "Le mot de passe doit contenir au moins 6 caractères.";
+  if (value.length < 8) return "Le mot de passe doit contenir au moins 8 caractères.";
+  if (!/[A-Z]/.test(value)) return "Le mot de passe doit contenir au moins une majuscule.";
+  if (!/[0-9]/.test(value)) return "Le mot de passe doit contenir au moins un chiffre.";
+  if (!/[^A-Za-z0-9]/.test(value)) return "Le mot de passe doit contenir au moins un caractère spécial.";
   return null;
 }
 
