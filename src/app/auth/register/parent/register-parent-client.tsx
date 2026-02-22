@@ -6,6 +6,7 @@ import AuthShell from "@/components/auth-shell";
 import { FieldError, Notice, type NoticeData } from "@/components/notice";
 import { syncProfile } from "@/lib/profile-sync";
 import { supabase } from "@/lib/supabase";
+import { DEPARTMENTS, PLAYER_POSITIONS } from "@/lib/constants";
 import {
   sanitizeInput,
   validateEmail,
@@ -201,12 +202,12 @@ export default function RegisterParentPage() {
             <p className="text-xs text-white/50">
               Ces informations nous aident à personnaliser l&apos;expérience de ton enfant.
             </p>
-            <input
-              className="px-input"
-              placeholder="Ta ville"
-              value={city}
-              onChange={(e) => setCity(sanitizeInput(e.target.value))}
-            />
+            <select className="px-select" value={city} onChange={(e) => setCity(e.target.value)}>
+              <option value="">Ton département</option>
+              {DEPARTMENTS.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
                 <input
@@ -242,12 +243,12 @@ export default function RegisterParentPage() {
                 <option value="Intermédiaire">Intermédiaire</option>
                 <option value="Confirmé">Confirmé</option>
               </select>
-              <input
-                className="px-input"
-                placeholder="Poste de l'enfant"
-                value={childPosition}
-                onChange={(e) => setChildPosition(sanitizeInput(e.target.value))}
-              />
+              <select className="px-select" value={childPosition} onChange={(e) => setChildPosition(e.target.value)}>
+                <option value="">Poste de l&apos;enfant</option>
+                {PLAYER_POSITIONS.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
             </div>
             <Notice notice={notice} />
             <div className="flex gap-3">

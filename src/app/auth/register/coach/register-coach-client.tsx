@@ -6,6 +6,7 @@ import AuthShell from "@/components/auth-shell";
 import { FieldError, Notice, type NoticeData } from "@/components/notice";
 import { syncProfile } from "@/lib/profile-sync";
 import { supabase } from "@/lib/supabase";
+import { COACH_DIPLOMAS, COACH_SPECIALITIES, DEPARTMENTS } from "@/lib/constants";
 import {
   sanitizeInput,
   validateEmail,
@@ -17,7 +18,7 @@ import {
 } from "@/lib/validation";
 
 export default function RegisterCoachPage() {
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -25,9 +26,10 @@ export default function RegisterCoachPage() {
   const [location, setLocation] = useState("");
   const [price, setPrice] = useState<number>(0);
   const [bio, setBio] = useState("");
-  const [diplomas, setDiplomas] = useState("");
+  const [selectedDiplomas, setSelectedDiplomas] = useState<string[]>([]);
+  const [diplomaFile, setDiplomaFile] = useState<File | null>(null);
   const [experienceYears, setExperienceYears] = useState<number | "">("");
-  const [certifications, setCertifications] = useState("");
+  const [certifications, setCertifications] = useState<string[]>([]);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -36,6 +38,21 @@ export default function RegisterCoachPage() {
   const [errors, setErrors] = useState<FieldErrors>({});
 
   const clearField = (field: string) => setErrors((prev) => ({ ...prev, [field]: "" }));
+
+  const toggleDiploma = (diploma: string) => {
+    setSelectedDiplomas((prev) =>
+      prev.includes(diploma) ? prev.filter((d) => d !== diploma) : [...prev, diploma],
+    );
+    clearField("diplomas");
+  };
+
+  const toggleCertification = (cert: string) => {
+    setCertifications((prev) =>
+      prev.includes(cert) ? prev.filter((c) => c !== cert) : [...prev, cert],
+    );
+  };
+
+  const CERTIFICATION_OPTIONS = COACH_DIPLOMAS.filter((d) => d.startsWith("UEFA"));
 
   const validateStep1 = (): boolean => {
     const next: FieldErrors = {};
@@ -58,12 +75,18 @@ export default function RegisterCoachPage() {
     const next: FieldErrors = {};
     const spErr = validateRequired(speciality, "La spécialité");
     if (spErr) next.speciality = spErr;
-    const locErr = validateRequired(location, "La localisation");
+    const locErr = validateRequired(location, "Le département");
     if (locErr) next.location = locErr;
-    const dipErr = validateRequired(diplomas, "Les diplômes");
-    if (dipErr) next.diplomas = dipErr;
     const prErr = validatePrice(price);
     if (prErr) next.price = prErr;
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const validateStep3 = (): boolean => {
+    const next: FieldErrors = {};
+    if (selectedDiplomas.length === 0) next.diplomas = "Sélectionne au moins un diplôme.";
+    if (!diplomaFile) next.diplomaFile = "Un justificatif est requis pour vérification.";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -72,9 +95,24 @@ export default function RegisterCoachPage() {
     event.preventDefault();
     setNotice(null);
 
-    if (!validateStep2()) return;
+    if (!validateStep3()) return;
 
     setLoading(true);
+
+    // Upload diploma file if provided
+    let diplomaFileUrl: string | null = null;
+    if (diplomaFile) {
+      const fileExt = diplomaFile.name.split(".").pop();
+      const filePath = `diplomas/${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from("documents")
+        .upload(filePath, diplomaFile);
+
+      if (!uploadError) {
+        diplomaFileUrl = filePath;
+      }
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -83,13 +121,15 @@ export default function RegisterCoachPage() {
           role: "coach",
           first_name: sanitizeInput(firstName),
           last_name: sanitizeInput(lastName),
-          speciality: sanitizeInput(speciality),
-          location: sanitizeInput(location),
+          speciality,
+          location,
           price_per_session: price,
           bio: sanitizeInput(bio),
-          diplomas: sanitizeInput(diplomas),
+          diplomas: selectedDiplomas.join(", "),
+          diploma_file: diplomaFileUrl,
+          diploma_verified: false,
           experience_years: experienceYears === "" ? null : experienceYears,
-          certifications: sanitizeInput(certifications),
+          certifications: certifications.join(", "),
         },
       },
     });
@@ -102,30 +142,54 @@ export default function RegisterCoachPage() {
       }
       setNotice({
         type: "success",
-        text: "Compte coach créé. Vérifie ton e-mail pour valider l'inscription.",
+        text: "Compte coach créé ! Tes diplômes seront vérifiés sous 48h. Vérifie ton e-mail pour valider l'inscription.",
       });
     }
 
     setLoading(false);
   };
 
-  const handleNext = () => {
+  const handleNextStep1 = () => {
     if (!validateStep1()) return;
     setNotice(null);
     setStep(2);
   };
 
+  const handleNextStep2 = () => {
+    if (!validateStep2()) return;
+    setNotice(null);
+    setStep(3);
+  };
+
+  const stepLabels = ["Compte", "Profil", "Diplômes"];
+
   return (
     <AuthShell
       title="Inscription coach"
-      subtitle={step === 1 ? "Étape 1/2: crée ton compte." : "Étape 2/2: complète ton profil."}
+      subtitle={`Étape ${step}/3 : ${stepLabels[step - 1].toLowerCase()}.`}
     >
       <form className="space-y-4" onSubmit={handleRegister} noValidate>
         <div className="flex items-center justify-between">
-          <span className="px-pill">Étape {step} / 2</span>
+          <div className="flex items-center gap-2">
+            {stepLabels.map((label, i) => (
+              <span
+                key={label}
+                className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+                  i + 1 === step
+                    ? "bg-[color:var(--px-accent)]/20 text-[color:var(--px-accent)]"
+                    : i + 1 < step
+                      ? "bg-[color:var(--px-success)]/20 text-[color:var(--px-success)]"
+                      : "bg-white/5 text-white/30"
+                }`}
+              >
+                {i + 1}. {label}
+              </span>
+            ))}
+          </div>
           <Link href="/auth/register" className="text-xs text-white/50">Changer de profil</Link>
         </div>
 
+        {/* ── Step 1: Account ── */}
         {step === 1 && (
           <>
             <div className="grid gap-3 md:grid-cols-2">
@@ -160,21 +224,42 @@ export default function RegisterCoachPage() {
               <FieldError error={errors.terms} />
             </div>
             <Notice notice={notice} />
-            <button className="px-button w-full" type="button" onClick={handleNext}>
+            <button className="px-button w-full" type="button" onClick={handleNextStep1}>
               Continuer
             </button>
           </>
         )}
 
+        {/* ── Step 2: Profile ── */}
         {step === 2 && (
           <>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <input className={`px-input ${errors.speciality ? "border-[color:var(--px-danger)]" : ""}`} placeholder="Spécialité" value={speciality} onChange={(e) => { setSpeciality(e.target.value); clearField("speciality"); }} aria-invalid={!!errors.speciality} />
+                <select
+                  className={`px-select ${errors.speciality ? "border-[color:var(--px-danger)]" : ""}`}
+                  value={speciality}
+                  onChange={(e) => { setSpeciality(e.target.value); clearField("speciality"); }}
+                  aria-invalid={!!errors.speciality}
+                >
+                  <option value="">Spécialité</option>
+                  {COACH_SPECIALITIES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
                 <FieldError error={errors.speciality} />
               </div>
               <div>
-                <input className={`px-input ${errors.location ? "border-[color:var(--px-danger)]" : ""}`} placeholder="Localisation" value={location} onChange={(e) => { setLocation(e.target.value); clearField("location"); }} aria-invalid={!!errors.location} />
+                <select
+                  className={`px-select ${errors.location ? "border-[color:var(--px-danger)]" : ""}`}
+                  value={location}
+                  onChange={(e) => { setLocation(e.target.value); clearField("location"); }}
+                  aria-invalid={!!errors.location}
+                >
+                  <option value="">Département</option>
+                  {DEPARTMENTS.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
                 <FieldError error={errors.location} />
               </div>
             </div>
@@ -187,29 +272,119 @@ export default function RegisterCoachPage() {
             </div>
             <textarea
               className="min-h-[120px] w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30"
-              placeholder="Bio"
+              placeholder="Bio (présente-toi en quelques lignes)"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-            />
-            <div>
-              <textarea
-                className={`min-h-[110px] w-full rounded-xl border bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30 ${errors.diplomas ? "border-[color:var(--px-danger)]" : "border-[color:var(--px-border)]"}`}
-                placeholder="Diplômes (séparés par des virgules)"
-                value={diplomas}
-                onChange={(e) => { setDiplomas(e.target.value); clearField("diplomas"); }}
-                aria-invalid={!!errors.diplomas}
-              />
-              <FieldError error={errors.diplomas} />
-            </div>
-            <textarea
-              className="min-h-[110px] w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30"
-              placeholder="Certifications (ex: UEFA B, etc.)"
-              value={certifications}
-              onChange={(e) => setCertifications(e.target.value)}
             />
             <Notice notice={notice} />
             <div className="flex gap-3">
               <button className="px-button-ghost w-full" type="button" onClick={() => setStep(1)}>
+                Retour
+              </button>
+              <button className="px-button w-full" type="button" onClick={handleNextStep2}>
+                Continuer
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ── Step 3: Diplomas & Certifications ── */}
+        {step === 3 && (
+          <>
+            <div className="rounded-xl border border-[color:var(--px-warning)]/30 bg-[color:var(--px-warning)]/5 p-4">
+              <p className="text-xs font-semibold text-[color:var(--px-warning)]">Vérification obligatoire</p>
+              <p className="mt-1 text-xs text-white/60">
+                Tes diplômes seront vérifiés par notre équipe avant l&apos;activation de ton profil coach. Envoie un justificatif (scan ou photo).
+              </p>
+            </div>
+
+            <div>
+              <p className="mb-2 text-sm text-white/70">Diplômes obtenus</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {COACH_DIPLOMAS.filter((d) => !d.startsWith("UEFA")).map((diploma) => (
+                  <label
+                    key={diploma}
+                    className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2.5 text-xs transition ${
+                      selectedDiplomas.includes(diploma)
+                        ? "border-[color:var(--px-accent)]/50 bg-[color:var(--px-accent)]/10 text-white"
+                        : "border-white/10 bg-white/5 text-white/60 hover:border-white/20"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="h-3.5 w-3.5"
+                      checked={selectedDiplomas.includes(diploma)}
+                      onChange={() => toggleDiploma(diploma)}
+                    />
+                    {diploma}
+                  </label>
+                ))}
+              </div>
+              <FieldError error={errors.diplomas} />
+            </div>
+
+            <div>
+              <p className="mb-2 text-sm text-white/70">Certifications UEFA</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {CERTIFICATION_OPTIONS.map((cert) => (
+                  <label
+                    key={cert}
+                    className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2.5 text-xs transition ${
+                      certifications.includes(cert)
+                        ? "border-[color:var(--px-accent)]/50 bg-[color:var(--px-accent)]/10 text-white"
+                        : "border-white/10 bg-white/5 text-white/60 hover:border-white/20"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="h-3.5 w-3.5"
+                      checked={certifications.includes(cert)}
+                      onChange={() => toggleCertification(cert)}
+                    />
+                    {cert}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-2 text-sm text-white/70">Justificatif (PDF ou image)</p>
+              <label
+                className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition ${
+                  errors.diplomaFile
+                    ? "border-[color:var(--px-danger)]/50 bg-[color:var(--px-danger)]/5"
+                    : diplomaFile
+                      ? "border-[color:var(--px-success)]/50 bg-[color:var(--px-success)]/5"
+                      : "border-white/15 bg-white/[0.02] hover:border-white/30"
+                }`}
+              >
+                <input
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp"
+                  onChange={(e) => {
+                    setDiplomaFile(e.target.files?.[0] ?? null);
+                    clearField("diplomaFile");
+                  }}
+                />
+                {diplomaFile ? (
+                  <>
+                    <span className="text-sm text-[color:var(--px-success)]">{diplomaFile.name}</span>
+                    <span className="text-[10px] text-white/40">Clique pour changer de fichier</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-sm text-white/50">Clique ou dépose ton fichier ici</span>
+                    <span className="text-[10px] text-white/30">PDF, JPG, PNG — max 10 Mo</span>
+                  </>
+                )}
+              </label>
+              <FieldError error={errors.diplomaFile} />
+            </div>
+
+            <Notice notice={notice} />
+            <div className="flex gap-3">
+              <button className="px-button-ghost w-full" type="button" onClick={() => setStep(2)}>
                 Retour
               </button>
               <button className="px-button w-full" type="submit" disabled={loading}>

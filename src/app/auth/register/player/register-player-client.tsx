@@ -6,6 +6,7 @@ import AuthShell from "@/components/auth-shell";
 import { FieldError, Notice, type NoticeData } from "@/components/notice";
 import { syncProfile } from "@/lib/profile-sync";
 import { supabase } from "@/lib/supabase";
+import { DEPARTMENTS, PLAYER_POSITIONS } from "@/lib/constants";
 import {
   sanitizeInput,
   validateEmail,
@@ -205,7 +206,12 @@ export default function RegisterPlayerPage() {
               </select>
               <input className="px-input" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
             </div>
-            <input className="px-input" placeholder="Ville" value={city} onChange={(e) => setCity(sanitizeInput(e.target.value))} />
+            <select className="px-select" value={city} onChange={(e) => setCity(e.target.value)}>
+              <option value="">Département</option>
+              {DEPARTMENTS.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
             <div className="grid gap-3 md:grid-cols-2">
               <select className="px-select" value={level} onChange={(e) => setLevel(e.target.value)}>
                 <option value="">Niveau</option>
@@ -213,7 +219,12 @@ export default function RegisterPlayerPage() {
                 <option value="Intermédiaire">Intermédiaire</option>
                 <option value="Confirmé">Confirmé</option>
               </select>
-              <input className="px-input" placeholder="Poste" value={position} onChange={(e) => setPosition(sanitizeInput(e.target.value))} />
+              <select className="px-select" value={position} onChange={(e) => setPosition(e.target.value)}>
+                <option value="">Poste</option>
+                {PLAYER_POSITIONS.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
             </div>
             <textarea
               className="min-h-[120px] w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30"
