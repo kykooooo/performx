@@ -6,13 +6,14 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useParams } from "next/navigation";
 import AppShell from "@/components/app-shell";
 import Breadcrumbs from "@/components/breadcrumbs";
-import { MapPinIcon, StarIcon } from "@/components/icons";
+import { CheckCircleIcon, MapPinIcon, StarIcon } from "@/components/icons";
 import { Notice, type NoticeData } from "@/components/notice";
 import { getAvailableSlots, normalizeTime } from "@/lib/booking";
 import { getCoachAvatarUrl } from "@/lib/coach-avatars";
 import { formatLongDate } from "@/lib/date";
 import { getAverageRating, getReviewTotal } from "@/lib/reviews";
 import { supabase } from "@/lib/supabase";
+import { mockCoaches, mockReviews } from "@/lib/mock-data";
 import type { AvailabilitySlot, Session } from "@/lib/types";
 
 type CoachRow = {
@@ -21,6 +22,9 @@ type CoachRow = {
   speciality: string;
   bio: string | null;
   location: string | null;
+  department: string | null;
+  diplomas: string[] | null;
+  experience: number | null;
   price_per_session: number | null;
   rating: number | null;
   reviews_count: number | null;
@@ -132,8 +136,49 @@ export default function CoachProfileClient() {
       }
 
       if (!mounted) return;
-      setCoach(coachData ?? null);
-      setReviews(reviewsData ?? []);
+
+      if (coachData) {
+        setCoach({
+          ...coachData,
+          department: null,
+          diplomas: null,
+          experience: null,
+        });
+        setReviews(reviewsData ?? []);
+      } else {
+        const mock = mockCoaches.find((c) => c.id === coachId);
+        if (mock) {
+          setCoach({
+            id: mock.id,
+            name: mock.name,
+            speciality: mock.speciality,
+            bio: mock.bio,
+            location: mock.location,
+            department: mock.department ?? null,
+            diplomas: mock.diplomas ?? null,
+            experience: mock.experience ?? null,
+            price_per_session: mock.pricePerSession,
+            rating: mock.rating,
+            reviews_count: mock.reviews,
+            availability: mock.availability,
+            avatar_url: null,
+          });
+          setReviews(
+            mockReviews
+              .filter((r) => r.coachId === coachId)
+              .map((r) => ({
+                id: r.id,
+                player_name: r.playerName,
+                rating: r.rating,
+                comment: r.comment,
+                date: r.date,
+              })),
+          );
+        } else {
+          setCoach(null);
+          setReviews([]);
+        }
+      }
       if (!sessionsError) {
         setSessions(
           (sessionsData ?? []).map((row, index) => ({
@@ -243,6 +288,39 @@ export default function CoachProfileClient() {
           </div>
           <div className="px-divider" />
           <p className="text-white/70">{coach.bio}</p>
+
+          {/* Enriched info */}
+          <div className="flex flex-wrap gap-2">
+            {coach.department && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
+                <MapPinIcon className="h-3.5 w-3.5" />
+                {coach.department}
+              </span>
+            )}
+            {coach.experience != null && coach.experience > 0 && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
+                {coach.experience} ans d&apos;expérience
+              </span>
+            )}
+          </div>
+
+          {coach.diplomas && coach.diplomas.length > 0 && (
+            <div>
+              <p className="mb-2 text-xs uppercase tracking-[0.3em] text-white/40">Diplômes & certifications</p>
+              <div className="flex flex-wrap gap-2">
+                {coach.diplomas.map((d) => (
+                  <span
+                    key={d}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--px-accent)]/20 bg-[color:var(--px-accent)]/10 px-3 py-1 text-xs font-medium text-[color:var(--px-accent)]"
+                  >
+                    <CheckCircleIcon className="h-3.5 w-3.5" />
+                    {d}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center gap-6">
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-white/40">Note moyenne</p>

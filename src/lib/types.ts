@@ -28,6 +28,9 @@ export type Coach = {
   speciality: string;
   bio: string;
   location: string;
+  department?: string;
+  diplomas?: string[];
+  experience?: number;
   pricePerSession: number;
   rating: number;
   reviews: number;

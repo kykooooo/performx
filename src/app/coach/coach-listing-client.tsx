@@ -15,10 +15,12 @@ import {
   BoltIcon,
   ArrowRightIcon,
   AlertIcon,
+  MapPinIcon,
 } from "@/components/icons";
 import { buildCoachAvatarMap } from "@/lib/coach-avatars";
 import { supabase } from "@/lib/supabase";
 import { mockCoaches } from "@/lib/mock-data";
+import { DEPARTMENTS } from "@/lib/constants";
 
 type CoachRow = {
   id: string;
@@ -64,6 +66,7 @@ export default function CoachPage() {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [activeChip, setActiveChip] = useState("Tous");
+  const [activeDepartment, setActiveDepartment] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -102,9 +105,12 @@ export default function CoachPage() {
       const matchesChip =
         activeChip === "Tous" ||
         coach.speciality.toLowerCase().includes(activeChip.toLowerCase());
-      return matchesQuery && matchesChip;
+      const matchesDepartment =
+        !activeDepartment ||
+        (coach.location ?? "").includes(activeDepartment);
+      return matchesQuery && matchesChip && matchesDepartment;
     });
-  }, [coaches, query, activeChip]);
+  }, [coaches, query, activeChip, activeDepartment]);
 
   const avgRating = useMemo(() => {
     const ratings = coaches.map((c) => c.rating ?? 0).filter((r) => r > 0);
@@ -227,6 +233,22 @@ export default function CoachPage() {
                 </button>
               ))}
             </div>
+
+            {/* Department filter */}
+            <div className="flex flex-wrap items-center gap-3">
+              <MapPinIcon className="h-4 w-4 text-white/40" />
+              <select
+                className="px-select max-w-[280px]"
+                value={activeDepartment}
+                onChange={(e) => setActiveDepartment(e.target.value)}
+                aria-label="Filtrer par département"
+              >
+                <option value="">Tous les départements</option>
+                {DEPARTMENTS.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Résultat count */}
@@ -273,6 +295,7 @@ export default function CoachPage() {
           onAction={() => {
             setQuery("");
             setActiveChip("Tous");
+            setActiveDepartment("");
           }}
         />
       )}

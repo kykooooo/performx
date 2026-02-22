@@ -9,6 +9,7 @@ import SessionCalendarMonth from "@/components/session-calendar-month";
 import { CalendarIcon, InboxIcon } from "@/components/icons";
 import { addDays, addMonths, formatLongDate, formatMonthYear, startOfMonth, startOfWeek } from "@/lib/date";
 import { supabase } from "@/lib/supabase";
+import { mockSessions, mockCoaches } from "@/lib/mock-data";
 import type { Session } from "@/lib/types";
 
 const normalizeTime = (value: string) => (value.length >= 5 ? value.slice(0, 5) : value);
@@ -41,7 +42,10 @@ export default function SessionsPage() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
         setUserId(null);
-        setSessions([]);
+        setSessions(mockSessions);
+        const lookup: Record<string, string> = {};
+        mockCoaches.forEach((c) => { lookup[c.id] = c.name; });
+        setCoachLookup(lookup);
         setLoading(false);
         return;
       }
@@ -65,14 +69,21 @@ export default function SessionsPage() {
         status: row.status,
       })) ?? [];
 
-      setSessions(mapped);
-      const lookup: Record<string, string> = {};
-      (data as SessionRow[] | null)?.forEach((row) => {
-        if (row.coach_id) {
-          lookup[row.coach_id] = row.coach?.name ?? "Coach";
-        }
-      });
-      setCoachLookup(lookup);
+      if (mapped.length > 0) {
+        setSessions(mapped);
+        const lookup: Record<string, string> = {};
+        (data as SessionRow[] | null)?.forEach((row) => {
+          if (row.coach_id) {
+            lookup[row.coach_id] = row.coach?.name ?? "Coach";
+          }
+        });
+        setCoachLookup(lookup);
+      } else {
+        setSessions(mockSessions);
+        const lookup: Record<string, string> = {};
+        mockCoaches.forEach((c) => { lookup[c.id] = c.name; });
+        setCoachLookup(lookup);
+      }
       setLoading(false);
     };
 
@@ -93,16 +104,6 @@ export default function SessionsPage() {
 
   return (
     <AppShell active="/sessions" title="Mes séances" description="Suivi de tes réservations et de ton planning.">
-      {!userId && !loading && (
-        <FeedbackState
-          icon={<InboxIcon className="h-7 w-7 text-white/40" />}
-          title="Connexion requise"
-          description="Connecte-toi pour accéder à tes réservations et à ton planning."
-          actionLabel="Se connecter"
-          actionHref="/auth/login"
-        />
-      )}
-
       <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
         <div className="px-stack-3">
           <div className="px-card-strong px-fade-up p-4">

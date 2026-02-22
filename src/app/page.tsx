@@ -77,40 +77,40 @@ const TESTIMONIALS = [
     name: "Thomas D.",
     role: "Parent d'un joueur U15",
     quote:
-      "Je peux suivre les seances, les retours des coachs et reserver rapidement pour mon fils. C'est clair et efficace.",
+      "Je peux suivre les séances, les retours des coachs et réserver rapidement pour mon fils. C'est clair et efficace.",
   },
 ];
 
 const IMMERSIVE_GALLERY = [
   {
     src: "https://images.pexels.com/photos/274422/pexels-photo-274422.jpeg?auto=compress&cs=tinysrgb&w=1400",
-    alt: "Footballeur en action pendant un entrainement",
+    alt: "Footballeur en action pendant un entraînement",
     label: "Travail technique",
   },
   {
     src: "https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=1400",
-    alt: "Coach qui dirige une seance terrain",
-    label: "Coaching personnalise",
+    alt: "Coach qui dirige une séance terrain",
+    label: "Coaching personnalisé",
   },
   {
     src: "https://images.pexels.com/photos/918798/pexels-photo-918798.jpeg?auto=compress&cs=tinysrgb&w=1400",
-    alt: "Joueurs de football en preparation avant seance",
-    label: "Suivi des progres",
+    alt: "Joueurs de football en préparation avant séance",
+    label: "Suivi des progrès",
   },
 ];
 
 const PARENT_BENEFITS = [
   {
     title: "Suivi simple",
-    text: "Visualisez les seances reservees, terminees et les prochaines etapes depuis un seul espace.",
+    text: "Visualisez les séances réservées, terminées et les prochaines étapes depuis un seul espace.",
   },
   {
     title: "Paiement clair",
-    text: "Montants, coach et horaires valides avant confirmation pour eviter les surprises.",
+    text: "Montants, coach et horaires validés avant confirmation pour éviter les surprises.",
   },
   {
     title: "Communication directe",
-    text: "Messagerie integree avec le coach pour preparer la seance et suivre le debrief.",
+    text: "Messagerie intégrée avec le coach pour préparer la séance et suivre le débrief.",
   },
 ];
 
@@ -182,6 +182,9 @@ export default function HomePage() {
                 Créer un compte
                 <ArrowRightIcon className="h-4 w-4" />
               </Link>
+              <Link href="/auth/login" className="px-button-ghost text-base px-7 py-4 border-[color:var(--px-accent)]/30 text-[color:var(--px-accent)]">
+                Connexion démo
+              </Link>
             </div>
 
             <div className="px-fade-up" style={{ animationDelay: "320ms" }}>
@@ -227,7 +230,7 @@ export default function HomePage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                 <p className="absolute bottom-3 left-3 text-xs uppercase tracking-[0.2em] text-white/80">
-                  Entrainement individuel
+                  Entraînement individuel
                 </p>
               </div>
               <div className="relative h-40 overflow-hidden rounded-2xl border border-white/10">
@@ -240,7 +243,7 @@ export default function HomePage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                 <p className="absolute bottom-3 left-3 text-xs uppercase tracking-[0.2em] text-white/80">
-                  Coach certifie
+                  Coach certifié
                 </p>
               </div>
             </div>
@@ -312,10 +315,10 @@ export default function HomePage() {
           <div className="mb-8 text-center">
             <div className="mx-auto mb-3 flex items-center justify-center gap-3 text-xs uppercase tracking-[0.35em] text-white/40">
               <span className="h-[2px] w-10 rounded-full bg-[color:var(--px-accent)]" />
-              Experience terrain
+              Expérience terrain
               <span className="h-[2px] w-10 rounded-full bg-[color:var(--px-accent)]" />
             </div>
-            <h2 className="text-4xl text-white sm:text-5xl">Le foot au coeur de la plateforme</h2>
+            <h2 className="text-4xl text-white sm:text-5xl">Le foot au cœur de la plateforme</h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
@@ -351,10 +354,10 @@ export default function HomePage() {
                   Pour les parents
                 </div>
                 <h2 className="text-3xl text-white sm:text-4xl">
-                  Une experience rassurante et lisible
+                  Une expérience rassurante et lisible
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm text-white/60">
-                  Cette version demo met l&apos;accent sur le parcours parent: reservation, suivi et echanges coach-joueur.
+                  Cette version démo met l&apos;accent sur le parcours parent : réservation, suivi et échanges coach-joueur.
                 </p>
               </div>
               <Link href="/dashboard/club" className="px-button-ghost">

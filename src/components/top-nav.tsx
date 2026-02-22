@@ -23,12 +23,27 @@ type NavItem = {
   icon: ReactNode;
 };
 
+const UNREAD_COUNT = 3; // demo
+
 const NAV_ITEMS: NavItem[] = [
   { label: "Accueil", href: "/", icon: <HomeIcon className="h-4 w-4" /> },
   { label: "Coach", href: "/coach", icon: <WhistleIcon className="h-4 w-4" /> },
   { label: "Joueurs", href: "/players", icon: <UserIcon className="h-4 w-4" /> },
   { label: "Mes séances", href: "/sessions", icon: <CalendarIcon className="h-4 w-4" /> },
-  { label: "Messages", href: "/messages", icon: <ChatIcon className="h-4 w-4" /> },
+  {
+    label: "Messages",
+    href: "/messages",
+    icon: (
+      <span className="relative">
+        <ChatIcon className="h-4 w-4" />
+        {UNREAD_COUNT > 0 && (
+          <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[color:var(--px-danger)] px-1 text-[9px] font-bold leading-none text-white">
+            {UNREAD_COUNT}
+          </span>
+        )}
+      </span>
+    ),
+  },
   { label: "Dashboard", href: "/dashboard", icon: <GridIcon className="h-4 w-4" /> },
 ];
 
