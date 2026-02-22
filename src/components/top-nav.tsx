@@ -47,13 +47,14 @@ export default function TopNav({ active }: { active?: string }) {
         </div>
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-1 text-sm lg:flex">
+        <nav aria-label="Navigation principale" className="hidden items-center gap-1 text-sm lg:flex">
           {NAV_ITEMS.map((item) => {
             const isActive = active === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={isActive ? "page" : undefined}
                 className={`flex items-center gap-2 rounded-full border px-4 py-2 transition ${
                   isActive
                     ? "border-[color:var(--px-accent)] bg-white/10 text-white"
@@ -79,6 +80,8 @@ export default function TopNav({ active }: { active?: string }) {
             type="button"
             onClick={() => setMobileOpen(true)}
             aria-label="Ouvrir le menu"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav-drawer"
           >
             <MenuIcon className="h-5 w-5" />
           </button>
@@ -90,11 +93,16 @@ export default function TopNav({ active }: { active?: string }) {
         <div
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Mobile drawer */}
       <div
+        id="mobile-nav-drawer"
+        role="dialog"
+        aria-label="Menu de navigation"
+        aria-modal={mobileOpen}
         className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-[320px] flex-col border-l border-white/10 bg-[color:var(--px-bg)] transition-transform duration-300 lg:hidden ${
           mobileOpen ? "translate-x-0" : "translate-x-full"
         }`}
@@ -111,13 +119,14 @@ export default function TopNav({ active }: { active?: string }) {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 p-4">
+        <nav aria-label="Navigation mobile" className="flex-1 space-y-1 p-4">
           {NAV_ITEMS.map((item) => {
             const isActive = active === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={isActive ? "page" : undefined}
                 onClick={() => setMobileOpen(false)}
                 className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition ${
                   isActive

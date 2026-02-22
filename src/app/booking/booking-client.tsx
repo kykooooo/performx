@@ -6,11 +6,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import AppShell from "@/components/app-shell";
 import { FeedbackState, LoadingState } from "@/components/feedback-state";
 import { AlertIcon, CalendarIcon, CheckCircleIcon, WhistleIcon } from "@/components/icons";
+import { Notice, type NoticeData } from "@/components/notice";
+import { normalizeTime } from "@/lib/booking";
 import { formatLongDate } from "@/lib/date";
 import { supabase } from "@/lib/supabase";
 import type { AvailabilitySlot } from "@/lib/types";
-
-const normalizeTime = (value: string) => (value.length >= 5 ? value.slice(0, 5) : value);
 
 const formatSlotLabel = (slot: AvailabilitySlot) => {
   const date = new Date(`${slot.date}T12:00`);
@@ -48,10 +48,11 @@ export default function BookingClient() {
   const [sessions, setSessions] = useState<{ date: string; time: string; status: string }[]>([]);
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
-  const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [notice, setNotice] = useState<NoticeData>(null);
   const [lastBookedCoachId, setLastBookedCoachId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [booking, setBooking] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -164,6 +165,7 @@ export default function BookingClient() {
       return;
     }
 
+    setBooking(true);
     const { data: bookingPath, error: bookingPathError } = await supabase
       .rpc("create_booking_with_conversation", {
         p_coach_id: selectedCoach.id,
@@ -179,6 +181,7 @@ export default function BookingClient() {
           ? "Ce créneau vient d'être réservé. Choisis un autre horaire."
           : bookingPathError?.message ?? "Impossible de réserver.";
       setNotice({ type: "error", text });
+      setBooking(false);
       return;
     }
 
@@ -202,7 +205,6 @@ export default function BookingClient() {
       coachName: selectedCoach.name,
       date: effectiveSelectedSlot.date,
       time: normalizeTime(effectiveSelectedSlot.time),
-      price: String(selectedCoach.price_per_session ?? 0),
       bookingId: rpcData.booking_id,
     });
     if (rpcData.conversation_id) {
@@ -303,6 +305,7 @@ export default function BookingClient() {
                   <button
                     key={`${slot.date}-${slot.time}`}
                     type="button"
+                    aria-pressed={isSelected}
                     className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-sm transition duration-200 ${
                       isSelected
                         ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-white"
@@ -316,17 +319,9 @@ export default function BookingClient() {
                 );
               })}
             </div>
-            {notice && (
-              <div
-                className={`mt-4 rounded-xl border px-3 py-2 text-xs ${
-                  notice.type === "success"
-                    ? "border-[color:var(--px-success)]/40 bg-[color:var(--px-success)]/15 text-[color:var(--px-success)]"
-                    : "border-[color:var(--px-danger)]/40 bg-[color:var(--px-danger)]/15 text-[color:var(--px-danger)]"
-                }`}
-              >
-                {notice.text}
-              </div>
-            )}
+            <div className="mt-4">
+              <Notice notice={notice} />
+            </div>
           </div>
           <div className="px-card p-6">
             <h3 className="text-lg text-white">Dernières réservations</h3>
@@ -376,9 +371,13 @@ export default function BookingClient() {
               className="px-button mt-5 w-full"
               type="button"
               onClick={handleBook}
-              disabled={!effectiveSelectedSlot || !selectedCoach}
+              disabled={!effectiveSelectedSlot || !selectedCoach || booking}
             >
-              Confirmer la réservation
+              {booking ? (
+                <><span className="px-spinner mr-2" /> Réservation en cours...</>
+              ) : (
+                "Confirmer la réservation"
+              )}
             </button>
             {lastBookedCoachId && (
               <Link href={`/messages?coach=${lastBookedCoachId}`} className="px-button-ghost mt-3 w-full text-center">

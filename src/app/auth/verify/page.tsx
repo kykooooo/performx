@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import AuthShell from "@/components/auth-shell";
+
+export const metadata: Metadata = {
+  title: "Vérification du compte",
+  robots: { index: false },
+};
 
 export default function VerifyPage() {
   return (

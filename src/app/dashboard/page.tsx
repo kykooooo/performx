@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import AppShell from "@/components/app-shell";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  robots: { index: false },
+};
 import ScrollReveal from "@/components/scroll-reveal";
 import {
   WhistleIcon,

@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import AuthShell from "@/components/auth-shell";
+
+export const metadata: Metadata = {
+  title: "Inscription",
+  description: "Crée ton compte PerformX en tant que joueur ou coach.",
+};
 
 export default function RegisterChoicePage() {
   return (

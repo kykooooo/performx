@@ -2,7 +2,7 @@ import type { AvailabilitySlot, Booking, Coach, Session } from "./types";
 
 let idCounter = 100;
 
-const normalizeTime = (value: string) => {
+export const normalizeTime = (value: string) => {
   if (!value) return value;
   return value.length >= 5 ? value.slice(0, 5) : value;
 };

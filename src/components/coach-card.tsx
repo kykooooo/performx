@@ -104,7 +104,7 @@ export default function CoachCard({
             ))}
           </div>
           <span className="text-xs font-medium text-white/70">{rating.toFixed(1)}</span>
-          <span className="text-xs text-white/40">({reviews})</span>
+          <span className="text-xs text-white/50">({reviews})</span>
         </div>
       </div>
 

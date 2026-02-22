@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
 import AppShell from "@/components/app-shell";
+import JsonLd from "@/components/json-ld";
 import {
   BoltIcon,
   SearchIcon,
@@ -112,9 +114,33 @@ const PARENT_BENEFITS = [
   },
 ];
 
+export const metadata: Metadata = {
+  title: "PerformX | Coaching Football Individuel – Trouve ton coach",
+  description:
+    "Réserve des séances de coaching football individuel avec des coachs certifiés. Progresse rapidement avec PerformX.",
+};
+
 export default function HomePage() {
   return (
     <AppShell active="/" hideTitle>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "PerformX",
+          url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://performx.fr",
+          description:
+            "Plateforme de coaching football individuel. Trouve ton coach, réserve une séance privée.",
+          potentialAction: {
+            "@type": "SearchAction",
+            target: {
+              "@type": "EntryPoint",
+              urlTemplate: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://performx.fr"}/coach?q={search_term_string}`,
+            },
+            "query-input": "required name=search_term_string",
+          },
+        }}
+      />
       {/* ── Hero ── */}
       <section className="relative py-8 lg:py-16">
         <div className="grid items-center gap-10 lg:grid-cols-[1.3fr_0.7fr]">

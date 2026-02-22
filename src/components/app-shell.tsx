@@ -14,7 +14,7 @@ export default function AppShell({ children, active, title, description, hideTit
   return (
     <div className="flex min-h-screen flex-col">
       <TopNav active={active} />
-      <main className="px-container px-main-stack">
+      <main id="main-content" className="px-container px-main-stack">
         {!hideTitle && (title || description) && (
           <div className="px-section px-stack-2">
             <div className="flex items-center gap-3 text-xs uppercase tracking-[0.35em] text-white/40">

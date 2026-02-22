@@ -15,7 +15,7 @@ export default function Footer() {
           </div>
 
           <div className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/40">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/50">
               Plateforme
             </p>
             <nav className="flex flex-col gap-2">
@@ -32,7 +32,7 @@ export default function Footer() {
           </div>
 
           <div className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/40">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/50">
               Compte
             </p>
             <nav className="flex flex-col gap-2">
@@ -49,7 +49,7 @@ export default function Footer() {
           </div>
 
           <div className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/40">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/50">
               Inscription
             </p>
             <nav className="flex flex-col gap-2">
@@ -64,10 +64,10 @@ export default function Footer() {
         </div>
 
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 md:flex-row">
-          <p className="text-xs text-white/30">
+          <p className="text-xs text-white/50">
             &copy; 2025 PerformX. Version de demonstration.
           </p>
-          <p className="text-xs text-white/30">
+          <p className="text-xs text-white/50">
             Built with Next.js + Supabase + Vercel
           </p>
         </div>

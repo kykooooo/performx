@@ -19,7 +19,7 @@ export default function SessionCalendar({ weekStart, sessions, coachLookup }: Se
   });
 
   return (
-    <div className="px-card p-4">
+    <div className="px-card p-4" role="region" aria-label="Calendrier des séances">
       <div className="flex gap-3 overflow-x-auto pb-2 lg:grid lg:grid-cols-7 lg:overflow-visible lg:pb-0">
         {days.map((item) => {
           const isToday = item.dateKey === todayKey;
@@ -31,11 +31,11 @@ export default function SessionCalendar({ weekStart, sessions, coachLookup }: Se
                 isToday ? "border-[color:var(--px-accent)]/40 bg-[color:var(--px-accent)]/10 lg:rounded-none lg:border-[color:var(--px-accent)]/40 lg:p-2" : "bg-white/[0.03]"
               }`}
             >
-              <div className="text-xs uppercase tracking-[0.2em] text-white/40">{item.short}</div>
+              <div className="text-xs uppercase tracking-[0.2em] text-white/50">{item.short}</div>
               <div className="mt-1 text-sm text-white">{formatDayLabel(item.date)}</div>
               <div className="mt-3 flex min-h-[120px] flex-col gap-3 lg:min-h-[220px]">
                 {daySessions.length === 0 && (
-                  <span className="text-xs text-white/30">Aucune séance</span>
+                  <span className="text-xs text-white/50">Aucune séance</span>
                 )}
                 {daySessions.map((event) => (
                   <div

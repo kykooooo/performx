@@ -28,7 +28,7 @@ export function FeedbackState({
   onAction,
 }: FeedbackStateProps) {
   return (
-    <div className="px-feedback px-stack-2">
+    <div className="px-feedback px-stack-2" role={tone === "error" ? "alert" : "status"} aria-live="polite">
       <div className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
         {icon}
       </div>
@@ -52,7 +52,7 @@ export function FeedbackState({
 
 export function LoadingState({ title = "Chargement", description = "Récupération des données..." }: { title?: string; description?: string }) {
   return (
-    <div className="px-feedback px-stack-2">
+    <div className="px-feedback px-stack-2" role="status" aria-live="polite">
       <div className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
         <span className="px-spinner" />
       </div>
