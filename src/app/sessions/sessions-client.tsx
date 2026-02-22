@@ -5,8 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/app-shell";
 import { FeedbackState, LoadingState } from "@/components/feedback-state";
 import SessionCalendar from "@/components/session-calendar";
+import SessionCalendarMonth from "@/components/session-calendar-month";
 import { CalendarIcon, InboxIcon } from "@/components/icons";
-import { addDays, formatLongDate, startOfWeek } from "@/lib/date";
+import { addDays, addMonths, formatLongDate, formatMonthYear, startOfMonth, startOfWeek } from "@/lib/date";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@/lib/types";
 
@@ -28,6 +29,8 @@ export default function SessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [coachLookup, setCoachLookup] = useState<Record<string, string>>({});
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
+  const [monthStart, setMonthStart] = useState(() => startOfMonth(new Date()));
+  const [viewMode, setViewMode] = useState<"week" | "month">("week");
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -161,28 +164,58 @@ export default function SessionsPage() {
         <div className="px-stack-2 px-fade-up" style={{ animationDelay: "120ms" }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-white/70">
-              <button
-                className="px-button-ghost"
-                type="button"
-                onClick={() => setWeekStart((prev) => addDays(prev, -7))}
-              >
-                ◀
-              </button>
-              <span className="px-pill">Semaine du {formatLongDate(weekStart)}</span>
-              <button
-                className="px-button-ghost"
-                type="button"
-                onClick={() => setWeekStart((prev) => addDays(prev, 7))}
-              >
-                ▶
-              </button>
+              {viewMode === "week" ? (
+                <>
+                  <button
+                    className="px-button-ghost"
+                    type="button"
+                    onClick={() => setWeekStart((prev) => addDays(prev, -7))}
+                  >
+                    ◀
+                  </button>
+                  <span className="px-pill">Semaine du {formatLongDate(weekStart)}</span>
+                  <button
+                    className="px-button-ghost"
+                    type="button"
+                    onClick={() => setWeekStart((prev) => addDays(prev, 7))}
+                  >
+                    ▶
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    className="px-button-ghost"
+                    type="button"
+                    onClick={() => setMonthStart((prev) => addMonths(prev, -1))}
+                  >
+                    ◀
+                  </button>
+                  <span className="px-pill capitalize">{formatMonthYear(monthStart)}</span>
+                  <button
+                    className="px-button-ghost"
+                    type="button"
+                    onClick={() => setMonthStart((prev) => addMonths(prev, 1))}
+                  >
+                    ▶
+                  </button>
+                </>
+              )}
             </div>
-            <select className="px-select max-w-[180px]">
-              <option>Vue semaine</option>
-              <option>Vue mois</option>
+            <select
+              className="px-select max-w-[180px]"
+              value={viewMode}
+              onChange={(e) => setViewMode(e.target.value as "week" | "month")}
+            >
+              <option value="week">Vue semaine</option>
+              <option value="month">Vue mois</option>
             </select>
           </div>
-          <SessionCalendar weekStart={weekStart} sessions={upcomingSessions} coachLookup={coachLookup} />
+          {viewMode === "week" ? (
+            <SessionCalendar weekStart={weekStart} sessions={upcomingSessions} coachLookup={coachLookup} />
+          ) : (
+            <SessionCalendarMonth monthStart={monthStart} sessions={upcomingSessions} coachLookup={coachLookup} />
+          )}
         </div>
       </div>
     </AppShell>
