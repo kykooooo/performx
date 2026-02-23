@@ -447,6 +447,78 @@ export const mockBookings: Booking[] = [
   },
 ];
 
+// ── Mock conversations & messages (demo messagerie) ──
+
+export type MockConversation = {
+  id: string;
+  otherName: string;
+  otherUserId: string;
+  created_at: string;
+};
+
+export type MockMessage = {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  body: string;
+  created_at: string;
+};
+
+const msgDate = (daysAgo: number, hours: number, minutes: number) => {
+  const d = addDays(baseWeek, -daysAgo);
+  d.setHours(hours, minutes, 0, 0);
+  return d.toISOString();
+};
+
+export const mockConversations: MockConversation[] = [
+  { id: "conv_1", otherName: "Jean Dupont", otherUserId: "user_10", created_at: msgDate(2, 14, 0) },
+  { id: "conv_2", otherName: "Sarah Mbappé", otherUserId: "user_12", created_at: msgDate(5, 10, 30) },
+  { id: "conv_3", otherName: "Amina Reza", otherUserId: "user_14", created_at: msgDate(1, 18, 15) },
+];
+
+export const mockMessages: MockMessage[] = [
+  // Conv 1 — Jean Dupont (technique)
+  { id: "msg_1", conversationId: "conv_1", senderId: "user_10", body: "Salut Alex ! Prêt pour la séance de mardi ?", created_at: msgDate(2, 14, 0) },
+  { id: "msg_2", conversationId: "conv_1", senderId: "user_1", body: "Oui, j'ai hâte ! On travaille les tirs cadrés ?", created_at: msgDate(2, 14, 5) },
+  { id: "msg_3", conversationId: "conv_1", senderId: "user_10", body: "Exactement, on va bosser le contrôle orienté + frappe enchaînée. Pense à tes crampons moulés.", created_at: msgDate(2, 14, 8) },
+  { id: "msg_4", conversationId: "conv_1", senderId: "user_1", body: "Parfait, j'apporte aussi de l'eau. À mardi !", created_at: msgDate(2, 14, 12) },
+  { id: "msg_5", conversationId: "conv_1", senderId: "user_10", body: "Top ! On se retrouve au terrain synthétique à 18h. 💪", created_at: msgDate(2, 14, 15) },
+  // Conv 2 — Sarah Mbappé (gardienne)
+  { id: "msg_6", conversationId: "conv_2", senderId: "user_12", body: "Bonjour Alex, j'ai regardé ta dernière séance. Tu progresses bien sur les sorties aériennes.", created_at: msgDate(5, 10, 30) },
+  { id: "msg_7", conversationId: "conv_2", senderId: "user_1", body: "Merci Sarah ! J'aimerais travailler les réflexes la prochaine fois.", created_at: msgDate(5, 11, 0) },
+  { id: "msg_8", conversationId: "conv_2", senderId: "user_12", body: "Bonne idée, je prépare un circuit réactivité. On se cale ça jeudi ?", created_at: msgDate(5, 11, 15) },
+  { id: "msg_9", conversationId: "conv_2", senderId: "user_1", body: "Jeudi c'est bon pour moi. 16h ça te va ?", created_at: msgDate(5, 11, 20) },
+  { id: "msg_10", conversationId: "conv_2", senderId: "user_12", body: "Parfait, c'est noté. À jeudi !", created_at: msgDate(5, 11, 25) },
+  // Conv 3 — Amina Reza (frappe)
+  { id: "msg_11", conversationId: "conv_3", senderId: "user_1", body: "Bonjour Amina, est-ce que tu as des créneaux cette semaine ?", created_at: msgDate(1, 18, 15) },
+  { id: "msg_12", conversationId: "conv_3", senderId: "user_14", body: "Salut ! Oui, j'ai un créneau mardi à 17h et un autre jeudi à 19h.", created_at: msgDate(1, 18, 30) },
+  { id: "msg_13", conversationId: "conv_3", senderId: "user_1", body: "Je prends mardi 17h ! On continue sur les frappes enroulées ?", created_at: msgDate(1, 18, 35) },
+  { id: "msg_14", conversationId: "conv_3", senderId: "user_14", body: "Oui, et on ajoutera du travail de placement avant la frappe. Tu vas voir la différence.", created_at: msgDate(1, 18, 40) },
+];
+
+// ── Mock player reviews (avis de coachs sur les joueurs) ──
+
+export type MockPlayerReview = {
+  id: string;
+  playerId: string;
+  coach_name: string;
+  rating: number;
+  comment: string;
+  date: string;
+};
+
+export const mockPlayerReviews: MockPlayerReview[] = [
+  { id: "prev_1", playerId: "player_1", coach_name: "Jean Dupont", rating: 4, comment: "Bon potentiel technique, belle progression sur les passes longues.", date: toISODate(addDays(baseWeek, -8)) },
+  { id: "prev_2", playerId: "player_1", coach_name: "Amina Reza", rating: 5, comment: "Très motivé et à l'écoute. Sa frappe s'est nettement améliorée.", date: toISODate(addDays(baseWeek, -3)) },
+  { id: "prev_3", playerId: "player_2", coach_name: "Jean Dupont", rating: 5, comment: "Excellent en finition, un vrai sens du but. Continue comme ça.", date: toISODate(addDays(baseWeek, -5)) },
+  { id: "prev_4", playerId: "player_2", coach_name: "Noa El Mahdi", rating: 4, comment: "Bon dribbleur, doit encore progresser sur le pied gauche.", date: toISODate(addDays(baseWeek, -2)) },
+  { id: "prev_5", playerId: "player_3", coach_name: "Sarah Mbappé", rating: 4, comment: "En bonne voie, le placement s'améliore séance après séance.", date: toISODate(addDays(baseWeek, -10)) },
+  { id: "prev_6", playerId: "player_4", coach_name: "Sarah Mbappé", rating: 4, comment: "Bons réflexes, le jeu au pied progresse bien.", date: toISODate(addDays(baseWeek, -6)) },
+  { id: "prev_7", playerId: "player_5", coach_name: "Philippe Le Divert", rating: 5, comment: "Endurance au top, pressing très efficace. Joueur modèle.", date: toISODate(addDays(baseWeek, -4)) },
+  { id: "prev_8", playerId: "player_7", coach_name: "Kevin Morel", rating: 4, comment: "Bonne lecture de jeu, les centres sont de plus en plus précis.", date: toISODate(addDays(baseWeek, -7)) },
+  { id: "prev_9", playerId: "player_8", coach_name: "Noa El Mahdi", rating: 5, comment: "Vision de jeu exceptionnelle. Coups de pied arrêtés très propres.", date: toISODate(addDays(baseWeek, -1)) },
+];
+
 export const mockReviews: Review[] = [
   {
     id: "review_1",

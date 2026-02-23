@@ -10,6 +10,7 @@ import { MapPinIcon, StarIcon } from "@/components/icons";
 import { Notice, type NoticeData } from "@/components/notice";
 import { normalizeTime } from "@/lib/booking";
 import { formatLongDate } from "@/lib/date";
+import { mockPlayers, mockPlayerReviews } from "@/lib/mock-data";
 import { getAverageRating, getReviewTotal } from "@/lib/reviews";
 import { supabase } from "@/lib/supabase";
 
@@ -84,6 +85,40 @@ export default function PlayerProfileClient() {
         .select("id, coach_name, rating, comment, date")
         .eq("player_id", playerId)
         .order("date", { ascending: false });
+
+      // Mock data fallback if Supabase returns nothing
+      if (!mounted) return;
+      if (!playerData) {
+        const mockPlayer = mockPlayers.find((p) => p.id === playerId);
+        if (mockPlayer) {
+          const [firstName, ...lastParts] = mockPlayer.name.split(" ");
+          setPlayer({
+            user_id: mockPlayer.id,
+            first_name: firstName,
+            last_name: lastParts.join(" "),
+            city: mockPlayer.city,
+            level: mockPlayer.level,
+            position: mockPlayer.position,
+            objectives: mockPlayer.objectives ?? null,
+            avatar_url: null,
+            rating: mockPlayer.rating,
+            reviews_count: mockPlayer.reviews,
+          });
+          setReviews(
+            mockPlayerReviews
+              .filter((r) => r.playerId === playerId)
+              .map((r) => ({
+                id: r.id,
+                coach_name: r.coach_name,
+                rating: r.rating,
+                comment: r.comment,
+                date: r.date,
+              })),
+          );
+          setLoading(false);
+          return;
+        }
+      }
 
       const { data: userData } = await supabase.auth.getUser();
       const role = (userData.user?.user_metadata?.role as string | undefined) ?? null;

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Logo from "./logo";
+import ThemeToggle from "./theme-toggle";
 import { supabase } from "@/lib/supabase";
 import {
   CalendarIcon,
@@ -104,6 +105,7 @@ export default function TopNav({ active }: { active?: string }) {
         </nav>
 
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           {loggedIn ? (
             <button
               className="px-button-ghost hidden text-sm sm:inline-flex"

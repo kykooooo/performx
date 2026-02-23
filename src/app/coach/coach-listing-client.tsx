@@ -67,6 +67,7 @@ export default function CoachPage() {
   const [query, setQuery] = useState("");
   const [activeChip, setActiveChip] = useState("Tous");
   const [activeDepartment, setActiveDepartment] = useState("");
+  const [sortBy, setSortBy] = useState<"rating" | "price-asc" | "price-desc" | "name">("rating");
 
   useEffect(() => {
     let mounted = true;
@@ -96,7 +97,7 @@ export default function CoachPage() {
 
   const filteredCoaches = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    return coaches.filter((coach) => {
+    const filtered = coaches.filter((coach) => {
       const matchesQuery =
         !normalized ||
         coach.name.toLowerCase().includes(normalized) ||
@@ -110,7 +111,24 @@ export default function CoachPage() {
         (coach.location ?? "").includes(activeDepartment);
       return matchesQuery && matchesChip && matchesDepartment;
     });
-  }, [coaches, query, activeChip, activeDepartment]);
+
+    const sorted = [...filtered];
+    switch (sortBy) {
+      case "rating":
+        sorted.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+        break;
+      case "price-asc":
+        sorted.sort((a, b) => (a.price_per_session ?? 0) - (b.price_per_session ?? 0));
+        break;
+      case "price-desc":
+        sorted.sort((a, b) => (b.price_per_session ?? 0) - (a.price_per_session ?? 0));
+        break;
+      case "name":
+        sorted.sort((a, b) => a.name.localeCompare(b.name, "fr"));
+        break;
+    }
+    return sorted;
+  }, [coaches, query, activeChip, activeDepartment, sortBy]);
 
   const avgRating = useMemo(() => {
     const ratings = coaches.map((c) => c.rating ?? 0).filter((r) => r > 0);
@@ -234,7 +252,7 @@ export default function CoachPage() {
               ))}
             </div>
 
-            {/* Department filter */}
+            {/* Department filter + Sort */}
             <div className="flex flex-wrap items-center gap-3">
               <MapPinIcon className="h-4 w-4 text-white/40" />
               <select
@@ -247,6 +265,17 @@ export default function CoachPage() {
                 {DEPARTMENTS.map((d) => (
                   <option key={d} value={d}>{d}</option>
                 ))}
+              </select>
+              <select
+                className="px-select max-w-[220px]"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                aria-label="Trier les coachs"
+              >
+                <option value="rating">Meilleure note</option>
+                <option value="price-asc">Prix croissant</option>
+                <option value="price-desc">Prix décroissant</option>
+                <option value="name">Nom A-Z</option>
               </select>
             </div>
           </div>

@@ -203,14 +203,26 @@ export default function SessionsPage() {
                 </>
               )}
             </div>
-            <select
-              className="px-select max-w-[180px]"
-              value={viewMode}
-              onChange={(e) => setViewMode(e.target.value as "week" | "month")}
-            >
-              <option value="week">Vue semaine</option>
-              <option value="month">Vue mois</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="px-button-ghost px-3 py-2 text-xs"
+                onClick={() => {
+                  if (viewMode === "week") setWeekStart(startOfWeek(new Date()));
+                  else setMonthStart(startOfMonth(new Date()));
+                }}
+              >
+                Aujourd&apos;hui
+              </button>
+              <select
+                className="px-select max-w-[180px]"
+                value={viewMode}
+                onChange={(e) => setViewMode(e.target.value as "week" | "month")}
+              >
+                <option value="week">Vue semaine</option>
+                <option value="month">Vue mois</option>
+              </select>
+            </div>
           </div>
           {viewMode === "week" ? (
             <SessionCalendar weekStart={weekStart} sessions={upcomingSessions} coachLookup={coachLookup} />

@@ -16,7 +16,7 @@ import {
 } from "@/components/icons";
 import { formatLongDate } from "@/lib/date";
 import { supabase } from "@/lib/supabase";
-import { mockCoaches, mockSessions } from "@/lib/mock-data";
+import { mockCoaches, mockSessions, mockBookings } from "@/lib/mock-data";
 
 type CoachRow = {
   id: string;
@@ -47,6 +47,8 @@ export default function ClubDashboardPage() {
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [childInfo, setChildInfo] = useState<ChildInfo | null>(null);
   const [parentName, setParentName] = useState("");
+  const [totalSpent, setTotalSpent] = useState(0);
+  const [completedCount, setCompletedCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +88,8 @@ export default function ClubDashboardPage() {
             .slice(0, 3)
             .map((s) => ({ id: s.id, title: s.title, date: s.date, time: s.time })),
         );
+        setTotalSpent(mockBookings.reduce((sum, b) => sum + b.price, 0));
+        setCompletedCount(mockSessions.filter((s) => s.status === "completed").length);
         setLoading(false);
         return;
       }
@@ -240,11 +244,12 @@ export default function ClubDashboardPage() {
           )}
 
           {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             {[
-              { label: "Séances programmées", value: sessionCount, icon: <CalendarIcon className="h-5 w-5" />, color: "text-[color:var(--px-accent)]" },
-              { label: "Coachs disponibles", value: coachCount, icon: <WhistleIcon className="h-5 w-5" />, color: "text-[color:var(--px-success)]" },
-              { label: "Note moy. coachs", value: coaches.length > 0 ? (coaches.reduce((s, c) => s + (c.rating ?? 0), 0) / coaches.length).toFixed(1) : "-", icon: <StarIcon className="h-5 w-5" />, color: "text-[color:var(--px-warning)]" },
+              { label: "Séances à venir", value: sessionCount, icon: <CalendarIcon className="h-5 w-5" />, color: "text-[color:var(--px-accent)]" },
+              { label: "Séances terminées", value: completedCount, icon: <BoltIcon className="h-5 w-5" />, color: "text-[color:var(--px-success)]" },
+              { label: "Total investi", value: `${totalSpent}€`, icon: <UserIcon className="h-5 w-5" />, color: "text-[color:var(--px-warning)]" },
+              { label: "Note moy. coachs", value: coaches.length > 0 ? (coaches.reduce((s, c) => s + (c.rating ?? 0), 0) / coaches.length).toFixed(1) : "-", icon: <StarIcon className="h-5 w-5" />, color: "text-[color:var(--px-accent)]" },
             ].map((stat, i) => (
               <ScrollReveal key={stat.label} delay={i * 60}>
                 <div className="px-card flex items-center gap-4 p-5">
@@ -366,6 +371,37 @@ export default function ClubDashboardPage() {
                   </div>
                 </div>
               </ScrollReveal>
+
+              {/* Progression enfant */}
+              {childInfo && (
+                <ScrollReveal>
+                  <div className="px-card p-6">
+                    <h3 className="text-lg text-white mb-4">Progression de {childInfo.firstName}</h3>
+                    <div className="space-y-4">
+                      {[
+                        { label: "Technique", value: 72 },
+                        { label: "Endurance", value: 58 },
+                        { label: "Tactique", value: 65 },
+                        { label: "Mental", value: 80 },
+                      ].map((skill) => (
+                        <div key={skill.label}>
+                          <div className="flex items-center justify-between text-xs mb-1.5">
+                            <span className="text-white/70">{skill.label}</span>
+                            <span className="text-white">{skill.value}%</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-[color:var(--px-accent)] to-[color:var(--px-accent-2)]"
+                              style={{ width: `${skill.value}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-4 text-[10px] text-white/30 uppercase tracking-wider">Basé sur les retours des coachs</p>
+                  </div>
+                </ScrollReveal>
+              )}
             </div>
           </div>
         </>

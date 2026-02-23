@@ -272,7 +272,16 @@ export default function CoachProfileClient() {
                 </div>
                 <div>
                   <h2 className="text-3xl text-white">{coach.speciality}</h2>
-                  <p className="text-sm text-white/60">{coach.name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-white/60">{coach.name}</p>
+                    <span className="inline-flex items-center gap-1.5 text-xs">
+                      <span className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[color:var(--px-success)] opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-[color:var(--px-success)]" />
+                      </span>
+                      <span className="text-[color:var(--px-success)]">En ligne</span>
+                    </span>
+                  </div>
                 </div>
               </div>
               <div className="mt-2 flex items-center gap-2 text-sm text-white/60">

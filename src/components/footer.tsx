@@ -9,8 +9,8 @@ export default function Footer() {
           <div className="space-y-4">
             <Logo />
             <p className="max-w-xs text-sm text-white/50">
-              Version demo de la plateforme qui connecte joueurs, coachs et parents pour des
-              s&eacute;ances individuelles et un suivi personnalis&eacute;.
+              Version démo de la plateforme qui connecte joueurs, coachs et parents pour des
+              séances individuelles et un suivi personnalisé.
             </p>
           </div>
 
@@ -26,7 +26,7 @@ export default function Footer() {
                 Trouver un joueur
               </Link>
               <Link href="/booking" className="text-sm text-white/60 hover:text-white">
-                R&eacute;server une s&eacute;ance
+                Réserver une séance
               </Link>
             </nav>
           </div>
@@ -43,7 +43,7 @@ export default function Footer() {
                 Messages
               </Link>
               <Link href="/sessions" className="text-sm text-white/60 hover:text-white">
-                Mes s&eacute;ances
+                Mes séances
               </Link>
             </nav>
           </div>
@@ -54,7 +54,7 @@ export default function Footer() {
             </p>
             <nav className="flex flex-col gap-2">
               <Link href="/auth/register" className="text-sm text-white/60 hover:text-white">
-                Cr&eacute;er un compte
+                Créer un compte
               </Link>
               <Link href="/auth/login" className="text-sm text-white/60 hover:text-white">
                 Se connecter
@@ -65,7 +65,7 @@ export default function Footer() {
 
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 md:flex-row">
           <p className="text-xs text-white/50">
-            &copy; 2025 PerformX. Version de demonstration.
+            © 2025 PerformX. Version de démonstration.
           </p>
           <p className="text-xs text-white/50">
             Built with Next.js + Supabase + Vercel

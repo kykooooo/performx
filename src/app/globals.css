@@ -26,6 +26,18 @@
   --px-font-display: "Bebas Neue", "Manrope", sans-serif;
 }
 
+[data-theme="light"] {
+  --px-bg: #f5f5f7;
+  --px-surface: #ffffff;
+  --px-card: #ffffff;
+  --px-card-strong: #fafafa;
+  --px-border: #e0e0e5;
+  --px-muted: #6b7080;
+  --px-text: #1a1a2e;
+  --px-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  --px-shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
 @theme inline {
   --color-background: var(--px-bg);
   --color-foreground: var(--px-text);
@@ -378,6 +390,39 @@ a {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ── Light mode overrides ── */
+
+[data-theme="light"] body {
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(255, 106, 0, 0.06), transparent 45%),
+    radial-gradient(circle at 80% 10%, rgba(255, 138, 0, 0.04), transparent 40%);
+}
+
+[data-theme="light"] body::before {
+  opacity: 0;
+}
+
+[data-theme="light"] body::after {
+  opacity: 0;
+}
+
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] h4 {
+  text-shadow: none;
+}
+
+[data-theme="light"] ::selection {
+  background: rgba(255, 106, 0, 0.2);
+  color: #1a1a2e;
+}
+
+[data-theme="light"] header {
+  background: rgba(255, 255, 255, 0.85);
+  border-bottom-color: #e0e0e5;
 }
 
 input[type="range"] {

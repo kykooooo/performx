@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import AppShell from "@/components/app-shell";
+import ConfirmModal from "@/components/confirm-modal";
 import ScrollReveal from "@/components/scroll-reveal";
 import {
   CalendarIcon,
@@ -71,6 +72,12 @@ export default function CoachDashboardPage() {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [calendarView, setCalendarView] = useState<"week" | "month">("week");
   const [monthCursor, setMonthCursor] = useState(() => new Date());
+  const [confirmAction, setConfirmAction] = useState<{
+    title: string;
+    description: string;
+    tone: "danger" | "warning";
+    onConfirm: () => void;
+  } | null>(null);
 
   const mock = useMockFallback();
 
@@ -260,7 +267,7 @@ export default function CoachDashboardPage() {
     setSlotNotice({ type: "success", text: "Créneau ajouté." });
   };
 
-  const handleRemoveSlot = async (slotToRemove: AvailabilitySlot) => {
+  const executeRemoveSlot = useCallback(async (slotToRemove: AvailabilitySlot) => {
     if (!coach) return;
     const availability = Array.isArray(coach.availability) ? coach.availability : [];
     const updated = availability.filter(
@@ -279,9 +286,22 @@ export default function CoachDashboardPage() {
     }
 
     setCoach({ ...coach, availability: updated });
+    setSlotNotice({ type: "success", text: "Créneau supprimé." });
+  }, [coach, isDemo]);
+
+  const handleRemoveSlot = (slotToRemove: AvailabilitySlot) => {
+    setConfirmAction({
+      title: "Supprimer ce créneau ?",
+      description: `Le créneau du ${formatLongDate(new Date(`${slotToRemove.date}T12:00`))} à ${slotToRemove.time} sera supprimé.`,
+      tone: "danger",
+      onConfirm: () => {
+        setConfirmAction(null);
+        executeRemoveSlot(slotToRemove);
+      },
+    });
   };
 
-  const handleSessionStatusChange = async (
+  const executeSessionStatusChange = useCallback(async (
     sessionId: string,
     status: "completed" | "cancelled",
   ) => {
@@ -305,6 +325,26 @@ export default function CoachDashboardPage() {
       type: "success",
       text: status === "completed" ? "Séance marquée terminée." : "Séance annulée.",
     });
+  }, [isDemo]);
+
+  const handleSessionStatusChange = (
+    sessionId: string,
+    status: "completed" | "cancelled",
+  ) => {
+    if (status === "cancelled") {
+      const session = sessions.find((s) => s.id === sessionId);
+      setConfirmAction({
+        title: "Annuler cette séance ?",
+        description: `La séance « ${session?.title ?? ""} » sera annulée. Cette action est irréversible.`,
+        tone: "danger",
+        onConfirm: () => {
+          setConfirmAction(null);
+          executeSessionStatusChange(sessionId, status);
+        },
+      });
+    } else {
+      executeSessionStatusChange(sessionId, status);
+    }
   };
 
   return (
@@ -529,6 +569,16 @@ export default function CoachDashboardPage() {
                   <button className={`rounded-full px-3 py-1 text-xs transition ${calendarView === "week" ? "bg-[color:var(--px-accent)] text-black" : "text-white/60"}`} type="button" onClick={() => setCalendarView("week")}>Semaine</button>
                   <button className={`rounded-full px-3 py-1 text-xs transition ${calendarView === "month" ? "bg-[color:var(--px-accent)] text-black" : "text-white/60"}`} type="button" onClick={() => setCalendarView("month")}>Mois</button>
                 </div>
+                <button
+                  type="button"
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60 transition hover:border-[color:var(--px-accent)]/30 hover:text-white"
+                  onClick={() => {
+                    if (calendarView === "week") setWeekStart(startOfWeek(new Date()));
+                    else setMonthCursor(new Date());
+                  }}
+                >
+                  Aujourd&apos;hui
+                </button>
                 {calendarView === "week" ? (
                   <div className="flex items-center gap-2">
                     <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-white/60 hover:text-white" type="button" onClick={() => setWeekStart((prev) => addDays(prev, -7))}>◀</button>
@@ -604,6 +654,17 @@ export default function CoachDashboardPage() {
           </div>
         </section>
       </ScrollReveal>
+
+      <ConfirmModal
+        open={!!confirmAction}
+        title={confirmAction?.title ?? ""}
+        description={confirmAction?.description ?? ""}
+        tone={confirmAction?.tone ?? "danger"}
+        confirmLabel="Confirmer"
+        cancelLabel="Annuler"
+        onConfirm={() => confirmAction?.onConfirm()}
+        onCancel={() => setConfirmAction(null)}
+      />
     </AppShell>
   );
 }

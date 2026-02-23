@@ -9,6 +9,7 @@ import { AlertIcon, CalendarIcon, CheckCircleIcon, WhistleIcon } from "@/compone
 import { Notice, type NoticeData } from "@/components/notice";
 import { normalizeTime } from "@/lib/booking";
 import { formatLongDate } from "@/lib/date";
+import { mockCoaches, mockBookings } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
 import type { AvailabilitySlot } from "@/lib/types";
 
@@ -59,14 +60,26 @@ export default function BookingClient() {
 
     const fetchData = async () => {
       setLoading(true);
-      const { data: coachData } = await supabase
+      const { data: coachData, error: coachError } = await supabase
         .from("public_coaches")
         .select("id, name, speciality, price_per_session, availability")
         .order("rating", { ascending: false });
 
       if (!mounted) return;
-      setCoaches(coachData ?? []);
-      const fallbackCoachId = initialCoachId ?? coachData?.[0]?.id ?? "";
+
+      const rows: CoachRow[] =
+        !coachError && coachData && coachData.length > 0
+          ? coachData
+          : mockCoaches.map((c) => ({
+              id: c.id,
+              name: c.name,
+              speciality: c.speciality,
+              price_per_session: c.pricePerSession,
+              availability: c.availability,
+            }));
+
+      setCoaches(rows);
+      const fallbackCoachId = initialCoachId ?? rows[0]?.id ?? "";
       setSelectedCoachId(fallbackCoachId);
       setLoading(false);
     };
@@ -85,15 +98,26 @@ export default function BookingClient() {
   }, [initialCoachId]);
 
   useEffect(() => {
-    if (!userId) return;
     const fetchBookings = async () => {
-      const { data } = await supabase
-        .from("bookings")
-        .select("id, payment_status")
-        .eq("player_id", userId)
-        .order("created_at", { ascending: false });
+      if (userId) {
+        const { data } = await supabase
+          .from("bookings")
+          .select("id, payment_status")
+          .eq("player_id", userId)
+          .order("created_at", { ascending: false });
 
-      setBookings(data ?? []);
+        if (data && data.length > 0) {
+          setBookings(data);
+          return;
+        }
+      }
+      // Fallback mock bookings for demo
+      setBookings(
+        mockBookings.slice(0, 3).map((b) => ({
+          id: b.id,
+          payment_status: b.paymentStatus,
+        })),
+      );
     };
 
     fetchBookings();

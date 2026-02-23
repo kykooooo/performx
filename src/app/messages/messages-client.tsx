@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/app-shell";
 import { FeedbackState, LoadingState } from "@/components/feedback-state";
 import { AlertIcon, ChatIcon, InboxIcon } from "@/components/icons";
+import { mockConversations, mockMessages } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
 
 type Conversation = {
@@ -27,11 +28,30 @@ type ProfileRow = {
   last_name: string | null;
 };
 
-const formatMessageTime = (value: string) =>
-  new Intl.DateTimeFormat("fr-FR", {
+const formatMessageTime = (value: string) => {
+  const date = new Date(value);
+  const now = new Date();
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear();
+
+  const time = new Intl.DateTimeFormat("fr-FR", {
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(value));
+  }).format(date);
+
+  if (isToday) return time;
+  if (isYesterday) return `Hier · ${time}`;
+  return `${new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" }).format(date)} · ${time}`;
+};
 
 export default function MessagesClient() {
   const searchParams = useSearchParams();
@@ -47,6 +67,7 @@ export default function MessagesClient() {
   const [notice, setNotice] = useState<string | null>(null);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [mobileChatOpen, setMobileChatOpen] = useState(Boolean(coachId));
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const conversationsRef = useRef<Conversation[]>([]);
 
@@ -189,25 +210,55 @@ export default function MessagesClient() {
     setLoading(false);
   };
 
+  const loadDemoMode = () => {
+    isDemoMode.current = true;
+    const demoUserId = "user_1";
+    setUserId(demoUserId);
+    const demoConversations: Conversation[] = mockConversations.map((c) => ({
+      id: c.id,
+      created_at: c.created_at,
+      otherUserId: c.otherUserId,
+      otherName: c.otherName,
+    }));
+    setConversations(demoConversations);
+    const firstId = demoConversations[0]?.id ?? null;
+    setActiveConversationId(firstId);
+    if (firstId) {
+      setMessages(
+        mockMessages
+          .filter((m) => m.conversationId === firstId)
+          .map((m) => ({ id: m.id, sender_id: m.senderId, body: m.body, created_at: m.created_at })),
+      );
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) {
-        setUserId(null);
-        setMessages([]);
-        setError("Connecte-toi pour accéder à la messagerie.");
-        setLoading(false);
+        loadDemoMode();
         return;
       }
       setUserId(data.user.id);
       loadConversations(data.user.id, coachId).catch(() => {
-        setError("Impossible de charger les conversations.");
-        setLoading(false);
+        loadDemoMode();
       });
     });
   }, [coachId]);
 
+  const isDemoMode = useRef(false);
+
   useEffect(() => {
     if (!activeConversationId) return;
+
+    if (isDemoMode.current) {
+      setMessages(
+        mockMessages
+          .filter((m) => m.conversationId === activeConversationId)
+          .map((m) => ({ id: m.id, sender_id: m.senderId, body: m.body, created_at: m.created_at })),
+      );
+      return;
+    }
 
     const fetchMessages = async () => {
       const { data } = await supabase
@@ -280,6 +331,40 @@ export default function MessagesClient() {
 
   const handleSend = async () => {
     if (!userId || !activeConversationId || !newMessage.trim()) return;
+
+    if (isDemoMode.current) {
+      const demoMsg: MessageRow = {
+        id: `demo-${Date.now()}`,
+        sender_id: userId,
+        body: newMessage,
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, demoMsg]);
+      setNewMessage("");
+
+      // Simulate typing indicator then auto-reply
+      setIsTyping(true);
+      const delay = 1500 + Math.random() * 2000;
+      setTimeout(() => {
+        setIsTyping(false);
+        const replies = [
+          "Parfait, on se voit sur le terrain !",
+          "Bien reçu, je prépare la séance.",
+          "Super, n'oublie pas tes crampons !",
+          "OK ! On travaillera la technique.",
+          "C'est noté, à bientôt !",
+        ];
+        const replyMsg: MessageRow = {
+          id: `demo-reply-${Date.now()}`,
+          sender_id: "other",
+          body: replies[Math.floor(Math.random() * replies.length)],
+          created_at: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, replyMsg]);
+      }, delay);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("messages")
       .insert({ conversation_id: activeConversationId, sender_id: userId, body: newMessage })
@@ -396,6 +481,13 @@ export default function MessagesClient() {
                   <p className="mt-1 text-[10px] text-white/45">{formatMessageTime(message.created_at)}</p>
                 </div>
               ))}
+              {isTyping && (
+                <div className="flex items-center gap-1 rounded-2xl bg-white/10 px-3 py-2 w-fit">
+                  <span className="h-2 w-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <span className="h-2 w-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="h-2 w-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: "300ms" }} />
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
           </div>
