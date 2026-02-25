@@ -125,21 +125,22 @@ export default function ClubDashboardPage() {
         });
       }
 
-      const { data: coachData, count: coachTotal } = await supabase
-        .from("public_coaches")
-        .select("id, name, speciality, rating", { count: "exact" });
-
-      const { data: sessionData, count: sessionTotal } = await supabase
-        .from("sessions")
-        .select("id, title, date, time", { count: "exact" })
-        .order("date", { ascending: true })
-        .limit(3);
+      const [coachRes, sessionRes] = await Promise.all([
+        supabase
+          .from("public_coaches")
+          .select("id, name, speciality, rating", { count: "exact" }),
+        supabase
+          .from("sessions")
+          .select("id, title, date, time", { count: "exact" })
+          .order("date", { ascending: true })
+          .limit(3),
+      ]);
 
       if (!mounted) return;
-      setCoachCount(coachTotal ?? coachData?.length ?? 0);
-      setSessionCount(sessionTotal ?? sessionData?.length ?? 0);
-      setCoaches((coachData ?? []).slice(0, 4));
-      setSessions(sessionData ?? []);
+      setCoachCount(coachRes.count ?? coachRes.data?.length ?? 0);
+      setSessionCount(sessionRes.count ?? sessionRes.data?.length ?? 0);
+      setCoaches((coachRes.data ?? []).slice(0, 4));
+      setSessions(sessionRes.data ?? []);
       setLoading(false);
     };
 
@@ -169,7 +170,7 @@ export default function ClubDashboardPage() {
               <span className="px-gradient-text">!</span>
             </h1>
             <p
-              className="px-fade-up max-w-md text-base text-white/60"
+              className="px-fade-up max-w-md text-base text-white/70"
               style={{ animationDelay: "160ms" }}
             >
               Suis la progression de ton enfant et gère ses séances d&apos;entraînement.
@@ -219,12 +220,12 @@ export default function ClubDashboardPage() {
                     <h3 className="text-lg text-white">
                       {childInfo.firstName} {childInfo.lastName}
                     </h3>
-                    <p className="text-xs text-white/50">Joueur suivi</p>
+                    <p className="text-xs text-white/70">Joueur suivi</p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {childAge !== null && (
-                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60">
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
                       {childAge} ans
                     </span>
                   )}
@@ -234,7 +235,7 @@ export default function ClubDashboardPage() {
                     </span>
                   )}
                   {childInfo.position && (
-                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60">
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
                       {childInfo.position}
                     </span>
                   )}
@@ -258,7 +259,7 @@ export default function ClubDashboardPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-semibold text-white">{stat.value}</p>
-                    <p className="text-xs text-white/50">{stat.label}</p>
+                    <p className="text-xs text-white/70">{stat.label}</p>
                   </div>
                 </div>
               </ScrollReveal>
@@ -279,7 +280,7 @@ export default function ClubDashboardPage() {
                   {sessions.length === 0 ? (
                     <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
                       <CalendarIcon className="mx-auto h-8 w-8 text-white/20" />
-                      <p className="mt-2 text-sm text-white/50">Aucune séance programmée</p>
+                      <p className="mt-2 text-sm text-white/70">Aucune séance programmée</p>
                       <Link href="/booking" className="px-button mt-4 text-sm">
                         Réserver une séance
                       </Link>
@@ -297,7 +298,7 @@ export default function ClubDashboardPage() {
                             </div>
                             <div>
                               <p className="text-sm font-medium text-white">{session.title}</p>
-                              <p className="text-xs text-white/50">
+                              <p className="text-xs text-white/70">
                                 {formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}
                               </p>
                             </div>
@@ -331,12 +332,12 @@ export default function ClubDashboardPage() {
                         className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-3 transition hover:border-white/20"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-transparent text-white/60">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-transparent text-white/70">
                             <WhistleIcon className="h-4 w-4" />
                           </div>
                           <div>
                             <p className="text-sm font-medium text-white">{coach.name}</p>
-                            <p className="text-xs text-white/50">{coach.speciality}</p>
+                            <p className="text-xs text-white/70">{coach.speciality}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1">

@@ -186,7 +186,7 @@ export default function CoachProfileEditPage() {
               <span className="px-gradient-text">coach.</span>
             </h1>
             <p
-              className="px-fade-up max-w-md text-base text-white/60"
+              className="px-fade-up max-w-md text-base text-white/70"
               style={{ animationDelay: "160ms" }}
             >
               Mets à jour ton profil pour attirer plus de joueurs et remplir ton planning.
@@ -223,7 +223,7 @@ export default function CoachProfileEditPage() {
                     </div>
                     <div>
                       <h3 className="text-lg text-white">Identité</h3>
-                      <p className="text-xs text-white/50">Nom et photo affichés publiquement</p>
+                      <p className="text-xs text-white/70">Nom et photo affichés publiquement</p>
                     </div>
                   </div>
 
@@ -234,7 +234,7 @@ export default function CoachProfileEditPage() {
                         {avatarUrl ? (
                           <Image src={avatarUrl} alt="Avatar" fill sizes="80px" className="object-cover" />
                         ) : (
-                          <WhistleIcon className="h-8 w-8 text-white/40" />
+                          <WhistleIcon className="h-8 w-8 text-white/70" />
                         )}
                       </div>
                       <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--px-accent)] text-black text-[10px] font-bold shadow-lg">
@@ -254,13 +254,14 @@ export default function CoachProfileEditPage() {
                           }}
                         />
                       </label>
-                      <p className="mt-1 text-[11px] text-white/50">JPG, PNG. Max 2 Mo.</p>
+                      <p className="mt-1 text-[11px] text-white/70">JPG, PNG. Max 2 Mo.</p>
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Nom affiché</label>
+                    <label htmlFor="coach-edit-name" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Nom affiché</label>
                     <input
+                      id="coach-edit-name"
                       className="px-input mt-2"
                       placeholder="Jean Dupont"
                       value={name}
@@ -270,10 +271,11 @@ export default function CoachProfileEditPage() {
                   </div>
 
                   <div className="mt-4">
-                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Localisation</label>
+                    <label htmlFor="coach-edit-location" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Localisation</label>
                     <div className="relative mt-2">
-                      <MapPinIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                      <MapPinIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/70" />
                       <input
+                        id="coach-edit-location"
                         className="px-input pl-9"
                         placeholder="Rouen · 12 km"
                         value={location}
@@ -293,13 +295,13 @@ export default function CoachProfileEditPage() {
                     </div>
                     <div>
                       <h3 className="text-lg text-white">Spécialisation</h3>
-                      <p className="text-xs text-white/50">Ta spécialité et ta présentation</p>
+                      <p className="text-xs text-white/70">Ta spécialité et ta présentation</p>
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Spécialité</label>
-                    <select className="px-select mt-2" value={speciality} onChange={(e) => setSpeciality(e.target.value)} required>
+                    <label htmlFor="coach-edit-speciality" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Spécialité</label>
+                    <select id="coach-edit-speciality" className="px-select mt-2" value={speciality} onChange={(e) => setSpeciality(e.target.value)} required>
                       <option value="">Sélectionner</option>
                       {SPECIALITIES.map((s) => (
                         <option key={s} value={s}>{s}</option>
@@ -308,14 +310,15 @@ export default function CoachProfileEditPage() {
                   </div>
 
                   <div className="mt-4">
-                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Bio</label>
+                    <label htmlFor="coach-edit-bio" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Bio</label>
                     <textarea
+                      id="coach-edit-bio"
                       className="mt-2 min-h-[120px] w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30"
                       placeholder="Décris ton approche, ton parcours, ce qui te différencie..."
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
                     />
-                    <p className="mt-1 text-[11px] text-white/50">
+                    <p className="mt-1 text-[11px] text-white/70">
                       Visible sur ton profil public. Sois précis pour attirer les bons joueurs.
                     </p>
                   </div>
@@ -331,14 +334,15 @@ export default function CoachProfileEditPage() {
                     </div>
                     <div>
                       <h3 className="text-lg text-white">Tarification</h3>
-                      <p className="text-xs text-white/50">Prix par séance affiché aux joueurs</p>
+                      <p className="text-xs text-white/70">Prix par séance affiché aux joueurs</p>
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Prix par séance (€)</label>
+                    <label htmlFor="coach-edit-price" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Prix par séance (€)</label>
                     <div className="relative mt-2">
                       <input
+                        id="coach-edit-price"
                         className="px-input pr-16"
                         type="number"
                         min={0}
@@ -346,7 +350,7 @@ export default function CoachProfileEditPage() {
                         value={price}
                         onChange={(e) => setPrice(Number(e.target.value))}
                       />
-                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-white/40">€/séance</span>
+                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-white/70">€/séance</span>
                     </div>
                     <div className="mt-3 flex items-center gap-4">
                       {[25, 35, 45, 55].map((preset) => (
@@ -357,7 +361,7 @@ export default function CoachProfileEditPage() {
                           className={`rounded-full border px-3 py-1 text-xs transition ${
                             price === preset
                               ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]"
-                              : "border-white/10 bg-white/5 text-white/60 hover:border-white/20"
+                              : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
                           }`}
                         >
                           {preset}€
@@ -406,7 +410,7 @@ export default function CoachProfileEditPage() {
                     </div>
                     {price > 0 && (
                       <div className="absolute bottom-3 right-4 rounded-full border border-white/20 bg-black/50 px-3 py-1 text-sm font-semibold text-white backdrop-blur-sm">
-                        {price}€<span className="text-[10px] font-normal text-white/50">/séance</span>
+                        {price}€<span className="text-[10px] font-normal text-white/70">/séance</span>
                       </div>
                     )}
                   </div>
@@ -416,7 +420,7 @@ export default function CoachProfileEditPage() {
                       {avatarUrl ? (
                         <Image src={avatarUrl} alt="Avatar" fill sizes="64px" className="object-cover" />
                       ) : (
-                        <WhistleIcon className="h-7 w-7 text-white/40" />
+                        <WhistleIcon className="h-7 w-7 text-white/70" />
                       )}
                     </div>
 
@@ -432,14 +436,14 @@ export default function CoachProfileEditPage() {
                     </div>
 
                     {location && (
-                      <div className="mt-2 flex items-center gap-1.5 text-xs text-white/50">
+                      <div className="mt-2 flex items-center gap-1.5 text-xs text-white/70">
                         <MapPinIcon className="h-3 w-3" />
                         <span>{location}</span>
                       </div>
                     )}
 
                     {bio && (
-                      <p className="mt-3 text-xs leading-relaxed text-white/60 line-clamp-3">{bio}</p>
+                      <p className="mt-3 text-xs leading-relaxed text-white/70 line-clamp-3">{bio}</p>
                     )}
 
                     <div className="mt-4 flex items-center gap-1">
@@ -449,7 +453,7 @@ export default function CoachProfileEditPage() {
                           className={`h-3.5 w-3.5 ${i < 5 ? "text-[color:var(--px-accent)]" : "text-white/15"}`}
                         />
                       ))}
-                      <span className="ml-1 text-xs text-white/50">4.7 (52 avis)</span>
+                      <span className="ml-1 text-xs text-white/70">4.7 (52 avis)</span>
                     </div>
                   </div>
                 </div>
@@ -458,7 +462,7 @@ export default function CoachProfileEditPage() {
               <ScrollReveal>
                 <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-5">
                   <p className="text-xs font-semibold text-white/70 mb-2">Conseils pour ton profil</p>
-                  <ul className="space-y-2 text-xs text-white/50 leading-relaxed">
+                  <ul className="space-y-2 text-xs text-white/70 leading-relaxed">
                     <li className="flex items-start gap-2">
                       <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--px-accent)]" />
                       Ajoute une photo professionnelle pour gagner en crédibilité.

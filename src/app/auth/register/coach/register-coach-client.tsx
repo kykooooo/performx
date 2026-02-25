@@ -142,7 +142,7 @@ export default function RegisterCoachPage() {
       setNotice({ type: "error", text: error.message });
     } else {
       if (data.user && data.session) {
-        syncProfile(data.user).catch(() => null);
+        syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
       }
       setNotice({
         type: "success",
@@ -190,7 +190,7 @@ export default function RegisterCoachPage() {
               </span>
             ))}
           </div>
-          <Link href="/auth/register" className="text-xs text-white/50">Changer de profil</Link>
+          <Link href="/auth/register" className="text-xs text-white/70">Changer de profil</Link>
         </div>
 
         {/* ── Step 1: Account ── */}
@@ -198,36 +198,36 @@ export default function RegisterCoachPage() {
           <>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs text-white/50">Prénom <span className="text-[color:var(--px-danger)]">*</span></label>
-                <input className={`px-input ${errors.firstName ? "border-[color:var(--px-danger)]" : ""}`} placeholder="Prénom" value={firstName} onChange={(e) => { setFirstName(e.target.value); clearField("firstName"); }} aria-invalid={!!errors.firstName} />
+                <label htmlFor="reg-coach-firstName" className="mb-1 block text-xs text-white/70">Prénom <span className="text-[color:var(--px-danger)]">*</span></label>
+                <input id="reg-coach-firstName" className={`px-input ${errors.firstName ? "border-[color:var(--px-danger)]" : ""}`} placeholder="Prénom" value={firstName} onChange={(e) => { setFirstName(e.target.value); clearField("firstName"); }} aria-invalid={!!errors.firstName} />
                 <FieldError error={errors.firstName} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/50">Nom <span className="text-[color:var(--px-danger)]">*</span></label>
-                <input className={`px-input ${errors.lastName ? "border-[color:var(--px-danger)]" : ""}`} placeholder="Nom" value={lastName} onChange={(e) => { setLastName(e.target.value); clearField("lastName"); }} aria-invalid={!!errors.lastName} />
+                <label htmlFor="reg-coach-lastName" className="mb-1 block text-xs text-white/70">Nom <span className="text-[color:var(--px-danger)]">*</span></label>
+                <input id="reg-coach-lastName" className={`px-input ${errors.lastName ? "border-[color:var(--px-danger)]" : ""}`} placeholder="Nom" value={lastName} onChange={(e) => { setLastName(e.target.value); clearField("lastName"); }} aria-invalid={!!errors.lastName} />
                 <FieldError error={errors.lastName} />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-xs text-white/50">Adresse e-mail <span className="text-[color:var(--px-danger)]">*</span></label>
-              <input className={`px-input ${errors.email ? "border-[color:var(--px-danger)]" : ""}`} type="email" placeholder="Adresse e-mail" value={email} onChange={(e) => { setEmail(e.target.value); clearField("email"); }} aria-invalid={!!errors.email} />
+              <label htmlFor="reg-coach-email" className="mb-1 block text-xs text-white/70">Adresse e-mail <span className="text-[color:var(--px-danger)]">*</span></label>
+              <input id="reg-coach-email" className={`px-input ${errors.email ? "border-[color:var(--px-danger)]" : ""}`} type="email" placeholder="Adresse e-mail" value={email} onChange={(e) => { setEmail(e.target.value); clearField("email"); }} aria-invalid={!!errors.email} />
               <FieldError error={errors.email} />
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs text-white/50">Mot de passe <span className="text-[color:var(--px-danger)]">*</span></label>
-                <input className={`px-input ${errors.password ? "border-[color:var(--px-danger)]" : ""}`} type="password" placeholder="Mot de passe" value={password} onChange={(e) => { setPassword(e.target.value); clearField("password"); }} aria-invalid={!!errors.password} />
+                <label htmlFor="reg-coach-password" className="mb-1 block text-xs text-white/70">Mot de passe <span className="text-[color:var(--px-danger)]">*</span></label>
+                <input id="reg-coach-password" className={`px-input ${errors.password ? "border-[color:var(--px-danger)]" : ""}`} type="password" placeholder="Mot de passe" value={password} onChange={(e) => { setPassword(e.target.value); clearField("password"); }} aria-invalid={!!errors.password} />
                 <FieldError error={errors.password} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/50">Confirmer <span className="text-[color:var(--px-danger)]">*</span></label>
-                <input className={`px-input ${errors.confirmPassword ? "border-[color:var(--px-danger)]" : ""}`} type="password" placeholder="Confirmer le mot de passe" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); clearField("confirmPassword"); }} aria-invalid={!!errors.confirmPassword} />
+                <label htmlFor="reg-coach-confirmPassword" className="mb-1 block text-xs text-white/70">Confirmer <span className="text-[color:var(--px-danger)]">*</span></label>
+                <input id="reg-coach-confirmPassword" className={`px-input ${errors.confirmPassword ? "border-[color:var(--px-danger)]" : ""}`} type="password" placeholder="Confirmer le mot de passe" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); clearField("confirmPassword"); }} aria-invalid={!!errors.confirmPassword} />
                 <FieldError error={errors.confirmPassword} />
               </div>
             </div>
             <p className="text-[10px] text-white/30">Min. 8 caractères, 1 majuscule, 1 chiffre, 1 caractère spécial.</p>
             <div>
-              <label className="flex items-center gap-2 text-xs text-white/60">
+              <label className="flex items-center gap-2 text-xs text-white/70">
                 <input type="checkbox" className="h-4 w-4" checked={acceptedTerms} onChange={(e) => { setAcceptedTerms(e.target.checked); clearField("terms"); }} aria-invalid={!!errors.terms} />
                 J&apos;accepte la politique de confidentialité et les conditions d&apos;utilisation.
               </label>
@@ -245,8 +245,9 @@ export default function RegisterCoachPage() {
           <>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs text-white/50">Spécialité <span className="text-[color:var(--px-danger)]">*</span></label>
+                <label htmlFor="reg-coach-speciality" className="mb-1 block text-xs text-white/70">Spécialité <span className="text-[color:var(--px-danger)]">*</span></label>
                 <select
+                  id="reg-coach-speciality"
                   className={`px-select ${errors.speciality ? "border-[color:var(--px-danger)]" : ""}`}
                   value={speciality}
                   onChange={(e) => { setSpeciality(e.target.value); clearField("speciality"); }}
@@ -260,8 +261,9 @@ export default function RegisterCoachPage() {
                 <FieldError error={errors.speciality} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/50">Département <span className="text-[color:var(--px-danger)]">*</span></label>
+                <label htmlFor="reg-coach-location" className="mb-1 block text-xs text-white/70">Département <span className="text-[color:var(--px-danger)]">*</span></label>
                 <select
+                  id="reg-coach-location"
                   className={`px-select ${errors.location ? "border-[color:var(--px-danger)]" : ""}`}
                   value={location}
                   onChange={(e) => { setLocation(e.target.value); clearField("location"); }}
@@ -277,18 +279,19 @@ export default function RegisterCoachPage() {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs text-white/50">Prix par séance (€) <span className="text-[color:var(--px-danger)]">*</span></label>
-                <input className={`px-input ${errors.price ? "border-[color:var(--px-danger)]" : ""}`} type="number" min={0} step={1} placeholder="Ex: 45" value={price} onChange={(e) => { setPrice(e.target.value === "" ? "" : Number(e.target.value)); clearField("price"); }} aria-invalid={!!errors.price} />
+                <label htmlFor="reg-coach-price" className="mb-1 block text-xs text-white/70">Prix par séance (€) <span className="text-[color:var(--px-danger)]">*</span></label>
+                <input id="reg-coach-price" className={`px-input ${errors.price ? "border-[color:var(--px-danger)]" : ""}`} type="number" min={0} step={1} placeholder="Ex: 45" value={price} onChange={(e) => { setPrice(e.target.value === "" ? "" : Number(e.target.value)); clearField("price"); }} aria-invalid={!!errors.price} />
                 <FieldError error={errors.price} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/50">Années d&apos;expérience</label>
-                <input className="px-input" type="number" min={0} step={1} placeholder="Ex: 5" value={experienceYears} onChange={(e) => setExperienceYears(e.target.value === "" ? "" : Number(e.target.value))} />
+                <label htmlFor="reg-coach-experience" className="mb-1 block text-xs text-white/70">Années d&apos;expérience</label>
+                <input id="reg-coach-experience" className="px-input" type="number" min={0} step={1} placeholder="Ex: 5" value={experienceYears} onChange={(e) => setExperienceYears(e.target.value === "" ? "" : Number(e.target.value))} />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-xs text-white/50">Bio</label>
+              <label htmlFor="reg-coach-bio" className="mb-1 block text-xs text-white/70">Bio</label>
               <textarea
+                id="reg-coach-bio"
                 className="min-h-[100px] w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30"
                 placeholder="Présente-toi en quelques lignes..."
                 value={bio}
@@ -312,7 +315,7 @@ export default function RegisterCoachPage() {
           <>
             <div className="rounded-xl border border-[color:var(--px-warning)]/30 bg-[color:var(--px-warning)]/5 p-4">
               <p className="text-xs font-semibold text-[color:var(--px-warning)]">Vérification obligatoire</p>
-              <p className="mt-1 text-xs text-white/60">
+              <p className="mt-1 text-xs text-white/70">
                 Tes diplômes seront vérifiés par notre équipe avant l&apos;activation de ton profil coach. Envoie un justificatif (scan ou photo).
               </p>
             </div>
@@ -326,7 +329,7 @@ export default function RegisterCoachPage() {
                     className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2.5 text-xs transition ${
                       selectedDiplomas.includes(diploma)
                         ? "border-[color:var(--px-accent)]/50 bg-[color:var(--px-accent)]/10 text-white"
-                        : "border-white/10 bg-white/5 text-white/60 hover:border-white/20"
+                        : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
                     }`}
                   >
                     <input
@@ -351,7 +354,7 @@ export default function RegisterCoachPage() {
                     className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2.5 text-xs transition ${
                       certifications.includes(cert)
                         ? "border-[color:var(--px-accent)]/50 bg-[color:var(--px-accent)]/10 text-white"
-                        : "border-white/10 bg-white/5 text-white/60 hover:border-white/20"
+                        : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
                     }`}
                   >
                     <input
@@ -389,11 +392,11 @@ export default function RegisterCoachPage() {
                 {diplomaFile ? (
                   <>
                     <span className="text-sm text-[color:var(--px-success)]">{diplomaFile.name}</span>
-                    <span className="text-[10px] text-white/40">Clique pour changer de fichier</span>
+                    <span className="text-[10px] text-white/70">Clique pour changer de fichier</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-sm text-white/50">Clique ou dépose ton fichier ici</span>
+                    <span className="text-sm text-white/70">Clique ou dépose ton fichier ici</span>
                     <span className="text-[10px] text-white/30">PDF, JPG, PNG — max 10 Mo</span>
                   </>
                 )}
@@ -413,7 +416,7 @@ export default function RegisterCoachPage() {
           </>
         )}
 
-        <p className="text-center text-xs text-white/60">
+        <p className="text-center text-xs text-white/70">
           Déjà un compte ? <Link className="text-[color:var(--px-accent)]" href="/auth/login">Se connecter</Link>
         </p>
       </form>

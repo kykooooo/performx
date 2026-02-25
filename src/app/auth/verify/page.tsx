@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import AuthShell from "@/components/auth-shell";
-import VerifyClient from "./verify-client";
+
+const VerifyClient = dynamic(() => import("./verify-client"), {
+  loading: () => <div className="px-skeleton h-[200px] rounded-xl" />,
+});
 
 export const metadata: Metadata = {
   title: "Vérification du compte",

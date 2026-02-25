@@ -365,7 +365,7 @@ export default function CoachDashboardPage() {
               <span className="px-gradient-text">{coach?.name ?? "Coach"}.</span>
             </h1>
             <p
-              className="px-fade-up max-w-md text-base text-white/60"
+              className="px-fade-up max-w-md text-base text-white/70"
               style={{ animationDelay: "160ms" }}
             >
               Gère tes disponibilités, suis tes séances et développe ton activité.
@@ -395,7 +395,7 @@ export default function CoachDashboardPage() {
               </div>
               <div>
                 <p className="text-2xl font-semibold text-white">{stat.value}</p>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-white/40">{stat.label}</p>
+                <p className="text-[11px] uppercase tracking-[0.2em] text-white/70">{stat.label}</p>
               </div>
             </div>
           ))}
@@ -421,7 +421,7 @@ export default function CoachDashboardPage() {
                 {!loading && upcoming.length === 0 && (
                   <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
                     <CalendarIcon className="mx-auto h-8 w-8 text-white/20" />
-                    <p className="mt-2 text-xs text-white/50">Aucune séance à venir.</p>
+                    <p className="mt-2 text-xs text-white/70">Aucune séance à venir.</p>
                   </div>
                 )}
                 {upcoming.map((session) => (
@@ -431,7 +431,7 @@ export default function CoachDashboardPage() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-white">{session.title}</p>
-                      <p className="text-xs text-white/50">{formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}</p>
+                      <p className="text-xs text-white/70">{formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -464,13 +464,13 @@ export default function CoachDashboardPage() {
                 )}
                 {completed.length > 0 && (
                   <div className="border-t border-white/10 pt-3">
-                    <p className="mb-2 text-[11px] uppercase tracking-[0.2em] text-white/50">Terminées</p>
+                    <p className="mb-2 text-[11px] uppercase tracking-[0.2em] text-white/70">Terminées</p>
                     {completed.slice(0, 2).map((session) => (
-                      <div key={session.id} className="flex items-center gap-4 rounded-xl p-3 text-white/40">
+                      <div key={session.id} className="flex items-center gap-4 rounded-xl p-3 text-white/70">
                         <CheckCircleIcon className="h-4 w-4 shrink-0" />
                         <div className="flex-1">
                           <p className="text-sm">{session.title}</p>
-                          <p className="text-xs text-white/50">{formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}</p>
+                          <p className="text-xs text-white/70">{formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}</p>
                         </div>
                       </div>
                     ))}
@@ -491,7 +491,7 @@ export default function CoachDashboardPage() {
                 </div>
                 <div>
                   <h3 className="text-lg text-white">Disponibilités</h3>
-                  <p className="text-xs text-white/50">Gère tes créneaux ouverts à la réservation.</p>
+                  <p className="text-xs text-white/70">Gère tes créneaux ouverts à la réservation.</p>
                 </div>
               </div>
               <form className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_100px_auto]" onSubmit={handleAddSlot}>
@@ -508,7 +508,7 @@ export default function CoachDashboardPage() {
               <div className="mt-4 space-y-2">
                 {availableSlots.length === 0 && !loading && (
                   <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
-                    <p className="text-xs text-white/50">Aucun créneau disponible.</p>
+                    <p className="text-xs text-white/70">Aucun créneau disponible.</p>
                   </div>
                 )}
                 {availableSlots.slice(0, 5).map((slot) => (
@@ -520,16 +520,16 @@ export default function CoachDashboardPage() {
                       </span>
                       <div>
                         <p className="text-sm text-white">{formatLongDate(new Date(`${slot.date}T12:00`))}</p>
-                        <p className="text-xs text-white/50">{slot.time} · {slot.durationMinutes} min</p>
+                        <p className="text-xs text-white/70">{slot.time} · {slot.durationMinutes} min</p>
                       </div>
                     </div>
-                    <button className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60 transition hover:border-[color:var(--px-danger)]/30 hover:text-[color:var(--px-danger)]" type="button" onClick={() => handleRemoveSlot(slot)}>
+                    <button className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70 transition hover:border-[color:var(--px-danger)]/30 hover:text-[color:var(--px-danger)]" type="button" onClick={() => handleRemoveSlot(slot)}>
                       Supprimer
                     </button>
                   </div>
                 ))}
                 {availableSlots.length > 5 && (
-                  <p className="text-center text-xs text-white/40">+{availableSlots.length - 5} autres créneaux</p>
+                  <p className="text-center text-xs text-white/70">+{availableSlots.length - 5} autres créneaux</p>
                 )}
               </div>
             </div>
@@ -566,12 +566,12 @@ export default function CoachDashboardPage() {
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex rounded-full border border-white/10 bg-white/5 p-1">
-                  <button className={`rounded-full px-3 py-1 text-xs transition ${calendarView === "week" ? "bg-[color:var(--px-accent)] text-black" : "text-white/60"}`} type="button" onClick={() => setCalendarView("week")}>Semaine</button>
-                  <button className={`rounded-full px-3 py-1 text-xs transition ${calendarView === "month" ? "bg-[color:var(--px-accent)] text-black" : "text-white/60"}`} type="button" onClick={() => setCalendarView("month")}>Mois</button>
+                  <button className={`rounded-full px-3 py-1 text-xs transition ${calendarView === "week" ? "bg-[color:var(--px-accent)] text-black" : "text-white/70"}`} type="button" onClick={() => setCalendarView("week")}>Semaine</button>
+                  <button className={`rounded-full px-3 py-1 text-xs transition ${calendarView === "month" ? "bg-[color:var(--px-accent)] text-black" : "text-white/70"}`} type="button" onClick={() => setCalendarView("month")}>Mois</button>
                 </div>
                 <button
                   type="button"
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60 transition hover:border-[color:var(--px-accent)]/30 hover:text-white"
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70 transition hover:border-[color:var(--px-accent)]/30 hover:text-white"
                   onClick={() => {
                     if (calendarView === "week") setWeekStart(startOfWeek(new Date()));
                     else setMonthCursor(new Date());
@@ -581,40 +581,40 @@ export default function CoachDashboardPage() {
                 </button>
                 {calendarView === "week" ? (
                   <div className="flex items-center gap-2">
-                    <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-white/60 hover:text-white" type="button" onClick={() => setWeekStart((prev) => addDays(prev, -7))}>◀</button>
+                    <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-white/70 hover:text-white" type="button" onClick={() => setWeekStart((prev) => addDays(prev, -7))}>◀</button>
                     <span className="px-pill text-xs">Sem. {formatShortDate(weekStart)}</span>
-                    <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-white/60 hover:text-white" type="button" onClick={() => setWeekStart((prev) => addDays(prev, 7))}>▶</button>
+                    <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-white/70 hover:text-white" type="button" onClick={() => setWeekStart((prev) => addDays(prev, 7))}>▶</button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-white/60 hover:text-white" type="button" onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}>◀</button>
+                    <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-white/70 hover:text-white" type="button" onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}>◀</button>
                     <span className="px-pill text-xs capitalize">{monthLabel}</span>
-                    <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-white/60 hover:text-white" type="button" onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}>▶</button>
+                    <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-white/70 hover:text-white" type="button" onClick={() => setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}>▶</button>
                   </div>
                 )}
               </div>
             </div>
-            <div className="mt-4 flex items-center gap-4 text-[10px] uppercase tracking-wider text-white/40">
+            <div className="mt-4 flex items-center gap-4 text-[10px] uppercase tracking-wider text-white/70">
               <div className="flex items-center gap-1.5"><span className="h-3 w-3 rounded border border-white/20 bg-white/10" /> Disponible</div>
               <div className="flex items-center gap-1.5"><span className="h-3 w-3 rounded border border-[color:var(--px-accent)]/40 bg-[color:var(--px-accent)]/15" /> Réservé</div>
             </div>
 
             {calendarView === "week" ? (
-              <div className="mt-4 overflow-x-auto">
-                <div className="min-w-[900px]">
-                  <div className="grid grid-cols-[80px_repeat(7,minmax(0,1fr))] gap-2">
+              <div className="mt-4 -mx-2 overflow-x-auto scroll-smooth snap-x snap-mandatory px-2 pb-2 md:mx-0 md:snap-none md:px-0 md:pb-0">
+                <div className="min-w-[700px] md:min-w-0">
+                  <div className="grid grid-cols-[60px_repeat(7,minmax(0,1fr))] md:grid-cols-[80px_repeat(7,minmax(0,1fr))] gap-2">
                     <div />
                     {weekDays.map((day) => (
                       <div key={day.dateKey} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center">
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">{day.short}</p>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">{day.short}</p>
                         <p className="text-sm font-medium text-white">{day.label}</p>
                       </div>
                     ))}
                   </div>
-                  <div className="mt-2 grid grid-cols-[80px_repeat(7,minmax(0,1fr))] gap-2">
+                  <div className="mt-2 grid grid-cols-[60px_repeat(7,minmax(0,1fr))] md:grid-cols-[80px_repeat(7,minmax(0,1fr))] gap-2">
                     {timeSlots.map((time) => (
                       <div key={time} className="contents">
-                        <div className="flex items-center justify-center text-xs text-white/50">{time}</div>
+                        <div className="flex items-center justify-center text-xs text-white/70">{time}</div>
                         {weekDays.map((day) => {
                           const key = `${day.dateKey}-${time}`;
                           const slot = availabilityMap.get(key);
@@ -634,16 +634,16 @@ export default function CoachDashboardPage() {
             ) : (
               <div className="mt-4 grid grid-cols-7 gap-2">
                 {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((label) => (
-                  <div key={label} className="pb-2 text-center text-[10px] uppercase tracking-[0.2em] text-white/40">{label}</div>
+                  <div key={label} className="pb-2 text-center text-[10px] uppercase tracking-[0.2em] text-white/70">{label}</div>
                 ))}
                 {monthDays.map((day) => {
                   const slotCount = slotCountByDay.get(day.dateKey) ?? 0;
                   const reservedCount = reservedCountByDay.get(day.dateKey) ?? 0;
                   return (
                     <div key={day.dateKey} className={`min-h-[80px] rounded-xl border p-2.5 text-sm transition ${day.isCurrentMonth ? "border-white/10 bg-white/5" : "border-white/5 bg-black/20 text-white/20"}`}>
-                      <p className="text-xs text-white/50">{day.day}</p>
+                      <p className="text-xs text-white/70">{day.day}</p>
                       <div className="mt-1.5 flex flex-wrap gap-1 text-[9px]">
-                        {slotCount > 0 && <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-white/60">{slotCount} dispo</span>}
+                        {slotCount > 0 && <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-white/70">{slotCount} dispo</span>}
                         {reservedCount > 0 && <span className="rounded-full bg-[color:var(--px-accent)]/20 px-1.5 py-0.5 text-[color:var(--px-accent)]">{reservedCount} rés.</span>}
                       </div>
                     </div>

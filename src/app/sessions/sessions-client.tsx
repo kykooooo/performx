@@ -108,7 +108,7 @@ export default function SessionsPage() {
         <div className="px-stack-3">
           <div className="px-card-strong px-fade-up p-4">
             <h3 className="text-lg text-white">Réserver une séance</h3>
-            <p className="mt-2 text-xs text-white/60">
+            <p className="mt-2 text-xs text-white/70">
               Accède à la réservation automatique et choisis un coach disponible.
             </p>
             <Link href="/booking" className="px-button mt-4 w-full">
@@ -131,8 +131,8 @@ export default function SessionsPage() {
               {upcomingSessions.map((session) => (
                 <div key={session.id} className="rounded-xl border border-white/10 bg-white/5 p-3 transition duration-200 hover:border-[color:var(--px-accent)]/30">
                   <p className="text-sm font-semibold text-white">{session.title}</p>
-                  <p className="text-xs text-white/60">{coachLookup[session.coachId] ?? "Coach"}</p>
-                  <div className="mt-2 flex items-center justify-between text-xs text-white/50">
+                  <p className="text-xs text-white/70">{coachLookup[session.coachId] ?? "Coach"}</p>
+                  <div className="mt-2 flex items-center justify-between text-xs text-white/70">
                     <span>{formatLongDate(new Date(`${session.date}T12:00`))}</span>
                     <span>{session.time}</span>
                   </div>
@@ -153,7 +153,7 @@ export default function SessionsPage() {
               {pastSessions.map((session) => (
                 <div key={session.id} className="rounded-xl border border-white/10 bg-white/5 p-3 transition duration-200 hover:border-[color:var(--px-accent)]/30">
                   <p className="text-sm font-semibold text-white">{session.title}</p>
-                  <p className="text-xs text-white/60">Le {formatLongDate(new Date(`${session.date}T12:00`))}</p>
+                  <p className="text-xs text-white/70">Le {formatLongDate(new Date(`${session.date}T12:00`))}</p>
                   <div className="mt-2 flex items-center gap-1 text-xs text-[color:var(--px-accent)]">
                     <span>★★★★★</span>
                   </div>

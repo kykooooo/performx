@@ -23,17 +23,25 @@ export default function ThemeToggle() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useEffect(() => {
-    const stored = localStorage.getItem("px-theme") as "dark" | "light" | null;
-    const initial = stored ?? "dark";
-    setTheme(initial);
-    document.documentElement.setAttribute("data-theme", initial);
+    try {
+      const stored = localStorage.getItem("px-theme") as "dark" | "light" | null;
+      const initial = stored ?? "dark";
+      setTheme(initial);
+      document.documentElement.setAttribute("data-theme", initial);
+    } catch {
+      // localStorage unavailable (e.g. private browsing)
+    }
   }, []);
 
   const toggle = () => {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
     document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("px-theme", next);
+    try {
+      localStorage.setItem("px-theme", next);
+    } catch {
+      // localStorage unavailable
+    }
   };
 
   return (

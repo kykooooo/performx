@@ -1,10 +1,27 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { headers } from "next/headers";
+import { Manrope, Bebas_Neue } from "next/font/google";
 import Analytics from "@/components/analytics";
 import AuthListener from "@/components/auth-listener";
+import { SITE_URL } from "@/lib/constants";
 import "./globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://performx.fr";
+const manrope = Manrope({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-manrope",
+});
+
+const bebasNeue = Bebas_Neue({
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+  variable: "--font-bebas",
+});
+
+const siteUrl = SITE_URL;
 
 export const metadata: Metadata = {
   title: {
@@ -38,15 +55,28 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  let nonce = "";
+  try {
+    nonce = (await headers()).get("x-nonce") ?? "";
+  } catch {
+    // headers() unavailable during static generation (e.g. global-error prerender)
+  }
+
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang="fr" className={`${manrope.variable} ${bebasNeue.variable}`} suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://images.pexels.com" />
+        <link rel="dns-prefetch" href="https://images.pexels.com" />
+        <link rel="dns-prefetch" href="https://plausible.io" />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <script
+          nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem("px-theme");if(t==="light")document.documentElement.setAttribute("data-theme","light")}catch(e){}})()`,
           }}
@@ -56,7 +86,7 @@ export default function RootLayout({
         <a href="#main-content" className="px-skip-link">
           Aller au contenu principal
         </a>
-        <Analytics />
+        <Analytics nonce={nonce} />
         <AuthListener />
         {children}
       </body>

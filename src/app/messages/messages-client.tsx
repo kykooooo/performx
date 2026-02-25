@@ -290,7 +290,7 @@ export default function MessagesClient() {
               (conversation) => conversation.id === message.conversation_id,
             );
             if (!knownConversation && userId) {
-              loadConversations(userId).catch(() => null);
+              loadConversations(userId).catch((err) => console.warn("[PerformX]", err));
             }
 
             if (message.conversation_id === activeConversationId) {
@@ -441,7 +441,7 @@ export default function MessagesClient() {
                     </span>
                   ) : null}
                 </div>
-                <p className="text-xs text-white/50">Conversation privée</p>
+                <p className="text-xs text-white/70">Conversation privée</p>
               </button>
             ))}
           </div>
@@ -456,7 +456,7 @@ export default function MessagesClient() {
             >
               Retour aux conversations
             </button>
-            <p className="text-sm text-white/60">Discussion avec</p>
+            <p className="text-sm text-white/70">Discussion avec</p>
             <h3 className="text-lg text-white">{activeConversation?.otherName ?? "Sélectionne une conversation"}</h3>
           </div>
           <div className="flex-1 overflow-y-auto py-4">

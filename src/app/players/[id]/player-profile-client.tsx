@@ -234,7 +234,7 @@ export default function PlayerProfileClient() {
   if (loading) {
     return (
       <AppShell active="/players" title="Profil joueur" description="Chargement du profil...">
-        <p className="text-sm text-white/50">Chargement...</p>
+        <p className="text-sm text-white/70">Chargement...</p>
       </AppShell>
     );
   }
@@ -242,7 +242,7 @@ export default function PlayerProfileClient() {
   if (!player) {
     return (
       <AppShell active="/players" title="Profil joueur" description="Joueur introuvable.">
-        <p className="text-sm text-white/50">Ce joueur n&apos;existe pas ou n&apos;est plus disponible.</p>
+        <p className="text-sm text-white/70">Ce joueur n&apos;existe pas ou n&apos;est plus disponible.</p>
         <Link href="/players" className="px-button mt-4">
           Retour aux joueurs
         </Link>
@@ -265,7 +265,7 @@ export default function PlayerProfileClient() {
         <div className="px-card-strong space-y-6 p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/40">Profil joueur</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/70">Profil joueur</p>
               <div className="mt-3 flex items-center gap-3">
                 <div className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-black/60 text-base font-semibold text-white">
                   {player.avatar_url ? (
@@ -281,16 +281,16 @@ export default function PlayerProfileClient() {
                 </div>
                 <div>
                   <h2 className="text-3xl text-white">{playerName}</h2>
-                  <p className="text-sm text-white/60">{player.level ?? "Niveau non defini"}</p>
+                  <p className="text-sm text-white/70">{player.level ?? "Niveau non defini"}</p>
                 </div>
               </div>
-              <div className="mt-2 flex items-center gap-2 text-sm text-white/60">
+              <div className="mt-2 flex items-center gap-2 text-sm text-white/70">
                 <MapPinIcon className="h-4 w-4" />
                 {player.city ?? "Ville non definie"}
               </div>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-right">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/40">Poste</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/70">Poste</p>
               <p className="text-3xl font-semibold text-white">{player.position ?? "N/A"}</p>
             </div>
           </div>
@@ -298,14 +298,14 @@ export default function PlayerProfileClient() {
           <p className="text-white/70">{player.objectives ?? "Objectifs en cours de definition."}</p>
           <div className="flex flex-wrap items-center gap-6">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/40">Note moyenne</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/70">Note moyenne</p>
               <div className="mt-2 flex items-center gap-2">
                 {renderStars(computedRating)}
-                <span className="text-sm text-white/60">{computedRating.toFixed(1)} / 5</span>
+                <span className="text-sm text-white/70">{computedRating.toFixed(1)} / 5</span>
               </div>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/40">Avis</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/70">Avis</p>
               <p className="mt-2 text-2xl text-white">{reviewsTotal}</p>
             </div>
           </div>
@@ -319,7 +319,7 @@ export default function PlayerProfileClient() {
           <h3 className="text-2xl text-white">Avis coaches</h3>
           {coachId && (
             <form className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4" onSubmit={handleReviewSubmit}>
-              <label className="text-xs text-white/60">Séance terminée</label>
+              <label className="text-xs text-white/70">Séance terminée</label>
               <select
                 className="px-select"
                 value={selectedReviewSessionId}
@@ -335,7 +335,7 @@ export default function PlayerProfileClient() {
                   </option>
                 ))}
               </select>
-              <label className="text-xs text-white/60">Note</label>
+              <label className="text-xs text-white/70">Note</label>
               <select
                 className="px-select"
                 value={reviewRating}
@@ -360,13 +360,13 @@ export default function PlayerProfileClient() {
             </form>
           )}
           {!coachId && (
-            <p className="text-sm text-white/50">Connecte-toi en coach pour laisser un avis.</p>
+            <p className="text-sm text-white/70">Connecte-toi en coach pour laisser un avis.</p>
           )}
           <div className="space-y-3">
-            {reviews.length === 0 && <p className="text-sm text-white/50">Aucun avis pour le moment.</p>}
+            {reviews.length === 0 && <p className="text-sm text-white/70">Aucun avis pour le moment.</p>}
             {reviews.map((review) => (
               <div key={review.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="flex items-center justify-between text-xs text-white/50">
+                <div className="flex items-center justify-between text-xs text-white/70">
                   <p className="text-sm font-semibold text-white">{review.coach_name ?? "Coach"}</p>
                   <span>{review.date ? formatLongDate(new Date(`${review.date}T12:00`)) : ""}</span>
                 </div>

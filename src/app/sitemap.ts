@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@supabase/supabase-js";
+import { SITE_URL } from "@/lib/constants";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://performx.fr";
+const siteUrl = SITE_URL;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [

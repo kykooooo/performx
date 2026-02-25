@@ -98,7 +98,7 @@ export default function RegisterParentPage() {
       setNotice({ type: "error", text: error.message });
     } else {
       if (data.user && data.session) {
-        syncProfile(data.user).catch(() => null);
+        syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
       }
       setNotice({
         type: "success",
@@ -138,15 +138,16 @@ export default function RegisterParentPage() {
               </span>
             ))}
           </div>
-          <Link href="/auth/register" className="text-xs text-white/50">Changer de profil</Link>
+          <Link href="/auth/register" className="text-xs text-white/70">Changer de profil</Link>
         </div>
 
         {step === 1 && (
           <>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs text-white/50">Ton prénom <span className="text-[color:var(--px-danger)]">*</span></label>
+                <label htmlFor="reg-parent-firstName" className="mb-1 block text-xs text-white/70">Ton prénom <span className="text-[color:var(--px-danger)]">*</span></label>
                 <input
+                  id="reg-parent-firstName"
                   className={`px-input ${errors.firstName ? "border-[color:var(--px-danger)]" : ""}`}
                   placeholder="Prénom"
                   value={firstName}
@@ -156,8 +157,9 @@ export default function RegisterParentPage() {
                 <FieldError error={errors.firstName} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/50">Ton nom <span className="text-[color:var(--px-danger)]">*</span></label>
+                <label htmlFor="reg-parent-lastName" className="mb-1 block text-xs text-white/70">Ton nom <span className="text-[color:var(--px-danger)]">*</span></label>
                 <input
+                  id="reg-parent-lastName"
                   className={`px-input ${errors.lastName ? "border-[color:var(--px-danger)]" : ""}`}
                   placeholder="Nom"
                   value={lastName}
@@ -168,8 +170,9 @@ export default function RegisterParentPage() {
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-xs text-white/50">Adresse e-mail <span className="text-[color:var(--px-danger)]">*</span></label>
+              <label htmlFor="reg-parent-email" className="mb-1 block text-xs text-white/70">Adresse e-mail <span className="text-[color:var(--px-danger)]">*</span></label>
               <input
+                id="reg-parent-email"
                 className={`px-input ${errors.email ? "border-[color:var(--px-danger)]" : ""}`}
                 type="email"
                 placeholder="Adresse e-mail"
@@ -181,8 +184,9 @@ export default function RegisterParentPage() {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs text-white/50">Mot de passe <span className="text-[color:var(--px-danger)]">*</span></label>
+                <label htmlFor="reg-parent-password" className="mb-1 block text-xs text-white/70">Mot de passe <span className="text-[color:var(--px-danger)]">*</span></label>
                 <input
+                  id="reg-parent-password"
                   className={`px-input ${errors.password ? "border-[color:var(--px-danger)]" : ""}`}
                   type="password"
                   placeholder="Mot de passe"
@@ -193,8 +197,9 @@ export default function RegisterParentPage() {
                 <FieldError error={errors.password} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/50">Confirmer <span className="text-[color:var(--px-danger)]">*</span></label>
+                <label htmlFor="reg-parent-confirmPassword" className="mb-1 block text-xs text-white/70">Confirmer <span className="text-[color:var(--px-danger)]">*</span></label>
                 <input
+                  id="reg-parent-confirmPassword"
                   className={`px-input ${errors.confirmPassword ? "border-[color:var(--px-danger)]" : ""}`}
                   type="password"
                   placeholder="Confirmer le mot de passe"
@@ -207,7 +212,7 @@ export default function RegisterParentPage() {
             </div>
             <p className="text-[10px] text-white/30">Min. 8 caractères, 1 majuscule, 1 chiffre, 1 caractère spécial.</p>
             <div>
-              <label className="flex items-center gap-2 text-xs text-white/60">
+              <label className="flex items-center gap-2 text-xs text-white/70">
                 <input
                   type="checkbox"
                   className="h-4 w-4"
@@ -228,12 +233,12 @@ export default function RegisterParentPage() {
 
         {step === 2 && (
           <>
-            <p className="text-xs text-white/50">
+            <p className="text-xs text-white/70">
               Ces informations nous aident à personnaliser l&apos;expérience de ton enfant.
             </p>
             <div>
-              <label className="mb-1 block text-xs text-white/50">Département <span className="text-[color:var(--px-danger)]">*</span></label>
-              <select className={`px-select ${errors.city ? "border-[color:var(--px-danger)]" : ""}`} value={city} onChange={(e) => { setCity(e.target.value); clearField("city"); }} aria-invalid={!!errors.city}>
+              <label htmlFor="reg-parent-city" className="mb-1 block text-xs text-white/70">Département <span className="text-[color:var(--px-danger)]">*</span></label>
+              <select id="reg-parent-city" className={`px-select ${errors.city ? "border-[color:var(--px-danger)]" : ""}`} value={city} onChange={(e) => { setCity(e.target.value); clearField("city"); }} aria-invalid={!!errors.city}>
                 <option value="">Sélectionner un département</option>
                 {DEPARTMENTS.map((d) => (
                   <option key={d} value={d}>{d}</option>
@@ -243,8 +248,9 @@ export default function RegisterParentPage() {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs text-white/50">Prénom de l&apos;enfant <span className="text-[color:var(--px-danger)]">*</span></label>
+                <label htmlFor="reg-parent-childFirstName" className="mb-1 block text-xs text-white/70">Prénom de l&apos;enfant <span className="text-[color:var(--px-danger)]">*</span></label>
                 <input
+                  id="reg-parent-childFirstName"
                   className={`px-input ${errors.childFirstName ? "border-[color:var(--px-danger)]" : ""}`}
                   placeholder="Prénom"
                   value={childFirstName}
@@ -254,8 +260,9 @@ export default function RegisterParentPage() {
                 <FieldError error={errors.childFirstName} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/50">Nom de l&apos;enfant <span className="text-[color:var(--px-danger)]">*</span></label>
+                <label htmlFor="reg-parent-childLastName" className="mb-1 block text-xs text-white/70">Nom de l&apos;enfant <span className="text-[color:var(--px-danger)]">*</span></label>
                 <input
+                  id="reg-parent-childLastName"
                   className={`px-input ${errors.childLastName ? "border-[color:var(--px-danger)]" : ""}`}
                   placeholder="Nom"
                   value={childLastName}
@@ -266,8 +273,9 @@ export default function RegisterParentPage() {
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-xs text-white/50">Date de naissance <span className="text-[color:var(--px-danger)]">*</span></label>
+              <label htmlFor="reg-parent-childBirthDate" className="mb-1 block text-xs text-white/70">Date de naissance <span className="text-[color:var(--px-danger)]">*</span></label>
               <input
+                id="reg-parent-childBirthDate"
                 className={`px-input ${errors.childBirthDate ? "border-[color:var(--px-danger)]" : ""}`}
                 type="date"
                 value={childBirthDate}
@@ -278,8 +286,8 @@ export default function RegisterParentPage() {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs text-white/50">Niveau <span className="text-[color:var(--px-danger)]">*</span></label>
-                <select className={`px-select ${errors.childLevel ? "border-[color:var(--px-danger)]" : ""}`} value={childLevel} onChange={(e) => { setChildLevel(e.target.value); clearField("childLevel"); }} aria-invalid={!!errors.childLevel}>
+                <label htmlFor="reg-parent-childLevel" className="mb-1 block text-xs text-white/70">Niveau <span className="text-[color:var(--px-danger)]">*</span></label>
+                <select id="reg-parent-childLevel" className={`px-select ${errors.childLevel ? "border-[color:var(--px-danger)]" : ""}`} value={childLevel} onChange={(e) => { setChildLevel(e.target.value); clearField("childLevel"); }} aria-invalid={!!errors.childLevel}>
                   <option value="">Sélectionner</option>
                   {PLAYER_LEVELS.map((l) => (
                     <option key={l} value={l}>{l}</option>
@@ -288,8 +296,8 @@ export default function RegisterParentPage() {
                 <FieldError error={errors.childLevel} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/50">Poste <span className="text-[color:var(--px-danger)]">*</span></label>
-                <select className={`px-select ${errors.childPosition ? "border-[color:var(--px-danger)]" : ""}`} value={childPosition} onChange={(e) => { setChildPosition(e.target.value); clearField("childPosition"); }} aria-invalid={!!errors.childPosition}>
+                <label htmlFor="reg-parent-childPosition" className="mb-1 block text-xs text-white/70">Poste <span className="text-[color:var(--px-danger)]">*</span></label>
+                <select id="reg-parent-childPosition" className={`px-select ${errors.childPosition ? "border-[color:var(--px-danger)]" : ""}`} value={childPosition} onChange={(e) => { setChildPosition(e.target.value); clearField("childPosition"); }} aria-invalid={!!errors.childPosition}>
                   <option value="">Sélectionner</option>
                   {PLAYER_POSITIONS.map((p) => (
                     <option key={p} value={p}>{p}</option>
@@ -310,7 +318,7 @@ export default function RegisterParentPage() {
           </>
         )}
 
-        <p className="text-center text-xs text-white/60">
+        <p className="text-center text-xs text-white/70">
           Déjà un compte ? <Link className="text-[color:var(--px-accent)]" href="/auth/login">Se connecter</Link>
         </p>
       </form>

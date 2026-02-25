@@ -32,5 +32,7 @@ export function validatePrice(value: number): string | null {
 }
 
 export function sanitizeInput(value: string): string {
-  return value.replace(/[<>]/g, "");
+  // Strip HTML tags entirely (React auto-escapes output, Supabase uses parameterized queries).
+  // This is defense-in-depth against stored XSS via dangerouslySetInnerHTML.
+  return value.replace(/<[^>]*>/g, "");
 }

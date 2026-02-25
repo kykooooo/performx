@@ -33,7 +33,7 @@ export default function SessionCalendarMonth({ monthStart, sessions, coachLookup
       {/* Header */}
       <div className="grid grid-cols-7 gap-px mb-2">
         {DAY_HEADERS.map((d) => (
-          <div key={d} className="py-2 text-center text-[10px] uppercase tracking-[0.2em] text-white/40">
+          <div key={d} className="py-2 text-center text-[10px] uppercase tracking-[0.2em] text-white/70">
             {d}
           </div>
         ))}
@@ -60,7 +60,7 @@ export default function SessionCalendarMonth({ monthStart, sessions, coachLookup
             >
               <div
                 className={`text-xs font-medium ${
-                  isToday ? "text-[color:var(--px-accent)]" : "text-white/50"
+                  isToday ? "text-[color:var(--px-accent)]" : "text-white/70"
                 }`}
               >
                 {date.getDate()}
@@ -72,7 +72,7 @@ export default function SessionCalendarMonth({ monthStart, sessions, coachLookup
                     className="rounded-lg border border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/15 px-1.5 py-1 text-[10px] leading-tight"
                   >
                     <p className="font-semibold text-white truncate">{event.title}</p>
-                    <p className="text-white/50 hidden sm:block">
+                    <p className="text-white/70 hidden sm:block">
                       {event.time} · {coachLookup[event.coachId] ?? "Coach"}
                     </p>
                   </div>

@@ -13,6 +13,7 @@ import {
   ShieldIcon,
   TrophyIcon,
 } from "@/components/icons";
+import { SITE_URL } from "@/lib/constants";
 import PublicStats from "@/components/public-stats";
 import FeaturedCoaches from "@/components/featured-coaches";
 import ScrollReveal from "@/components/scroll-reveal";
@@ -83,17 +84,17 @@ const TESTIMONIALS = [
 
 const IMMERSIVE_GALLERY = [
   {
-    src: "https://images.pexels.com/photos/274422/pexels-photo-274422.jpeg?auto=compress&cs=tinysrgb&w=1400",
+    src: "https://images.pexels.com/photos/274422/pexels-photo-274422.jpeg?auto=compress&cs=tinysrgb&w=800",
     alt: "Footballeur en action pendant un entraînement",
     label: "Travail technique",
   },
   {
-    src: "https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=1400",
+    src: "https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=800",
     alt: "Coach qui dirige une séance terrain",
     label: "Coaching personnalisé",
   },
   {
-    src: "https://images.pexels.com/photos/918798/pexels-photo-918798.jpeg?auto=compress&cs=tinysrgb&w=1400",
+    src: "https://images.pexels.com/photos/918798/pexels-photo-918798.jpeg?auto=compress&cs=tinysrgb&w=800",
     alt: "Joueurs de football en préparation avant séance",
     label: "Suivi des progrès",
   },
@@ -128,14 +129,14 @@ export default function HomePage() {
           "@context": "https://schema.org",
           "@type": "WebSite",
           name: "PerformX",
-          url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://performx.fr",
+          url: SITE_URL,
           description:
             "Plateforme de coaching football individuel. Trouve ton coach, réserve une séance privée.",
           potentialAction: {
             "@type": "SearchAction",
             target: {
               "@type": "EntryPoint",
-              urlTemplate: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://performx.fr"}/coach?q={search_term_string}`,
+              urlTemplate: `${SITE_URL}/coach?q={search_term_string}`,
             },
             "query-input": "required name=search_term_string",
           },
@@ -160,7 +161,7 @@ export default function HomePage() {
             </h1>
 
             <p
-              className="px-fade-up max-w-xl text-lg text-white/60"
+              className="px-fade-up max-w-xl text-lg text-white/70"
               style={{ animationDelay: "160ms" }}
             >
               Trouve un coach près de chez toi, réserve une séance individuelle en
@@ -194,21 +195,23 @@ export default function HomePage() {
             <div className="px-fade-up grid gap-3 sm:grid-cols-2 lg:hidden" style={{ animationDelay: "360ms" }}>
               <div className="relative h-32 overflow-hidden rounded-2xl border border-white/10">
                 <Image
-                  src="https://images.pexels.com/photos/46798/the-ball-stadion-football-the-pitch-46798.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                  src="https://images.pexels.com/photos/46798/the-ball-stadion-football-the-pitch-46798.jpeg?auto=compress&cs=tinysrgb&w=800"
                   alt="Ballon de football sur un terrain"
                   fill
                   sizes="(max-width: 640px) 100vw, 320px"
                   className="object-cover"
+                  priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
               </div>
               <div className="relative h-32 overflow-hidden rounded-2xl border border-white/10">
                 <Image
-                  src="https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                  src="https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=800"
                   alt="Coach de football donnant des consignes"
                   fill
                   sizes="(max-width: 640px) 100vw, 320px"
                   className="object-cover"
+                  priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
               </div>
@@ -222,11 +225,12 @@ export default function HomePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="relative h-40 overflow-hidden rounded-2xl border border-white/10">
                 <Image
-                  src="https://images.pexels.com/photos/46798/the-ball-stadion-football-the-pitch-46798.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                  src="https://images.pexels.com/photos/46798/the-ball-stadion-football-the-pitch-46798.jpeg?auto=compress&cs=tinysrgb&w=800"
                   alt="Ballon de football sur un terrain"
                   fill
                   sizes="(max-width: 1024px) 100vw, 360px"
                   className="object-cover"
+                  priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                 <p className="absolute bottom-3 left-3 text-xs uppercase tracking-[0.2em] text-white/80">
@@ -235,11 +239,12 @@ export default function HomePage() {
               </div>
               <div className="relative h-40 overflow-hidden rounded-2xl border border-white/10">
                 <Image
-                  src="https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                  src="https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=800"
                   alt="Coach de football donnant des consignes"
                   fill
                   sizes="(max-width: 1024px) 100vw, 360px"
                   className="object-cover"
+                  priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                 <p className="absolute bottom-3 left-3 text-xs uppercase tracking-[0.2em] text-white/80">
@@ -264,7 +269,7 @@ export default function HomePage() {
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-4">
-              <p className="text-xs text-white/50 leading-relaxed">
+              <p className="text-xs text-white/70 leading-relaxed">
                 Il s&apos;agit d&apos;une version demo. Les parcours, statistiques et réservations sont
                 présentés pour valider l&apos;expérience avant lancement officiel.
               </p>
@@ -277,7 +282,7 @@ export default function HomePage() {
       <ScrollReveal>
         <section className="py-16">
           <div className="mb-12 text-center">
-            <div className="mx-auto mb-4 flex items-center justify-center gap-3 text-xs uppercase tracking-[0.35em] text-white/40">
+            <div className="mx-auto mb-4 flex items-center justify-center gap-3 text-xs uppercase tracking-[0.35em] text-white/70">
               <span className="h-[2px] w-10 rounded-full bg-[color:var(--px-accent)]" />
               Comment ça marche
               <span className="h-[2px] w-10 rounded-full bg-[color:var(--px-accent)]" />
@@ -285,7 +290,7 @@ export default function HomePage() {
             <h2 className="text-4xl text-white sm:text-5xl">
               3 étapes, zéro friction.
             </h2>
-            <p className="mx-auto mt-4 max-w-lg text-white/50">
+            <p className="mx-auto mt-4 max-w-lg text-white/70">
               De la recherche à la progression, tout est pensé pour aller vite.
             </p>
           </div>
@@ -301,7 +306,7 @@ export default function HomePage() {
                     {step.icon}
                   </div>
                   <h3 className="mb-3 text-2xl text-white">{step.title}</h3>
-                  <p className="text-sm leading-relaxed text-white/50">{step.description}</p>
+                  <p className="text-sm leading-relaxed text-white/70">{step.description}</p>
                 </div>
               </ScrollReveal>
             ))}
@@ -313,7 +318,7 @@ export default function HomePage() {
       <ScrollReveal>
         <section className="py-12">
           <div className="mb-8 text-center">
-            <div className="mx-auto mb-3 flex items-center justify-center gap-3 text-xs uppercase tracking-[0.35em] text-white/40">
+            <div className="mx-auto mb-3 flex items-center justify-center gap-3 text-xs uppercase tracking-[0.35em] text-white/70">
               <span className="h-[2px] w-10 rounded-full bg-[color:var(--px-accent)]" />
               Expérience terrain
               <span className="h-[2px] w-10 rounded-full bg-[color:var(--px-accent)]" />
@@ -349,14 +354,14 @@ export default function HomePage() {
           <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-8 sm:p-10">
             <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
               <div>
-                <div className="mb-3 flex items-center gap-3 text-xs uppercase tracking-[0.35em] text-white/40">
+                <div className="mb-3 flex items-center gap-3 text-xs uppercase tracking-[0.35em] text-white/70">
                   <span className="h-[2px] w-10 rounded-full bg-[color:var(--px-accent)]" />
                   Pour les parents
                 </div>
                 <h2 className="text-3xl text-white sm:text-4xl">
                   Une expérience rassurante et lisible
                 </h2>
-                <p className="mt-3 max-w-2xl text-sm text-white/60">
+                <p className="mt-3 max-w-2xl text-sm text-white/70">
                   Cette version démo met l&apos;accent sur le parcours parent : réservation, suivi et échanges coach-joueur.
                 </p>
               </div>
@@ -368,7 +373,7 @@ export default function HomePage() {
               {PARENT_BENEFITS.map((item) => (
                 <div key={item.title} className="rounded-2xl border border-white/10 bg-white/5 p-5">
                   <h3 className="text-lg text-white">{item.title}</h3>
-                  <p className="mt-2 text-sm text-white/60">{item.text}</p>
+                  <p className="mt-2 text-sm text-white/70">{item.text}</p>
                 </div>
               ))}
             </div>
@@ -401,7 +406,7 @@ export default function HomePage() {
         <section className="py-16">
           <div className="mb-8 flex items-end justify-between">
             <div>
-              <div className="mb-3 flex items-center gap-3 text-xs uppercase tracking-[0.35em] text-white/40">
+              <div className="mb-3 flex items-center gap-3 text-xs uppercase tracking-[0.35em] text-white/70">
                 <span className="h-[2px] w-10 rounded-full bg-[color:var(--px-accent)]" />
                 Top coachs
               </div>
@@ -429,7 +434,7 @@ export default function HomePage() {
       <ScrollReveal>
         <section className="py-16">
           <div className="mb-12 text-center">
-            <div className="mx-auto mb-4 flex items-center justify-center gap-3 text-xs uppercase tracking-[0.35em] text-white/40">
+            <div className="mx-auto mb-4 flex items-center justify-center gap-3 text-xs uppercase tracking-[0.35em] text-white/70">
               <span className="h-[2px] w-10 rounded-full bg-[color:var(--px-accent)]" />
               Témoignages
               <span className="h-[2px] w-10 rounded-full bg-[color:var(--px-accent)]" />
@@ -453,7 +458,7 @@ export default function HomePage() {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-white">{testimonial.name}</p>
-                      <p className="text-xs text-white/40">{testimonial.role}</p>
+                      <p className="text-xs text-white/70">{testimonial.role}</p>
                     </div>
                   </div>
                 </div>
@@ -474,7 +479,7 @@ export default function HomePage() {
                 Prêt à passer au{" "}
                 <span className="px-gradient-text">niveau supérieur</span> ?
               </h2>
-              <p className="mx-auto mt-4 max-w-lg text-white/50">
+              <p className="mx-auto mt-4 max-w-lg text-white/70">
                 Version demo en ligne pour valider les usages joueurs, coachs et parents
                 avant la mise en production.
               </p>

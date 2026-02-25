@@ -38,7 +38,7 @@ export default function PlayerCard({
     .join("")
     .toUpperCase();
 
-  const levelColor = LEVEL_COLORS[level] ?? "border-white/20 bg-white/10 text-white/60";
+  const levelColor = LEVEL_COLORS[level] ?? "border-white/20 bg-white/10 text-white/70";
 
   return (
     <div className="px-card group flex h-full flex-col gap-4 p-4 transition-transform duration-300 hover:translate-y-[-3px]">
@@ -58,7 +58,7 @@ export default function PlayerCard({
           </div>
           <div>
             <p className="text-sm font-semibold text-white">{name}</p>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-white/50">{position || "Joueur"}</p>
+            <p className="text-[11px] uppercase tracking-[0.2em] text-white/70">{position || "Joueur"}</p>
           </div>
         </div>
 
@@ -82,7 +82,7 @@ export default function PlayerCard({
       </div>
 
       {/* Location */}
-      <div className="flex items-center gap-2 text-xs text-white/50">
+      <div className="flex items-center gap-2 text-xs text-white/70">
         <MapPinIcon className="h-4 w-4 shrink-0" />
         {city || "Localisation non définie"}
       </div>
@@ -94,8 +94,8 @@ export default function PlayerCard({
 
       {/* Rating bar */}
       <div className="mt-auto flex items-center justify-between border-t border-white/10 pt-3">
-        <div className="flex items-center gap-1.5">
-          <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-1.5" aria-label={`Note\u00a0: ${rating.toFixed(1)} sur 5, ${reviews} avis`}>
+          <div className="flex items-center gap-0.5" aria-hidden="true">
             {Array.from({ length: 5 }).map((_, i) => (
               <StarIcon
                 key={i}
@@ -108,7 +108,7 @@ export default function PlayerCard({
             ))}
           </div>
           <span className="text-xs font-medium text-white/70">{rating.toFixed(1)}</span>
-          <span className="text-xs text-white/50">({reviews})</span>
+          <span className="text-xs text-white/70">({reviews})</span>
         </div>
       </div>
 

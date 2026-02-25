@@ -203,7 +203,7 @@ export default function PlayerProfileEditPage() {
               <span className="px-gradient-text">joueur.</span>
             </h1>
             <p
-              className="px-fade-up max-w-md text-base text-white/60"
+              className="px-fade-up max-w-md text-base text-white/70"
               style={{ animationDelay: "160ms" }}
             >
               Personnalise ton profil pour que les coachs te repèrent plus facilement.
@@ -240,7 +240,7 @@ export default function PlayerProfileEditPage() {
                     </div>
                     <div>
                       <h3 className="text-lg text-white">Identité</h3>
-                      <p className="text-xs text-white/50">Informations personnelles</p>
+                      <p className="text-xs text-white/70">Informations personnelles</p>
                     </div>
                   </div>
 
@@ -251,7 +251,7 @@ export default function PlayerProfileEditPage() {
                         {avatarUrl ? (
                           <Image src={avatarUrl} alt="Avatar" fill sizes="80px" className="object-cover" />
                         ) : (
-                          <UserIcon className="h-8 w-8 text-white/40" />
+                          <UserIcon className="h-8 w-8 text-white/70" />
                         )}
                       </div>
                       <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--px-accent)] text-black text-[10px] font-bold shadow-lg">
@@ -271,15 +271,16 @@ export default function PlayerProfileEditPage() {
                           }}
                         />
                       </label>
-                      <p className="mt-1 text-[11px] text-white/50">JPG, PNG. Max 2 Mo.</p>
+                      <p className="mt-1 text-[11px] text-white/70">JPG, PNG. Max 2 Mo.</p>
                     </div>
                   </div>
 
                   {/* Name fields */}
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Prénom</label>
+                      <label htmlFor="player-edit-firstName" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Prénom</label>
                       <input
+                        id="player-edit-firstName"
                         className="px-input mt-2"
                         placeholder="Prénom"
                         value={firstName}
@@ -287,8 +288,9 @@ export default function PlayerProfileEditPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Nom</label>
+                      <label htmlFor="player-edit-lastName" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Nom</label>
                       <input
+                        id="player-edit-lastName"
                         className="px-input mt-2"
                         placeholder="Nom"
                         value={lastName}
@@ -299,8 +301,8 @@ export default function PlayerProfileEditPage() {
 
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Genre</label>
-                      <select className="px-select mt-2" value={gender} onChange={(e) => setGender(e.target.value)}>
+                      <label htmlFor="player-edit-gender" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Genre</label>
+                      <select id="player-edit-gender" className="px-select mt-2" value={gender} onChange={(e) => setGender(e.target.value)}>
                         <option value="">Sélectionner</option>
                         <option value="Homme">Homme</option>
                         <option value="Femme">Femme</option>
@@ -308,8 +310,9 @@ export default function PlayerProfileEditPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Date de naissance</label>
+                      <label htmlFor="player-edit-birthDate" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Date de naissance</label>
                       <input
+                        id="player-edit-birthDate"
                         className="px-input mt-2"
                         type="date"
                         value={birthDate}
@@ -319,10 +322,11 @@ export default function PlayerProfileEditPage() {
                   </div>
 
                   <div className="mt-4">
-                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Ville</label>
+                    <label htmlFor="player-edit-city" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Ville</label>
                     <div className="relative mt-2">
-                      <MapPinIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                      <MapPinIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/70" />
                       <input
+                        id="player-edit-city"
                         className="px-input pl-9"
                         placeholder="Ta ville"
                         value={city}
@@ -342,14 +346,14 @@ export default function PlayerProfileEditPage() {
                     </div>
                     <div>
                       <h3 className="text-lg text-white">Infos sportives</h3>
-                      <p className="text-xs text-white/50">Niveau, poste et objectifs</p>
+                      <p className="text-xs text-white/70">Niveau, poste et objectifs</p>
                     </div>
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Niveau</label>
-                      <select className="px-select mt-2" value={level} onChange={(e) => setLevel(e.target.value)}>
+                      <label htmlFor="player-edit-level" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Niveau</label>
+                      <select id="player-edit-level" className="px-select mt-2" value={level} onChange={(e) => setLevel(e.target.value)}>
                         <option value="">Sélectionner</option>
                         {LEVELS.map((l) => (
                           <option key={l} value={l}>{l}</option>
@@ -357,8 +361,8 @@ export default function PlayerProfileEditPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Poste</label>
-                      <select className="px-select mt-2" value={position} onChange={(e) => setPosition(e.target.value)}>
+                      <label htmlFor="player-edit-position" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Poste</label>
+                      <select id="player-edit-position" className="px-select mt-2" value={position} onChange={(e) => setPosition(e.target.value)}>
                         <option value="">Sélectionner</option>
                         {POSITIONS.map((p) => (
                           <option key={p} value={p}>{p}</option>
@@ -368,14 +372,15 @@ export default function PlayerProfileEditPage() {
                   </div>
 
                   <div className="mt-4">
-                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/40">Objectifs</label>
+                    <label htmlFor="player-edit-objectives" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Objectifs</label>
                     <textarea
+                      id="player-edit-objectives"
                       className="mt-2 min-h-[100px] w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30"
                       placeholder="Décris tes objectifs..."
                       value={objectives}
                       onChange={(e) => setObjectives(e.target.value)}
                     />
-                    <p className="mt-1 text-[11px] text-white/50">Visible par les coachs pour personnaliser tes séances.</p>
+                    <p className="mt-1 text-[11px] text-white/70">Visible par les coachs pour personnaliser tes séances.</p>
                   </div>
                 </div>
               </ScrollReveal>
@@ -427,13 +432,13 @@ export default function PlayerProfileEditPage() {
                       {avatarUrl ? (
                         <Image src={avatarUrl} alt="Avatar" fill sizes="64px" className="object-cover" />
                       ) : (
-                        <UserIcon className="h-7 w-7 text-white/40" />
+                        <UserIcon className="h-7 w-7 text-white/70" />
                       )}
                     </div>
 
                     <div className="mt-3">
                       <p className="text-lg font-semibold text-white">{fullName}</p>
-                      <div className="mt-1 flex items-center gap-2 text-xs text-white/50">
+                      <div className="mt-1 flex items-center gap-2 text-xs text-white/70">
                         {city && (
                           <>
                             <MapPinIcon className="h-3 w-3" />
@@ -445,12 +450,12 @@ export default function PlayerProfileEditPage() {
 
                     <div className="mt-3 flex flex-wrap gap-2">
                       {level && (
-                        <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${LEVEL_COLORS[level] ?? "border-white/10 bg-white/5 text-white/60"}`}>
+                        <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${LEVEL_COLORS[level] ?? "border-white/10 bg-white/5 text-white/70"}`}>
                           {level}
                         </span>
                       )}
                       {gender && (
-                        <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-white/60">
+                        <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-white/70">
                           {gender}
                         </span>
                       )}
@@ -458,7 +463,7 @@ export default function PlayerProfileEditPage() {
 
                     {objectives && (
                       <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
-                        <p className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-1">Objectifs</p>
+                        <p className="text-[11px] uppercase tracking-[0.2em] text-white/70 mb-1">Objectifs</p>
                         <p className="text-xs leading-relaxed text-white/70">{objectives}</p>
                       </div>
                     )}
@@ -470,7 +475,7 @@ export default function PlayerProfileEditPage() {
                           className={`h-3.5 w-3.5 ${i < 4 ? "text-[color:var(--px-accent)]" : "text-white/15"}`}
                         />
                       ))}
-                      <span className="ml-1 text-xs text-white/50">4.2 (8 avis)</span>
+                      <span className="ml-1 text-xs text-white/70">4.2 (8 avis)</span>
                     </div>
                   </div>
                 </div>
@@ -479,7 +484,7 @@ export default function PlayerProfileEditPage() {
               <ScrollReveal>
                 <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-5">
                   <p className="text-xs font-semibold text-white/70 mb-2">Conseils</p>
-                  <ul className="space-y-2 text-xs text-white/50 leading-relaxed">
+                  <ul className="space-y-2 text-xs text-white/70 leading-relaxed">
                     <li className="flex items-start gap-2">
                       <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--px-accent)]" />
                       Ajoute une photo pour augmenter la visibilité de ton profil.

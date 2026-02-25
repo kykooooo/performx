@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import ConfirmationClient from "./confirmation-client";
+import dynamic from "next/dynamic";
 import { LoadingState } from "@/components/feedback-state";
+
+const ConfirmationClient = dynamic(() => import("./confirmation-client"), {
+  loading: () => (
+    <div className="px-container py-10">
+      <LoadingState title="Validation de la réservation" description="Préparation du récapitulatif..." />
+    </div>
+  ),
+});
 
 export const metadata: Metadata = {
   title: "Réservation confirmée",
@@ -9,15 +16,5 @@ export const metadata: Metadata = {
 };
 
 export default function BookingConfirmationPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="px-container py-10">
-          <LoadingState title="Validation de la réservation" description="Préparation du récapitulatif..." />
-        </div>
-      }
-    >
-      <ConfirmationClient />
-    </Suspense>
-  );
+  return <ConfirmationClient />;
 }

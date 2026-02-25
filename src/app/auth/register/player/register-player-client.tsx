@@ -95,7 +95,7 @@ export default function RegisterPlayerPage() {
       setNotice({ type: "error", text: error.message });
     } else {
       if (data.user && data.session) {
-        syncProfile(data.user).catch(() => null);
+        syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
       }
       setNotice({
         type: "success",
@@ -135,15 +135,16 @@ export default function RegisterPlayerPage() {
               </span>
             ))}
           </div>
-          <Link href="/auth/register" className="text-xs text-white/50">Changer de profil</Link>
+          <Link href="/auth/register" className="text-xs text-white/70">Changer de profil</Link>
         </div>
 
         {step === 1 && (
           <>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs text-white/50">Prénom <span className="text-[color:var(--px-danger)]">*</span></label>
+                <label htmlFor="reg-player-firstName" className="mb-1 block text-xs text-white/70">Prénom <span className="text-[color:var(--px-danger)]">*</span></label>
                 <input
+                  id="reg-player-firstName"
                   className={`px-input ${errors.firstName ? "border-[color:var(--px-danger)]" : ""}`}
                   placeholder="Prénom"
                   value={firstName}
@@ -153,8 +154,9 @@ export default function RegisterPlayerPage() {
                 <FieldError error={errors.firstName} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/50">Nom <span className="text-[color:var(--px-danger)]">*</span></label>
+                <label htmlFor="reg-player-lastName" className="mb-1 block text-xs text-white/70">Nom <span className="text-[color:var(--px-danger)]">*</span></label>
                 <input
+                  id="reg-player-lastName"
                   className={`px-input ${errors.lastName ? "border-[color:var(--px-danger)]" : ""}`}
                   placeholder="Nom"
                   value={lastName}
@@ -165,8 +167,9 @@ export default function RegisterPlayerPage() {
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-xs text-white/50">Adresse e-mail <span className="text-[color:var(--px-danger)]">*</span></label>
+              <label htmlFor="reg-player-email" className="mb-1 block text-xs text-white/70">Adresse e-mail <span className="text-[color:var(--px-danger)]">*</span></label>
               <input
+                id="reg-player-email"
                 className={`px-input ${errors.email ? "border-[color:var(--px-danger)]" : ""}`}
                 type="email"
                 placeholder="Adresse e-mail"
@@ -178,8 +181,9 @@ export default function RegisterPlayerPage() {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs text-white/50">Mot de passe <span className="text-[color:var(--px-danger)]">*</span></label>
+                <label htmlFor="reg-player-password" className="mb-1 block text-xs text-white/70">Mot de passe <span className="text-[color:var(--px-danger)]">*</span></label>
                 <input
+                  id="reg-player-password"
                   className={`px-input ${errors.password ? "border-[color:var(--px-danger)]" : ""}`}
                   type="password"
                   placeholder="Mot de passe"
@@ -190,8 +194,9 @@ export default function RegisterPlayerPage() {
                 <FieldError error={errors.password} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/50">Confirmer <span className="text-[color:var(--px-danger)]">*</span></label>
+                <label htmlFor="reg-player-confirmPassword" className="mb-1 block text-xs text-white/70">Confirmer <span className="text-[color:var(--px-danger)]">*</span></label>
                 <input
+                  id="reg-player-confirmPassword"
                   className={`px-input ${errors.confirmPassword ? "border-[color:var(--px-danger)]" : ""}`}
                   type="password"
                   placeholder="Confirmer le mot de passe"
@@ -204,7 +209,7 @@ export default function RegisterPlayerPage() {
             </div>
             <p className="text-[10px] text-white/30">Min. 8 caractères, 1 majuscule, 1 chiffre, 1 caractère spécial.</p>
             <div>
-              <label className="flex items-center gap-2 text-xs text-white/60">
+              <label className="flex items-center gap-2 text-xs text-white/70">
                 <input
                   type="checkbox"
                   className="h-4 w-4"
@@ -227,8 +232,8 @@ export default function RegisterPlayerPage() {
           <>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs text-white/50">Genre <span className="text-[color:var(--px-danger)]">*</span></label>
-                <select className={`px-select ${errors.gender ? "border-[color:var(--px-danger)]" : ""}`} value={gender} onChange={(e) => { setGender(e.target.value); clearField("gender"); }} aria-invalid={!!errors.gender}>
+                <label htmlFor="reg-player-gender" className="mb-1 block text-xs text-white/70">Genre <span className="text-[color:var(--px-danger)]">*</span></label>
+                <select id="reg-player-gender" className={`px-select ${errors.gender ? "border-[color:var(--px-danger)]" : ""}`} value={gender} onChange={(e) => { setGender(e.target.value); clearField("gender"); }} aria-invalid={!!errors.gender}>
                   <option value="">Sélectionner</option>
                   <option value="Homme">Homme</option>
                   <option value="Femme">Femme</option>
@@ -237,14 +242,14 @@ export default function RegisterPlayerPage() {
                 <FieldError error={errors.gender} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/50">Date de naissance <span className="text-[color:var(--px-danger)]">*</span></label>
-                <input className={`px-input ${errors.birthDate ? "border-[color:var(--px-danger)]" : ""}`} type="date" value={birthDate} onChange={(e) => { setBirthDate(e.target.value); clearField("birthDate"); }} aria-invalid={!!errors.birthDate} />
+                <label htmlFor="reg-player-birthDate" className="mb-1 block text-xs text-white/70">Date de naissance <span className="text-[color:var(--px-danger)]">*</span></label>
+                <input id="reg-player-birthDate" className={`px-input ${errors.birthDate ? "border-[color:var(--px-danger)]" : ""}`} type="date" value={birthDate} onChange={(e) => { setBirthDate(e.target.value); clearField("birthDate"); }} aria-invalid={!!errors.birthDate} />
                 <FieldError error={errors.birthDate} />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-xs text-white/50">Département <span className="text-[color:var(--px-danger)]">*</span></label>
-              <select className={`px-select ${errors.city ? "border-[color:var(--px-danger)]" : ""}`} value={city} onChange={(e) => { setCity(e.target.value); clearField("city"); }} aria-invalid={!!errors.city}>
+              <label htmlFor="reg-player-city" className="mb-1 block text-xs text-white/70">Département <span className="text-[color:var(--px-danger)]">*</span></label>
+              <select id="reg-player-city" className={`px-select ${errors.city ? "border-[color:var(--px-danger)]" : ""}`} value={city} onChange={(e) => { setCity(e.target.value); clearField("city"); }} aria-invalid={!!errors.city}>
                 <option value="">Sélectionner un département</option>
                 {DEPARTMENTS.map((d) => (
                   <option key={d} value={d}>{d}</option>
@@ -254,8 +259,8 @@ export default function RegisterPlayerPage() {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs text-white/50">Niveau <span className="text-[color:var(--px-danger)]">*</span></label>
-                <select className={`px-select ${errors.level ? "border-[color:var(--px-danger)]" : ""}`} value={level} onChange={(e) => { setLevel(e.target.value); clearField("level"); }} aria-invalid={!!errors.level}>
+                <label htmlFor="reg-player-level" className="mb-1 block text-xs text-white/70">Niveau <span className="text-[color:var(--px-danger)]">*</span></label>
+                <select id="reg-player-level" className={`px-select ${errors.level ? "border-[color:var(--px-danger)]" : ""}`} value={level} onChange={(e) => { setLevel(e.target.value); clearField("level"); }} aria-invalid={!!errors.level}>
                   <option value="">Sélectionner</option>
                   {PLAYER_LEVELS.map((l) => (
                     <option key={l} value={l}>{l}</option>
@@ -264,8 +269,8 @@ export default function RegisterPlayerPage() {
                 <FieldError error={errors.level} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/50">Poste <span className="text-[color:var(--px-danger)]">*</span></label>
-                <select className={`px-select ${errors.position ? "border-[color:var(--px-danger)]" : ""}`} value={position} onChange={(e) => { setPosition(e.target.value); clearField("position"); }} aria-invalid={!!errors.position}>
+                <label htmlFor="reg-player-position" className="mb-1 block text-xs text-white/70">Poste <span className="text-[color:var(--px-danger)]">*</span></label>
+                <select id="reg-player-position" className={`px-select ${errors.position ? "border-[color:var(--px-danger)]" : ""}`} value={position} onChange={(e) => { setPosition(e.target.value); clearField("position"); }} aria-invalid={!!errors.position}>
                   <option value="">Sélectionner</option>
                   {PLAYER_POSITIONS.map((p) => (
                     <option key={p} value={p}>{p}</option>
@@ -275,8 +280,9 @@ export default function RegisterPlayerPage() {
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-xs text-white/50">Objectifs personnels</label>
+              <label htmlFor="reg-player-objectives" className="mb-1 block text-xs text-white/70">Objectifs personnels</label>
               <textarea
+                id="reg-player-objectives"
                 className="min-h-[100px] w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30"
                 placeholder="Ex: vitesse, précision, détection..."
                 value={objectives}
@@ -295,7 +301,7 @@ export default function RegisterPlayerPage() {
           </>
         )}
 
-        <p className="text-center text-xs text-white/60">
+        <p className="text-center text-xs text-white/70">
           Déjà un compte ? <Link className="text-[color:var(--px-accent)]" href="/auth/login">Se connecter</Link>
         </p>
       </form>

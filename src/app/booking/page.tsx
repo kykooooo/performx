@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import BookingClient from "./booking-client";
+import dynamic from "next/dynamic";
 import { LoadingState } from "@/components/feedback-state";
+
+const BookingClient = dynamic(() => import("./booking-client"), {
+  loading: () => (
+    <div className="px-container py-10">
+      <LoadingState title="Préparation de la réservation" description="Chargement du parcours de réservation..." />
+    </div>
+  ),
+});
 
 export const metadata: Metadata = {
   title: "Réserver une séance",
@@ -10,15 +17,5 @@ export const metadata: Metadata = {
 };
 
 export default function BookingPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="px-container py-10">
-          <LoadingState title="Préparation de la réservation" description="Chargement du parcours de réservation..." />
-        </div>
-      }
-    >
-      <BookingClient />
-    </Suspense>
-  );
+  return <BookingClient />;
 }

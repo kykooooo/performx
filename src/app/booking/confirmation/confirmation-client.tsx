@@ -252,7 +252,7 @@ export default function ConfirmationClient() {
               </div>
               <div>
                 <p className="text-sm text-white">E-mail de confirmation envoyé</p>
-                <p className="text-xs text-white/50">Un récapitulatif a été envoyé à ton adresse e-mail.</p>
+                <p className="text-xs text-white/70">Un récapitulatif a été envoyé à ton adresse e-mail.</p>
               </div>
             </div>
             <button

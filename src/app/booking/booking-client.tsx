@@ -264,7 +264,7 @@ export default function BookingClient() {
               className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition ${
                 bookingStep >= step.id
                   ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-white"
-                  : "border-white/10 bg-white/5 text-white/50"
+                  : "border-white/10 bg-white/5 text-white/70"
               }`}
             >
               {step.icon}
@@ -280,13 +280,15 @@ export default function BookingClient() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="text-xl text-white">Sélection du coach</h3>
-                <p className="mt-1 text-xs text-white/60">Réservation automatique si disponible.</p>
+                <p className="mt-1 text-xs text-white/70">Réservation automatique si disponible.</p>
               </div>
               <Link href="/coach" className="px-button-ghost">
                 Voir les coachs
               </Link>
             </div>
+            <label htmlFor="booking-coach-select" className="sr-only">Sélectionner un coach</label>
             <select
+              id="booking-coach-select"
               className="px-select mt-4"
               value={selectedCoachId}
               onChange={(event) => handleCoachChange(event.target.value)}
@@ -349,7 +351,7 @@ export default function BookingClient() {
           </div>
           <div className="px-card p-6">
             <h3 className="text-lg text-white">Dernières réservations</h3>
-            <p className="mt-1 text-xs text-white/60">{bookings.length} réservations confirmées.</p>
+            <p className="mt-1 text-xs text-white/70">{bookings.length} réservations confirmées.</p>
             <div className="mt-4 space-y-3">
               {bookings.length === 0 && (
                 <FeedbackState
@@ -360,8 +362,8 @@ export default function BookingClient() {
               )}
               {bookings.slice(0, 3).map((booking) => (
                 <div key={booking.id} className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm transition duration-200 hover:border-[color:var(--px-accent)]/30">
-                  <p className="text-white">Réservation #{booking.id}</p>
-                  <p className="text-xs text-white/50">Paiement : {booking.payment_status}</p>
+                  <p className="text-white">Réservation confirmée</p>
+                  <p className="text-xs text-white/70">Paiement : {booking.payment_status === "paid" ? "Payé" : booking.payment_status === "pending" ? "En attente" : booking.payment_status}</p>
                 </div>
               ))}
             </div>
@@ -408,13 +410,13 @@ export default function BookingClient() {
                 Ouvrir la conversation
               </Link>
             )}
-            <p className="mt-3 text-xs text-white/50">
+            <p className="mt-3 text-xs text-white/70">
               Paiement direct : le coach est payé immédiatement après confirmation.
             </p>
           </div>
           <div className="px-card p-6">
             <h3 className="text-lg text-white">Connexion requise</h3>
-            <p className="mt-2 text-sm text-white/60">
+            <p className="mt-2 text-sm text-white/70">
               {userId ? "Tu es connecté." : "Connecte-toi pour finaliser la réservation."}
             </p>
             {!userId && (

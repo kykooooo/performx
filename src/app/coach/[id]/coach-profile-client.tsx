@@ -227,7 +227,7 @@ export default function CoachProfileClient() {
   if (loading) {
     return (
       <AppShell active="/coach" title="Profil coach" description="Chargement du profil...">
-        <p className="text-sm text-white/50">Chargement...</p>
+        <p className="text-sm text-white/70">Chargement...</p>
       </AppShell>
     );
   }
@@ -235,7 +235,7 @@ export default function CoachProfileClient() {
   if (!coach) {
     return (
       <AppShell active="/coach" title="Profil coach" description="Coach introuvable.">
-        <p className="text-sm text-white/50">Ce coach n&apos;existe pas ou n&apos;est plus disponible.</p>
+        <p className="text-sm text-white/70">Ce coach n&apos;existe pas ou n&apos;est plus disponible.</p>
         <Link href="/coach" className="px-button mt-4">Retour aux coachs</Link>
       </AppShell>
     );
@@ -256,7 +256,7 @@ export default function CoachProfileClient() {
         <div className="px-card-strong space-y-6 p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/40">Spécialité</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/70">Spécialité</p>
               <div className="mt-3 flex items-center gap-3">
                 <div className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-black/60 text-base font-semibold text-white">
                   {coachAvatar ? (
@@ -273,7 +273,7 @@ export default function CoachProfileClient() {
                 <div>
                   <h2 className="text-3xl text-white">{coach.speciality}</h2>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm text-white/60">{coach.name}</p>
+                    <p className="text-sm text-white/70">{coach.name}</p>
                     <span className="inline-flex items-center gap-1.5 text-xs">
                       <span className="relative flex h-2 w-2">
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[color:var(--px-success)] opacity-75" />
@@ -284,15 +284,15 @@ export default function CoachProfileClient() {
                   </div>
                 </div>
               </div>
-              <div className="mt-2 flex items-center gap-2 text-sm text-white/60">
+              <div className="mt-2 flex items-center gap-2 text-sm text-white/70">
                 <MapPinIcon className="h-4 w-4" />
                 {coach.location}
               </div>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-right">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/40">Tarif</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/70">Tarif</p>
               <p className="text-3xl font-semibold text-white">{coach.price_per_session ?? 0}€</p>
-              <p className="text-xs text-white/50">par séance</p>
+              <p className="text-xs text-white/70">par séance</p>
             </div>
           </div>
           <div className="px-divider" />
@@ -315,7 +315,7 @@ export default function CoachProfileClient() {
 
           {coach.diplomas && coach.diplomas.length > 0 && (
             <div>
-              <p className="mb-2 text-xs uppercase tracking-[0.3em] text-white/40">Diplômes & certifications</p>
+              <p className="mb-2 text-xs uppercase tracking-[0.3em] text-white/70">Diplômes & certifications</p>
               <div className="flex flex-wrap gap-2">
                 {coach.diplomas.map((d) => (
                   <span
@@ -332,14 +332,14 @@ export default function CoachProfileClient() {
 
           <div className="flex flex-wrap items-center gap-6">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/40">Note moyenne</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/70">Note moyenne</p>
               <div className="mt-2 flex items-center gap-2">
                 {renderStars(computedRating)}
-                <span className="text-sm text-white/60">{computedRating.toFixed(1)} / 5</span>
+                <span className="text-sm text-white/70">{computedRating.toFixed(1)} / 5</span>
               </div>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/40">Avis</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/70">Avis</p>
               <p className="mt-2 text-2xl text-white">{reviewsTotal}</p>
             </div>
           </div>
@@ -359,7 +359,7 @@ export default function CoachProfileClient() {
           <h3 className="text-2xl text-white">Disponibilités à venir</h3>
           <div className="space-y-3">
             {availableSlots.length === 0 && (
-              <p className="text-sm text-white/50">Aucun créneau disponible cette semaine.</p>
+              <p className="text-sm text-white/70">Aucun créneau disponible cette semaine.</p>
             )}
             {availableSlots.map((slot) => (
               <div
@@ -368,7 +368,7 @@ export default function CoachProfileClient() {
               >
                 <div>
                   <p className="text-white">{formatLongDate(new Date(`${slot.date}T12:00`))}</p>
-                  <p className="text-xs text-white/50">{slot.time} · {slot.durationMinutes} min</p>
+                  <p className="text-xs text-white/70">{slot.time} · {slot.durationMinutes} min</p>
                 </div>
                 <Link
                   href={`/booking?coach=${coach.id}&date=${slot.date}&time=${slot.time}`}
@@ -379,7 +379,7 @@ export default function CoachProfileClient() {
               </div>
             ))}
           </div>
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 to-transparent p-4 text-xs text-white/60">
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 to-transparent p-4 text-xs text-white/70">
             Les créneaux affichés sont mis à jour automatiquement après chaque réservation.
           </div>
         </div>
@@ -392,7 +392,7 @@ export default function CoachProfileClient() {
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <p className="text-sm text-white">Laisser un avis</p>
-          <p className="mt-1 text-xs text-white/50">Connecte-toi pour publier ton retour.</p>
+          <p className="mt-1 text-xs text-white/70">Connecte-toi pour publier ton retour.</p>
           <form
             className="mt-4 grid gap-3 md:grid-cols-[120px_1fr_auto]"
             onSubmit={async (event: FormEvent<HTMLFormElement>) => {
@@ -497,7 +497,7 @@ export default function CoachProfileClient() {
             <div key={review.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-white">{review.player_name ?? "Joueur"}</p>
-                <span className="text-xs text-white/50">
+                <span className="text-xs text-white/70">
                   {review.date ? formatLongDate(new Date(`${review.date}T12:00`)) : ""}
                 </span>
               </div>

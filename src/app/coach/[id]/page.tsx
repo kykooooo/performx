@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
-import CoachProfileClient from "./coach-profile-client";
+import dynamic from "next/dynamic";
 import JsonLd from "@/components/json-ld";
+import { SITE_URL } from "@/lib/constants";
+
+const CoachProfileClient = dynamic(() => import("./coach-profile-client"), {
+  loading: () => <div className="px-container py-10"><div className="px-skeleton h-[600px]" /></div>,
+});
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -24,7 +29,7 @@ async function getCoach(id: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://performx.fr";
+  const siteUrl = SITE_URL;
   const coach = await getCoach(id);
 
   if (!coach) {
@@ -58,7 +63,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CoachProfilePage({ params }: Props) {
   const { id } = await params;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://performx.fr";
+  const siteUrl = SITE_URL;
   const coach = await getCoach(id);
 
   const personSchema = coach

@@ -36,9 +36,21 @@ describe("validatePassword", () => {
     expect(validatePassword("12345")).not.toBeNull();
   });
 
-  it("accepte un mot de passe de 6+ caractères", () => {
-    expect(validatePassword("123456")).toBeNull();
-    expect(validatePassword("strongpassword")).toBeNull();
+  it("rejette un mot de passe sans majuscule", () => {
+    expect(validatePassword("abcdefgh1!")).not.toBeNull();
+  });
+
+  it("rejette un mot de passe sans chiffre", () => {
+    expect(validatePassword("Abcdefgh!")).not.toBeNull();
+  });
+
+  it("rejette un mot de passe sans caractère spécial", () => {
+    expect(validatePassword("Abcdefgh1")).not.toBeNull();
+  });
+
+  it("accepte un mot de passe valide (8+ chars, majuscule, chiffre, spécial)", () => {
+    expect(validatePassword("Abcdef1!")).toBeNull();
+    expect(validatePassword("StrongP@ss1")).toBeNull();
   });
 });
 
@@ -81,12 +93,15 @@ describe("validatePrice", () => {
 
 describe("sanitizeInput", () => {
   it("supprime les balises HTML", () => {
-    expect(sanitizeInput("<script>alert('xss')</script>")).toBe("scriptalert('xss')/script");
-    expect(sanitizeInput("texte <b>gras</b>")).toBe("texte bgras/b");
+    expect(sanitizeInput("<script>alert('xss')</script>")).toBe("alert('xss')");
+    expect(sanitizeInput("texte <b>gras</b>")).toBe("texte gras");
+    expect(sanitizeInput("<img src=x onerror=alert(1)>")).toBe("");
+    expect(sanitizeInput("a]<div onclick='evil()'>click</div>")).toBe("a]click");
   });
 
   it("laisse passer le texte normal", () => {
     expect(sanitizeInput("Jean Dupont")).toBe("Jean Dupont");
     expect(sanitizeInput("Coach à Rouen, 12 ans d'exp.")).toBe("Coach à Rouen, 12 ans d'exp.");
+    expect(sanitizeInput("3 < 5 et 10 > 7")).toBe("3  7");
   });
 });

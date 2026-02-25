@@ -1,3 +1,6 @@
+// ── URL du site ──
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://performx.fr";
+
 // ── Spécialités coach ──
 export const COACH_SPECIALITIES = [
   "Technique individuelle",

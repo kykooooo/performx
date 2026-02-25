@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import RegisterPlayerPage from "./register-player-client";
+import dynamic from "next/dynamic";
+
+const RegisterPlayerPage = dynamic(() => import("./register-player-client"), {
+  loading: () => <div className="px-container py-10"><div className="px-skeleton h-[500px]" /></div>,
+});
 
 export const metadata: Metadata = {
   title: "Inscription Joueur",

@@ -25,7 +25,7 @@ export default function NotFound() {
         </div>
         <div className="px-fade-up space-y-3" style={{ animationDelay: "120ms" }}>
           <h2 className="text-3xl text-white">Page introuvable</h2>
-          <p className="text-sm text-white/60">
+          <p className="text-sm text-white/70">
             La page que tu recherches n&apos;existe pas ou a été déplacée.
           </p>
         </div>

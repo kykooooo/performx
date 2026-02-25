@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
-import PlayerProfileClient from "./player-profile-client";
+import dynamic from "next/dynamic";
+import { SITE_URL } from "@/lib/constants";
+
+const PlayerProfileClient = dynamic(() => import("./player-profile-client"), {
+  loading: () => <div className="px-container py-10"><div className="px-skeleton h-[600px]" /></div>,
+});
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -8,7 +13,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://performx.fr";
+  const siteUrl = SITE_URL;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 

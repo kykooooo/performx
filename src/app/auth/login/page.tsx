@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import LoginPage from "./login-client";
+import dynamic from "next/dynamic";
+
+const LoginPage = dynamic(() => import("./login-client"), {
+  loading: () => <div className="px-container py-10"><div className="px-skeleton h-[400px]" /></div>,
+});
 
 export const metadata: Metadata = {
   title: "Connexion",

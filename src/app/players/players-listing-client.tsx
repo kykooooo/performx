@@ -138,7 +138,7 @@ export default function PlayersPage() {
             </h1>
 
             <p
-              className="px-fade-up max-w-lg text-base text-white/60"
+              className="px-fade-up max-w-lg text-base text-white/70"
               style={{ animationDelay: "160ms" }}
             >
               Découvre les profils joueurs, leurs objectifs et leur progression.
@@ -171,18 +171,18 @@ export default function PlayersPage() {
                   <UsersIcon className="h-5 w-5" />
                 </div>
                 <p className="text-2xl font-semibold text-white">{players.length}</p>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/40">Joueurs</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/70">Joueurs</p>
               </div>
               <div className="px-card p-4 text-center">
                 <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">
                   <StarIcon className="h-5 w-5" />
                 </div>
                 <p className="text-2xl font-semibold text-white">{avgRating.toFixed(1)}</p>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/40">Note moyenne</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/70">Note moyenne</p>
               </div>
             </div>
             <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-4">
-              <p className="text-xs text-white/50 leading-relaxed">
+              <p className="text-xs text-white/70 leading-relaxed">
                 <span className="font-semibold text-white/70">{cities.length} villes</span>{" "}
                 représentées. Des joueurs de tous niveaux prêts à progresser ensemble.
               </p>
@@ -198,10 +198,10 @@ export default function PlayersPage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-white">Recherche joueurs</p>
-                <p className="text-xs text-white/50">Filtre par niveau, poste ou localisation.</p>
+                <p className="text-xs text-white/70">Filtre par niveau, poste ou localisation.</p>
               </div>
               <div className="relative w-full sm:w-[320px]">
-                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/70" />
                 <input
                   className="px-input pl-9"
                   placeholder="Rechercher un joueur..."
@@ -230,7 +230,7 @@ export default function PlayersPage() {
             {/* Select filters */}
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="px-outline p-3">
-                <label htmlFor="filter-position" className="text-[11px] uppercase tracking-[0.2em] text-white/50">Poste</label>
+                <label htmlFor="filter-position" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Poste</label>
                 <select
                   id="filter-position"
                   className="px-select mt-2"
@@ -246,7 +246,7 @@ export default function PlayersPage() {
                 </select>
               </div>
               <div className="px-outline p-3">
-                <label htmlFor="filter-city" className="text-[11px] uppercase tracking-[0.2em] text-white/50">Ville</label>
+                <label htmlFor="filter-city" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Ville</label>
                 <select
                   id="filter-city"
                   className="px-select mt-2"
@@ -267,8 +267,8 @@ export default function PlayersPage() {
           {/* Résultat count */}
           {!loading && filteredPlayers.length > 0 && (
             <div className="flex items-center gap-2">
-              <FilterIcon className="h-4 w-4 text-white/50" />
-              <p className="text-sm text-white/50">
+              <FilterIcon className="h-4 w-4 text-white/70" />
+              <p className="text-sm text-white/70">
                 {filteredPlayers.length} joueur{filteredPlayers.length > 1 ? "s" : ""} trouvé
                 {filteredPlayers.length > 1 ? "s" : ""}
               </p>
@@ -301,7 +301,7 @@ export default function PlayersPage() {
       {/* ── Empty ── */}
       {!loading && filteredPlayers.length === 0 && !error && (
         <FeedbackState
-          icon={<SearchIcon className="h-7 w-7 text-white/40" />}
+          icon={<SearchIcon className="h-7 w-7 text-white/70" />}
           title="Aucun joueur trouvé"
           description="Aucun joueur ne correspond à tes filtres actuels."
           actionLabel="Réinitialiser les filtres"
@@ -348,7 +348,7 @@ export default function PlayersPage() {
                 Prêt à progresser ?{" "}
                 <span className="px-gradient-text">Crée ton profil.</span>
               </h2>
-              <p className="mx-auto mt-3 max-w-md text-sm text-white/50">
+              <p className="mx-auto mt-3 max-w-md text-sm text-white/70">
                 Inscris-toi gratuitement, définis tes objectifs et trouve le coach qui te fera passer au niveau supérieur.
               </p>
               <Link href="/auth/register/player" className="px-button mt-6 inline-flex text-sm px-6 py-3">

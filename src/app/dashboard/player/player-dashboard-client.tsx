@@ -184,7 +184,7 @@ export default function PlayerDashboardPage() {
               <span className="px-gradient-text">joueur.</span>
             </h1>
             <p
-              className="px-fade-up max-w-md text-base text-white/60"
+              className="px-fade-up max-w-md text-base text-white/70"
               style={{ animationDelay: "160ms" }}
             >
               Retrouve tes séances, tes stats et tes coachs préférés.
@@ -223,7 +223,7 @@ export default function PlayerDashboardPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-semibold text-white">{stat.value}</p>
-                    <p className="text-xs text-white/50">{stat.label}</p>
+                    <p className="text-xs text-white/70">{stat.label}</p>
                   </div>
                 </div>
               </ScrollReveal>
@@ -245,7 +245,7 @@ export default function PlayerDashboardPage() {
                   {upcoming.length === 0 ? (
                     <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
                       <CalendarIcon className="mx-auto h-8 w-8 text-white/20" />
-                      <p className="mt-2 text-sm text-white/50">Aucune séance programmée</p>
+                      <p className="mt-2 text-sm text-white/70">Aucune séance programmée</p>
                       <Link href="/booking" className="px-button mt-4 text-sm">
                         Réserver une séance
                       </Link>
@@ -263,7 +263,7 @@ export default function PlayerDashboardPage() {
                             </div>
                             <div>
                               <p className="text-sm font-medium text-white">{session.title}</p>
-                              <p className="text-xs text-white/50">
+                              <p className="text-xs text-white/70">
                                 {formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}
                                 {coachMap[session.coach_id] && ` · ${coachMap[session.coach_id]}`}
                               </p>
@@ -296,7 +296,7 @@ export default function PlayerDashboardPage() {
                             </div>
                             <div>
                               <p className="text-sm font-medium text-white">{session.title}</p>
-                              <p className="text-xs text-white/50">
+                              <p className="text-xs text-white/70">
                                 {formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}
                                 {coachMap[session.coach_id] && ` · ${coachMap[session.coach_id]}`}
                               </p>
@@ -332,12 +332,12 @@ export default function PlayerDashboardPage() {
                         className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-3 transition hover:border-white/20"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-transparent text-white/60">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-transparent text-white/70">
                             <WhistleIcon className="h-4 w-4" />
                           </div>
                           <div>
                             <p className="text-sm font-medium text-white">{coach.name}</p>
-                            <p className="text-xs text-white/50">{coach.speciality}</p>
+                            <p className="text-xs text-white/70">{coach.speciality}</p>
                           </div>
                         </div>
                         <div className="text-right">
@@ -345,7 +345,7 @@ export default function PlayerDashboardPage() {
                             <StarIcon className="h-3 w-3 text-[color:var(--px-accent)]" />
                             <span className="text-xs text-white">{(coach.rating ?? 0).toFixed(1)}</span>
                           </div>
-                          <p className="text-[10px] text-white/40">{coach.price_per_session ?? 0} €/séance</p>
+                          <p className="text-[10px] text-white/70">{coach.price_per_session ?? 0} €/séance</p>
                         </div>
                       </Link>
                     ))}

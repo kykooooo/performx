@@ -22,7 +22,7 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
         </div>
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold text-white">Une erreur est survenue</h2>
-          <p className="text-sm text-white/60">
+          <p className="text-sm text-white/70">
             L&apos;incident a été remonté automatiquement. Tu peux réessayer ou retourner à l&apos;accueil.
           </p>
         </div>

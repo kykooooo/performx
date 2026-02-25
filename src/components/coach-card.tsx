@@ -54,7 +54,7 @@ export default function CoachCard({
           </div>
           <div>
             <p className="text-sm font-semibold text-white">{name}</p>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-white/50">{speciality}</p>
+            <p className="text-[11px] uppercase tracking-[0.2em] text-white/70">{speciality}</p>
           </div>
         </div>
 
@@ -65,17 +65,14 @@ export default function CoachCard({
         </span>
 
         {/* Availability indicator */}
-        <div className="absolute bottom-3 left-4 flex items-center gap-1.5">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[color:var(--px-success)] opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-[color:var(--px-success)]" />
-          </span>
+        <div className="absolute bottom-3 left-4 flex items-center gap-1.5" aria-label="Coach actuellement disponible">
+          <span className="inline-flex h-2 w-2 rounded-full bg-[color:var(--px-success)]" />
           <span className="text-[10px] font-medium text-[color:var(--px-success)]">Disponible</span>
         </div>
 
         {/* Price tag */}
         <div className="absolute bottom-3 right-3 rounded-lg bg-black/60 px-2.5 py-1 backdrop-blur-sm">
-          <p className="text-sm font-semibold text-white">{price}<span className="text-[10px] text-white/50">/séance</span></p>
+          <p className="text-sm font-semibold text-white" aria-label={`${price} par séance`}>{price}<span className="text-[10px] text-white/70">/séance</span></p>
         </div>
       </div>
 
@@ -83,15 +80,15 @@ export default function CoachCard({
       <p className="line-clamp-2 text-sm leading-relaxed text-white/70">{description}</p>
 
       {/* Location */}
-      <div className="flex items-center gap-2 text-xs text-white/50">
+      <div className="flex items-center gap-2 text-xs text-white/70">
         <MapPinIcon className="h-4 w-4 shrink-0" />
         {location}
       </div>
 
       {/* Rating bar */}
       <div className="mt-auto flex items-center justify-between border-t border-white/10 pt-3">
-        <div className="flex items-center gap-1.5">
-          <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-1.5" aria-label={`Note\u00a0: ${rating.toFixed(1)} sur 5, ${reviews} avis`}>
+          <div className="flex items-center gap-0.5" aria-hidden="true">
             {Array.from({ length: 5 }).map((_, i) => (
               <StarIcon
                 key={i}
@@ -103,8 +100,8 @@ export default function CoachCard({
               />
             ))}
           </div>
-          <span className="text-xs font-medium text-white/70">{rating.toFixed(1)}</span>
-          <span className="text-xs text-white/50">({reviews})</span>
+          <span className="text-xs font-medium text-white/80">{rating.toFixed(1)}</span>
+          <span className="text-xs text-white/70">({reviews})</span>
         </div>
       </div>
 

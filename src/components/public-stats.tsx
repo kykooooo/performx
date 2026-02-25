@@ -98,9 +98,9 @@ function StatItem({
       <div>
         <p className="text-2xl font-semibold text-white">
           {decimals > 0 ? animatedValue.toFixed(decimals) : animatedValue}
-          {suffix && <span className="ml-1 text-base text-white/50">{suffix}</span>}
+          {suffix && <span className="ml-1 text-base text-white/70">{suffix}</span>}
         </p>
-        <p className="text-xs uppercase tracking-[0.2em] text-white/40">{label}</p>
+        <p className="text-xs uppercase tracking-[0.2em] text-white/70">{label}</p>
       </div>
     </div>
   );
@@ -112,11 +112,14 @@ export default function PublicStats() {
   useEffect(() => {
     let mounted = true;
     const fetchStats = async () => {
-      const { data: coachesData } = await supabase.from("public_coaches").select("rating");
-      const { data: playersData } = await supabase.from("public_players").select("rating");
-      const { count: sessionsCount } = await supabase
-        .from("public_sessions")
-        .select("coach_id", { count: "exact", head: true });
+      const [coachesRes, playersRes, sessionsRes] = await Promise.all([
+        supabase.from("public_coaches").select("rating"),
+        supabase.from("public_players").select("rating"),
+        supabase.from("public_sessions").select("coach_id", { count: "exact", head: true }),
+      ]);
+      const coachesData = coachesRes.data;
+      const playersData = playersRes.data;
+      const sessionsCount = sessionsRes.count;
 
       if (!mounted) return;
       const coachRatings = (coachesData ?? []).map((row) => row.rating ?? 0);

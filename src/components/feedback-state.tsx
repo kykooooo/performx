@@ -58,7 +58,7 @@ export function LoadingState({ title = "Chargement", description = "Récupérati
       </div>
       <div className="relative px-stack-1">
         <h3 className="text-xl text-white">{title}</h3>
-        <p className="text-sm text-white/60">{description}</p>
+        <p className="text-sm text-white/70">{description}</p>
       </div>
       <div className="relative mx-auto w-full max-w-md px-stack-1">
         <div className="px-skeleton h-3 w-3/4" />

@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -22,8 +21,8 @@
   --px-space-4: 32px;
   --px-space-5: 40px;
   --px-space-6: 48px;
-  --px-font-sans: "Manrope", system-ui, -apple-system, sans-serif;
-  --px-font-display: "Bebas Neue", "Manrope", sans-serif;
+  --px-font-sans: var(--font-manrope), "Manrope", system-ui, -apple-system, sans-serif;
+  --px-font-display: var(--font-bebas), "Bebas Neue", "Manrope", sans-serif;
 }
 
 [data-theme="light"] {
@@ -58,25 +57,6 @@ body {
     radial-gradient(circle at 80% 10%, rgba(255, 138, 0, 0.12), transparent 40%),
     radial-gradient(circle at 20% 70%, rgba(255, 255, 255, 0.06), transparent 50%),
     linear-gradient(135deg, rgba(255, 255, 255, 0.02), transparent 55%);
-  background-attachment: fixed;
-}
-
-body::before,
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-}
-
-body::before {
-  background-image: linear-gradient(120deg, rgba(255, 106, 0, 0.08), transparent 40%);
-  opacity: 0.6;
-}
-
-body::after {
-  background-image: radial-gradient(circle at 70% 50%, rgba(255, 255, 255, 0.08), transparent 55%);
-  opacity: 0.35;
 }
 
 h1,
@@ -223,7 +203,7 @@ a {
   }
 
   .px-chip {
-    @apply rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-white/60 transition-all duration-200 hover:border-white/20 hover:text-white;
+    @apply rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-white/70 transition-all duration-200 hover:border-white/20 hover:text-white;
   }
 
   .px-chip[data-active="true"] {
@@ -413,6 +393,7 @@ a {
 [data-theme="light"] h3,
 [data-theme="light"] h4 {
   text-shadow: none;
+  color: var(--px-text);
 }
 
 [data-theme="light"] ::selection {
@@ -423,6 +404,157 @@ a {
 [data-theme="light"] header {
   background: rgba(255, 255, 255, 0.85);
   border-bottom-color: #e0e0e5;
+}
+
+/* Remap all hardcoded white text to theme-aware dark text */
+[data-theme="light"] .text-white {
+  color: var(--px-text) !important;
+}
+
+[data-theme="light"] .text-white\/90 {
+  color: color-mix(in srgb, var(--px-text) 90%, transparent) !important;
+}
+
+[data-theme="light"] .text-white\/80 {
+  color: color-mix(in srgb, var(--px-text) 80%, transparent) !important;
+}
+
+[data-theme="light"] .text-white\/70 {
+  color: var(--px-muted) !important;
+}
+
+[data-theme="light"] .text-white\/35 {
+  color: color-mix(in srgb, var(--px-muted) 60%, transparent) !important;
+}
+
+/* White bg overlays → dark overlays */
+[data-theme="light"] .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-theme="light"] .bg-white\/8 {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* White borders → light grey borders */
+[data-theme="light"] .border-white\/10,
+[data-theme="light"] .border-white\/20 {
+  border-color: var(--px-border) !important;
+}
+
+/* Gradient text: ensure readability */
+[data-theme="light"] .px-gradient-text {
+  background: linear-gradient(135deg, var(--px-accent) 0%, var(--px-accent-2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Cards: remove dark-mode gradient overlays */
+[data-theme="light"] .px-card {
+  background-image: none;
+  background-color: var(--px-card);
+}
+
+[data-theme="light"] .px-card-strong {
+  background-image: none;
+  background-color: var(--px-card-strong);
+  border-color: var(--px-border);
+}
+
+[data-theme="light"] .px-card:hover,
+[data-theme="light"] .px-card-strong:hover {
+  box-shadow: 0 4px 20px rgba(255, 106, 0, 0.08), 0 8px 30px rgba(0, 0, 0, 0.06);
+}
+
+/* Input/select fields */
+[data-theme="light"] .px-input,
+[data-theme="light"] .px-select {
+  color: var(--px-text) !important;
+  background-color: var(--px-surface) !important;
+  border-color: var(--px-border) !important;
+}
+
+/* Ghost buttons */
+[data-theme="light"] .px-button-ghost {
+  color: var(--px-text) !important;
+  border-color: var(--px-border) !important;
+}
+
+[data-theme="light"] .px-button-ghost:hover {
+  color: var(--px-accent) !important;
+  border-color: var(--px-accent) !important;
+}
+
+/* Badges and pills */
+[data-theme="light"] .px-badge {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+  color: var(--px-muted) !important;
+}
+
+[data-theme="light"] .px-pill {
+  border-color: var(--px-border) !important;
+  background-color: rgba(0, 0, 0, 0.03) !important;
+  color: var(--px-muted) !important;
+}
+
+[data-theme="light"] .px-chip {
+  border-color: var(--px-border) !important;
+  background-color: rgba(0, 0, 0, 0.03) !important;
+  color: var(--px-muted) !important;
+}
+
+[data-theme="light"] .px-chip:hover {
+  border-color: var(--px-text) !important;
+  color: var(--px-text) !important;
+}
+
+[data-theme="light"] .px-chip[data-active="true"] {
+  border-color: var(--px-accent) !important;
+  background-color: rgba(255, 106, 0, 0.08) !important;
+  color: var(--px-accent) !important;
+}
+
+/* Skeleton shimmer */
+[data-theme="light"] .px-skeleton {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.06) 25%, rgba(0, 0, 0, 0.10) 50%, rgba(0, 0, 0, 0.06) 75%);
+  background-size: 200% 100%;
+}
+
+/* Section and outline */
+[data-theme="light"] .px-section {
+  border-color: var(--px-border);
+  background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.02), transparent);
+}
+
+[data-theme="light"] .px-outline {
+  border-color: var(--px-border);
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Feedback card */
+[data-theme="light"] .px-feedback {
+  background-image: none;
+  background-color: var(--px-card);
+}
+
+[data-theme="light"] .px-feedback::before {
+  background: radial-gradient(circle at 50% -20%, rgba(255, 106, 0, 0.08), transparent 45%);
+}
+
+/* Divider */
+[data-theme="light"] .px-divider {
+  background: linear-gradient(to right, transparent, var(--px-border), transparent);
+}
+
+/* Spinner */
+[data-theme="light"] .px-spinner {
+  border-color: rgba(0, 0, 0, 0.1);
+  border-top-color: var(--px-accent);
 }
 
 input[type="range"] {

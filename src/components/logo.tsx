@@ -7,7 +7,7 @@ export default function Logo() {
         X
       </span>
       <div className="leading-none">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/60">Perform</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-white/70">Perform</p>
         <p className="text-lg font-semibold">
           Perform<span className="text-[color:var(--px-accent)]">X</span>
         </p>

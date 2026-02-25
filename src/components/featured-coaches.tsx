@@ -5,6 +5,7 @@ import CoachCard from "./coach-card";
 import { SkeletonCard } from "./skeleton";
 import { supabase } from "@/lib/supabase";
 import { buildCoachAvatarMap } from "@/lib/coach-avatars";
+import { mockCoaches } from "@/lib/mock-data";
 
 type CoachRow = {
   id: string;
@@ -17,6 +18,20 @@ type CoachRow = {
   reviews_count: number | null;
   avatar_url: string | null;
 };
+
+function mockToCoachRow(c: (typeof mockCoaches)[number]): CoachRow {
+  return {
+    id: c.id,
+    name: c.name,
+    speciality: c.speciality,
+    bio: c.bio,
+    location: c.location,
+    price_per_session: c.pricePerSession,
+    rating: c.rating,
+    reviews_count: c.reviews,
+    avatar_url: null,
+  };
+}
 
 export default function FeaturedCoaches() {
   const [coaches, setCoaches] = useState<CoachRow[]>([]);
@@ -33,7 +48,11 @@ export default function FeaturedCoaches() {
         .limit(4);
 
       if (!mounted) return;
-      setCoaches(data ?? []);
+      // Fallback to mock data for demo when Supabase returns nothing
+      const rows = data && data.length > 0
+        ? data
+        : mockCoaches.slice(0, 4).map(mockToCoachRow);
+      setCoaches(rows);
       setLoading(false);
     };
 
@@ -50,12 +69,6 @@ export default function FeaturedCoaches() {
           <SkeletonCard key={index} />
         ))}
       </div>
-    );
-  }
-
-  if (coaches.length === 0) {
-    return (
-      <p className="text-sm text-white/50">Aucun coach disponible pour le moment.</p>
     );
   }
 

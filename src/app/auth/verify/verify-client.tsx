@@ -106,7 +106,7 @@ export default function VerifyClient() {
           <CheckCircleIcon className="h-8 w-8 text-[color:var(--px-success)]" />
         </div>
         <h2 className="text-2xl text-white">Compte vérifié !</h2>
-        <p className="text-sm text-white/60">Redirection vers le tableau de bord...</p>
+        <p className="text-sm text-white/70">Redirection vers le tableau de bord...</p>
         <div className="mx-auto h-1 w-32 overflow-hidden rounded-full bg-white/10">
           <div className="h-full animate-pulse rounded-full bg-[color:var(--px-success)]" style={{ width: "100%" }} />
         </div>
@@ -154,7 +154,7 @@ export default function VerifyClient() {
         )}
       </button>
 
-      <p className="text-center text-xs text-white/60">
+      <p className="text-center text-xs text-white/70">
         Code non reçu ?{" "}
         <button
           type="button"

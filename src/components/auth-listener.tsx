@@ -35,20 +35,20 @@ export default function AuthListener() {
     supabase.auth.getUser().then(({ data }) => {
       if (!mounted) return;
       if (data.user) {
-        syncProfile(data.user).catch(() => null);
+        syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
         if (pathname.startsWith("/auth/")) {
           const roleHint = (data.user.user_metadata?.role as string | undefined) ?? null;
-          redirectByRole(data.user.id, roleHint).catch(() => null);
+          redirectByRole(data.user.id, roleHint).catch((err) => console.warn("[PerformX]", err));
         }
       }
     });
 
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        syncProfile(session.user).catch(() => null);
+        syncProfile(session.user).catch((err) => console.warn("[PerformX]", err));
         if (pathname.startsWith("/auth/")) {
           const roleHint = (session.user.user_metadata?.role as string | undefined) ?? null;
-          redirectByRole(session.user.id, roleHint).catch(() => null);
+          redirectByRole(session.user.id, roleHint).catch((err) => console.warn("[PerformX]", err));
         }
       }
     });

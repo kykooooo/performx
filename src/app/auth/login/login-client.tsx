@@ -8,13 +8,18 @@ import { syncProfile } from "@/lib/profile-sync";
 import { supabase } from "@/lib/supabase";
 import { validateEmail, validatePassword, type FieldErrors } from "@/lib/validation";
 
+// Demo credentials are intentionally exposed via NEXT_PUBLIC_* for demo purposes only.
+// Set NEXT_PUBLIC_DEMO_MODE=true to enable the demo panel. Remove all NEXT_PUBLIC_DEMO_*
+// env vars before deploying to production.
+const DEMO_ENABLED = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+
 export default function LoginPage() {
-  const demoCoachEmail = process.env.NEXT_PUBLIC_DEMO_COACH_EMAIL ?? "";
-  const demoCoachPassword = process.env.NEXT_PUBLIC_DEMO_COACH_PASSWORD ?? "";
-  const demoPlayerEmail = process.env.NEXT_PUBLIC_DEMO_PLAYER_EMAIL ?? "";
-  const demoPlayerPassword = process.env.NEXT_PUBLIC_DEMO_PLAYER_PASSWORD ?? "";
-  const demoParentEmail = process.env.NEXT_PUBLIC_DEMO_PARENT_EMAIL ?? "";
-  const demoParentPassword = process.env.NEXT_PUBLIC_DEMO_PARENT_PASSWORD ?? "";
+  const demoCoachEmail = DEMO_ENABLED ? (process.env.NEXT_PUBLIC_DEMO_COACH_EMAIL ?? "") : "";
+  const demoCoachPassword = DEMO_ENABLED ? (process.env.NEXT_PUBLIC_DEMO_COACH_PASSWORD ?? "") : "";
+  const demoPlayerEmail = DEMO_ENABLED ? (process.env.NEXT_PUBLIC_DEMO_PLAYER_EMAIL ?? "") : "";
+  const demoPlayerPassword = DEMO_ENABLED ? (process.env.NEXT_PUBLIC_DEMO_PLAYER_PASSWORD ?? "") : "";
+  const demoParentEmail = DEMO_ENABLED ? (process.env.NEXT_PUBLIC_DEMO_PARENT_EMAIL ?? "") : "";
+  const demoParentPassword = DEMO_ENABLED ? (process.env.NEXT_PUBLIC_DEMO_PARENT_PASSWORD ?? "") : "";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,7 +49,7 @@ export default function LoginPage() {
       setNotice({ type: "error", text: error.message });
     } else {
       if (data.user) {
-        syncProfile(data.user).catch(() => null);
+        syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
       }
       setNotice({ type: "success", text: "Connexion réussie." });
     }
@@ -79,7 +84,7 @@ export default function LoginPage() {
     <AuthShell title="Bienvenue sur PerformX" subtitle="Connecte-toi pour réserver une séance.">
       <form className="space-y-4" onSubmit={handleLogin} noValidate>
         <div>
-          <label htmlFor="login-email" className="mb-1 block text-xs font-medium uppercase tracking-[0.15em] text-white/50">
+          <label htmlFor="login-email" className="mb-1 block text-xs font-medium uppercase tracking-[0.15em] text-white/70">
             E-mail
           </label>
           <input
@@ -95,7 +100,7 @@ export default function LoginPage() {
           <FieldError error={errors.email} />
         </div>
         <div>
-          <label htmlFor="login-password" className="mb-1 block text-xs font-medium uppercase tracking-[0.15em] text-white/50">
+          <label htmlFor="login-password" className="mb-1 block text-xs font-medium uppercase tracking-[0.15em] text-white/70">
             Mot de passe
           </label>
           <div className="relative">
@@ -110,7 +115,7 @@ export default function LoginPage() {
               aria-describedby={errors.password ? "login-password-error" : undefined}
             />
             <button
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-white/50 hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-white/70 hover:text-white"
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
               aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
@@ -120,7 +125,7 @@ export default function LoginPage() {
           </div>
           <FieldError error={errors.password} />
         </div>
-        <label className="flex items-center gap-2 text-xs text-white/60">
+        <label className="flex items-center gap-2 text-xs text-white/70">
           <input type="checkbox" className="h-4 w-4" />
           Se souvenir de moi
         </label>
@@ -128,9 +133,9 @@ export default function LoginPage() {
         <button className="px-button w-full" type="submit" disabled={loading}>
           {loading ? <><span className="px-spinner mr-2" /> Connexion...</> : "Se connecter"}
         </button>
-        {(demoCoachEmail || demoPlayerEmail || demoParentEmail) && (
+        {DEMO_ENABLED && (demoCoachEmail || demoPlayerEmail || demoParentEmail) && (
           <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-white/40">Comptes démo</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-white/70">Comptes démo</p>
             <div className="mt-2 grid gap-2 sm:grid-cols-3">
               <button
                 className="px-button-ghost text-xs"
@@ -159,7 +164,7 @@ export default function LoginPage() {
             </div>
           </div>
         )}
-        <p className="text-center text-xs text-white/50">Ou se connecter avec</p>
+        <p className="text-center text-xs text-white/70">Ou se connecter avec</p>
         <div className="grid grid-cols-2 gap-3">
           <button className="px-button-ghost" type="button" onClick={() => handleOAuth("google")}>
             Google
@@ -168,7 +173,7 @@ export default function LoginPage() {
             Facebook
           </button>
         </div>
-        <p className="text-center text-xs text-white/60">
+        <p className="text-center text-xs text-white/70">
           Pas encore inscrit ? <Link className="text-[color:var(--px-accent)]" href="/auth/register">Créer un compte</Link>
         </p>
       </form>
