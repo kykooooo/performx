@@ -11,7 +11,7 @@ type AuthShellProps = {
 
 export default function AuthShell({ title, subtitle, children }: AuthShellProps) {
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div className="px-dark-context relative min-h-screen overflow-hidden">
       <Image
         src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1600&q=80"
         alt=""

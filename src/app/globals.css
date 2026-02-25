@@ -372,7 +372,9 @@ a {
   }
 }
 
-/* ── Light mode overrides ── */
+/* ══════════════════════════════════════════════════════
+   LIGHT MODE — comprehensive overrides
+   ══════════════════════════════════════════════════════ */
 
 [data-theme="light"] body {
   background-image:
@@ -380,10 +382,7 @@ a {
     radial-gradient(circle at 80% 10%, rgba(255, 138, 0, 0.04), transparent 40%);
 }
 
-[data-theme="light"] body::before {
-  opacity: 0;
-}
-
+[data-theme="light"] body::before,
 [data-theme="light"] body::after {
   opacity: 0;
 }
@@ -406,28 +405,87 @@ a {
   border-bottom-color: #e0e0e5;
 }
 
-/* Remap all hardcoded white text to theme-aware dark text */
-[data-theme="light"] .text-white {
+/* ── Nuclear catch-all: ANY element whose class contains "text-white" ── */
+/* Excludes .px-dark-context areas (auth pages with dark photo overlay) */
+[data-theme="light"] :not(.px-dark-context) [class*="text-white"]:not(.px-gradient-text):not(.px-button) {
   color: var(--px-text) !important;
+  -webkit-text-fill-color: var(--px-text) !important;
 }
 
-[data-theme="light"] .text-white\/90 {
+/* Keep white text inside dark context areas (auth, photo overlays) */
+[data-theme="light"] .px-dark-context [class*="text-white"] {
+  color: white !important;
+  -webkit-text-fill-color: white !important;
+}
+
+[data-theme="light"] .px-dark-context .text-white\/70 {
+  color: rgba(255, 255, 255, 0.7) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-theme="light"] .px-dark-context .text-white\/30 {
+  color: rgba(255, 255, 255, 0.3) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="light"] .px-dark-context .px-input,
+[data-theme="light"] .px-dark-context .px-select {
+  color: white !important;
+  -webkit-text-fill-color: white !important;
+}
+
+/* Specific opacity variants — muted shades (outside dark-context) */
+[data-theme="light"] :not(.px-dark-context) .text-white\/90 {
   color: color-mix(in srgb, var(--px-text) 90%, transparent) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--px-text) 90%, transparent) !important;
 }
 
-[data-theme="light"] .text-white\/80 {
+[data-theme="light"] :not(.px-dark-context) .text-white\/80 {
   color: color-mix(in srgb, var(--px-text) 80%, transparent) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--px-text) 80%, transparent) !important;
 }
 
-[data-theme="light"] .text-white\/70 {
+[data-theme="light"] :not(.px-dark-context) .text-white\/70 {
   color: var(--px-muted) !important;
+  -webkit-text-fill-color: var(--px-muted) !important;
 }
 
-[data-theme="light"] .text-white\/35 {
+[data-theme="light"] :not(.px-dark-context) .text-white\/45 {
+  color: color-mix(in srgb, var(--px-muted) 70%, transparent) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--px-muted) 70%, transparent) !important;
+}
+
+[data-theme="light"] :not(.px-dark-context) .text-white\/35 {
   color: color-mix(in srgb, var(--px-muted) 60%, transparent) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--px-muted) 60%, transparent) !important;
 }
 
-/* White bg overlays → dark overlays */
+[data-theme="light"] :not(.px-dark-context) .text-white\/30 {
+  color: color-mix(in srgb, var(--px-muted) 55%, transparent) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--px-muted) 55%, transparent) !important;
+}
+
+[data-theme="light"] :not(.px-dark-context) .text-white\/20 {
+  color: color-mix(in srgb, var(--px-muted) 40%, transparent) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--px-muted) 40%, transparent) !important;
+}
+
+[data-theme="light"] :not(.px-dark-context) .text-white\/15 {
+  color: color-mix(in srgb, var(--px-muted) 30%, transparent) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--px-muted) 30%, transparent) !important;
+}
+
+/* Hover states: keep them adaptive too (outside dark-context) */
+[data-theme="light"] :not(.px-dark-context) .hover\:text-white:hover {
+  color: var(--px-text) !important;
+  -webkit-text-fill-color: var(--px-text) !important;
+}
+
+/* ── Background: white overlays → dark overlays ── */
+[data-theme="light"] [class*="bg-white\\/"] {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
 [data-theme="light"] .bg-white\/5 {
   background-color: rgba(0, 0, 0, 0.03) !important;
 }
@@ -440,21 +498,49 @@ a {
   background-color: rgba(0, 0, 0, 0.05) !important;
 }
 
-/* White borders → light grey borders */
-[data-theme="light"] .border-white\/10,
-[data-theme="light"] .border-white\/20 {
+[data-theme="light"] .bg-white\/50 {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .hover\:bg-white\/5:hover,
+[data-theme="light"] .hover\:bg-white\/8:hover,
+[data-theme="light"] .hover\:bg-white\/10:hover {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* ── Borders: white borders → light grey ── */
+[data-theme="light"] [class*="border-white"] {
   border-color: var(--px-border) !important;
 }
 
-/* Gradient text: ensure readability */
-[data-theme="light"] .px-gradient-text {
-  background: linear-gradient(135deg, var(--px-accent) 0%, var(--px-accent-2) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+[data-theme="light"] .hover\:border-white\/20:hover,
+[data-theme="light"] .hover\:border-white\/30:hover {
+  border-color: color-mix(in srgb, var(--px-border) 80%, var(--px-text)) !important;
 }
 
-/* Cards: remove dark-mode gradient overlays */
+/* ── Gradients from/via/to white → subtle dark ── */
+[data-theme="light"] .from-white\/10,
+[data-theme="light"] .from-white\/8 {
+  --tw-gradient-from: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .via-white\/5 {
+  --tw-gradient-via: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .via-white\/20 {
+  --tw-gradient-via: rgba(0, 0, 0, 0.06);
+}
+
+/* ── Gradient text: keep accent gradient readable ── */
+[data-theme="light"] .px-gradient-text {
+  background: linear-gradient(135deg, var(--px-accent) 0%, var(--px-accent-2) 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* ── Cards: remove dark-mode gradient overlays ── */
 [data-theme="light"] .px-card {
   background-image: none;
   background-color: var(--px-card);
@@ -471,61 +557,81 @@ a {
   box-shadow: 0 4px 20px rgba(255, 106, 0, 0.08), 0 8px 30px rgba(0, 0, 0, 0.06);
 }
 
-/* Input/select fields */
+/* ── Glass morphism ── */
+[data-theme="light"] .px-glass {
+  background-color: rgba(255, 255, 255, 0.7) !important;
+  border-color: var(--px-border) !important;
+}
+
+/* ── Input/select fields ── */
 [data-theme="light"] .px-input,
 [data-theme="light"] .px-select {
   color: var(--px-text) !important;
+  -webkit-text-fill-color: var(--px-text) !important;
   background-color: var(--px-surface) !important;
   border-color: var(--px-border) !important;
 }
 
-/* Ghost buttons */
+[data-theme="light"] .px-input::placeholder,
+[data-theme="light"] .px-select::placeholder {
+  color: var(--px-muted) !important;
+  -webkit-text-fill-color: var(--px-muted) !important;
+}
+
+/* ── Ghost buttons ── */
 [data-theme="light"] .px-button-ghost {
   color: var(--px-text) !important;
+  -webkit-text-fill-color: var(--px-text) !important;
   border-color: var(--px-border) !important;
 }
 
 [data-theme="light"] .px-button-ghost:hover {
   color: var(--px-accent) !important;
+  -webkit-text-fill-color: var(--px-accent) !important;
   border-color: var(--px-accent) !important;
 }
 
-/* Badges and pills */
+/* ── Badges, pills, chips ── */
 [data-theme="light"] .px-badge {
   background-color: rgba(0, 0, 0, 0.06) !important;
   color: var(--px-muted) !important;
+  -webkit-text-fill-color: var(--px-muted) !important;
 }
 
 [data-theme="light"] .px-pill {
   border-color: var(--px-border) !important;
   background-color: rgba(0, 0, 0, 0.03) !important;
   color: var(--px-muted) !important;
+  -webkit-text-fill-color: var(--px-muted) !important;
 }
 
 [data-theme="light"] .px-chip {
   border-color: var(--px-border) !important;
   background-color: rgba(0, 0, 0, 0.03) !important;
   color: var(--px-muted) !important;
+  -webkit-text-fill-color: var(--px-muted) !important;
 }
 
 [data-theme="light"] .px-chip:hover {
   border-color: var(--px-text) !important;
   color: var(--px-text) !important;
+  -webkit-text-fill-color: var(--px-text) !important;
 }
 
 [data-theme="light"] .px-chip[data-active="true"] {
   border-color: var(--px-accent) !important;
   background-color: rgba(255, 106, 0, 0.08) !important;
   color: var(--px-accent) !important;
+  -webkit-text-fill-color: var(--px-accent) !important;
 }
 
-/* Skeleton shimmer */
+/* ── Skeleton shimmer ── */
 [data-theme="light"] .px-skeleton {
   background: linear-gradient(90deg, rgba(0, 0, 0, 0.06) 25%, rgba(0, 0, 0, 0.10) 50%, rgba(0, 0, 0, 0.06) 75%);
   background-size: 200% 100%;
 }
 
-/* Section and outline */
+/* ── Section and outline ── */
 [data-theme="light"] .px-section {
   border-color: var(--px-border);
   background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.02), transparent);
@@ -536,7 +642,7 @@ a {
   background-color: rgba(0, 0, 0, 0.02);
 }
 
-/* Feedback card */
+/* ── Feedback card ── */
 [data-theme="light"] .px-feedback {
   background-image: none;
   background-color: var(--px-card);
@@ -546,15 +652,20 @@ a {
   background: radial-gradient(circle at 50% -20%, rgba(255, 106, 0, 0.08), transparent 45%);
 }
 
-/* Divider */
+/* ── Divider ── */
 [data-theme="light"] .px-divider {
   background: linear-gradient(to right, transparent, var(--px-border), transparent);
 }
 
-/* Spinner */
+/* ── Spinner ── */
 [data-theme="light"] .px-spinner {
   border-color: rgba(0, 0, 0, 0.1);
   border-top-color: var(--px-accent);
+}
+
+/* ── SVG icons inside white-text elements ── */
+[data-theme="light"] [class*="text-white"] svg {
+  color: inherit !important;
 }
 
 input[type="range"] {
