@@ -16,7 +16,7 @@ import {
 import { addDays, formatDayLabel, formatLongDate, formatShortDate, startOfWeek, toISODate } from "@/lib/date";
 import { supabase } from "@/lib/supabase";
 import { mockCoaches, mockSessions } from "@/lib/mock-data";
-import type { AvailabilitySlot } from "@/lib/types";
+import type { AvailabilitySlot, SessionFeedback } from "@/lib/types";
 
 const normalizeTime = (value: string) => (value.length >= 5 ? value.slice(0, 5) : value);
 
@@ -35,6 +35,7 @@ type SessionRow = {
   date: string;
   time: string;
   status: string;
+  feedback?: SessionFeedback | null;
 };
 
 function useMockFallback() {
@@ -54,6 +55,7 @@ function useMockFallback() {
       date: s.date,
       time: s.time,
       status: s.status,
+      feedback: s.feedback ?? null,
     }));
     return { coachRow, sessionRows };
   }, []);
@@ -70,8 +72,16 @@ export default function CoachDashboardPage() {
   const [slotTime, setSlotTime] = useState("");
   const [slotDuration, setSlotDuration] = useState(60);
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
-  const [calendarView, setCalendarView] = useState<"week" | "month">("week");
+  const [calendarView, setCalendarView] = useState<"day" | "week" | "month">(() =>
+    typeof window !== "undefined" && window.innerWidth < 768 ? "day" : "week",
+  );
+  const [dayDate, setDayDate] = useState(() => new Date());
   const [monthCursor, setMonthCursor] = useState(() => new Date());
+  const [feedbackOpen, setFeedbackOpen] = useState<string | null>(null);
+  const [feedbackDraft, setFeedbackDraft] = useState<SessionFeedback>({
+    ratings: { technique: 3, engagement: 3, progression: 3 },
+    comment: "",
+  });
   const [confirmAction, setConfirmAction] = useState<{
     title: string;
     description: string;
@@ -347,6 +357,22 @@ export default function CoachDashboardPage() {
     }
   };
 
+  const handleFeedbackSubmit = (sessionId: string) => {
+    setSessions((prev) =>
+      prev.map((s) => (s.id === sessionId ? { ...s, feedback: { ...feedbackDraft } } : s)),
+    );
+    setFeedbackOpen(null);
+    setFeedbackDraft({ ratings: { technique: 3, engagement: 3, progression: 3 }, comment: "" });
+    setSessionNotice({ type: "success", text: "Retour envoyé au joueur." });
+  };
+
+  const NAV_SECTIONS = [
+    { id: "section-sessions", label: "Séances" },
+    { id: "section-dispos", label: "Disponibilités" },
+    { id: "section-actions", label: "Actions" },
+    { id: "section-calendrier", label: "Calendrier" },
+  ];
+
   return (
     <AppShell active="/dashboard" hideTitle>
       {/* ── Hero header ── */}
@@ -402,11 +428,28 @@ export default function CoachDashboardPage() {
         </div>
       </ScrollReveal>
 
+      {/* ── Sticky sub-nav ── */}
+      <nav className="sticky top-[73px] z-20 -mx-4 flex gap-2 overflow-x-auto border-b border-[color:var(--px-border)] bg-[color:var(--px-bg)]/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
+        {NAV_SECTIONS.map((s) => (
+          <a
+            key={s.id}
+            href={`#${s.id}`}
+            className="whitespace-nowrap rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-1.5 text-xs font-medium text-[color:var(--px-text-secondary)] transition hover:border-[color:var(--px-accent)]/40 hover:text-[color:var(--px-accent)]"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById(s.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+          >
+            {s.label}
+          </a>
+        ))}
+      </nav>
+
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         {/* ── Left column ── */}
         <div className="space-y-6">
           <ScrollReveal>
-            <div className="px-card p-6">
+            <div id="section-sessions" className="px-card p-6 scroll-mt-32">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">
@@ -465,13 +508,89 @@ export default function CoachDashboardPage() {
                 {completed.length > 0 && (
                   <div className="border-t border-white/10 pt-3">
                     <p className="mb-2 text-[11px] uppercase tracking-[0.2em] text-white/70">Terminées</p>
-                    {completed.slice(0, 2).map((session) => (
-                      <div key={session.id} className="flex items-center gap-4 rounded-xl p-3 text-white/70">
-                        <CheckCircleIcon className="h-4 w-4 shrink-0" />
-                        <div className="flex-1">
-                          <p className="text-sm">{session.title}</p>
-                          <p className="text-xs text-white/70">{formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}</p>
+                    {completed.slice(0, 4).map((session) => (
+                      <div key={session.id} className="rounded-xl border border-white/10 bg-white/5 p-3 mb-2">
+                        <div className="flex items-center gap-4">
+                          <CheckCircleIcon className="h-4 w-4 shrink-0 text-white/70" />
+                          <div className="flex-1">
+                            <p className="text-sm text-white/70">{session.title}</p>
+                            <p className="text-xs text-white/70">{formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}</p>
+                          </div>
+                          {session.feedback ? (
+                            <span className="rounded-full bg-[color:var(--px-success)]/15 px-2.5 py-1 text-[10px] font-semibold text-[color:var(--px-success)]">Retour envoyé</span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="rounded-lg border border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/10 px-2.5 py-1 text-[10px] font-semibold uppercase text-[color:var(--px-accent)]"
+                              onClick={() => setFeedbackOpen(feedbackOpen === session.id ? null : session.id)}
+                            >
+                              {feedbackOpen === session.id ? "Fermer" : "Donner un retour"}
+                            </button>
+                          )}
                         </div>
+                        {session.feedback && (
+                          <div className="mt-2 ml-8 space-y-1">
+                            {(["technique", "engagement", "progression"] as const).map((k) => (
+                              <div key={k} className="flex items-center gap-2">
+                                <span className="w-24 text-[10px] capitalize text-white/50">{k}</span>
+                                <div className="flex gap-0.5">
+                                  {[1, 2, 3, 4, 5].map((n) => (
+                                    <span key={n} className={`h-1.5 w-4 rounded-full ${n <= session.feedback!.ratings[k] ? "bg-[color:var(--px-accent)]" : "bg-white/10"}`} />
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                            {session.feedback.comment && (
+                              <p className="text-[11px] italic text-white/50 mt-1">&ldquo;{session.feedback.comment}&rdquo;</p>
+                            )}
+                          </div>
+                        )}
+                        {feedbackOpen === session.id && !session.feedback && (
+                          <div className="mt-3 ml-8 space-y-3 rounded-xl border border-[color:var(--px-accent)]/20 bg-[color:var(--px-accent)]/5 p-4">
+                            {(["technique", "engagement", "progression"] as const).map((k) => (
+                              <div key={k} className="flex items-center gap-3">
+                                <span className="w-24 text-xs capitalize text-white/70">{k}</span>
+                                <div className="flex gap-1">
+                                  {[1, 2, 3, 4, 5].map((n) => (
+                                    <button
+                                      key={n}
+                                      type="button"
+                                      onClick={() =>
+                                        setFeedbackDraft((prev) => ({
+                                          ...prev,
+                                          ratings: { ...prev.ratings, [k]: n },
+                                        }))
+                                      }
+                                      className={`h-6 w-6 rounded-md text-xs font-medium transition ${
+                                        n <= feedbackDraft.ratings[k]
+                                          ? "bg-[color:var(--px-accent)] text-black"
+                                          : "border border-white/15 bg-white/5 text-white/50 hover:bg-white/10"
+                                      }`}
+                                    >
+                                      {n}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                            <textarea
+                              className="px-input w-full text-sm"
+                              rows={2}
+                              placeholder="Commentaire pour le joueur..."
+                              value={feedbackDraft.comment}
+                              onChange={(e) =>
+                                setFeedbackDraft((prev) => ({ ...prev, comment: e.target.value }))
+                              }
+                            />
+                            <button
+                              type="button"
+                              className="px-button text-xs"
+                              onClick={() => handleFeedbackSubmit(session.id)}
+                            >
+                              Envoyer le retour
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -484,7 +603,7 @@ export default function CoachDashboardPage() {
         {/* ── Right column ── */}
         <div className="space-y-6">
           <ScrollReveal>
-            <div className="px-card-strong p-6">
+            <div id="section-dispos" className="px-card-strong p-6 scroll-mt-32">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">
                   <BoltIcon className="h-4 w-4" />
@@ -536,7 +655,7 @@ export default function CoachDashboardPage() {
           </ScrollReveal>
 
           <ScrollReveal>
-            <div className="px-card p-6">
+            <div id="section-actions" className="px-card p-6 scroll-mt-32">
               <h3 className="text-lg text-white">Actions rapides</h3>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <Link href="/dashboard/coach/profile" className="px-button text-center text-sm">
@@ -555,7 +674,7 @@ export default function CoachDashboardPage() {
 
       {/* ── Calendrier ── */}
       <ScrollReveal>
-        <section className="mt-6">
+        <section id="section-calendrier" className="mt-6 scroll-mt-32">
           <div className="px-card p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -566,6 +685,7 @@ export default function CoachDashboardPage() {
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex rounded-full border border-white/10 bg-white/5 p-1">
+                  <button className={`rounded-full px-3 py-1 text-xs transition ${calendarView === "day" ? "bg-[color:var(--px-accent)] text-black" : "text-white/70"}`} type="button" onClick={() => setCalendarView("day")}>Jour</button>
                   <button className={`rounded-full px-3 py-1 text-xs transition ${calendarView === "week" ? "bg-[color:var(--px-accent)] text-black" : "text-white/70"}`} type="button" onClick={() => setCalendarView("week")}>Semaine</button>
                   <button className={`rounded-full px-3 py-1 text-xs transition ${calendarView === "month" ? "bg-[color:var(--px-accent)] text-black" : "text-white/70"}`} type="button" onClick={() => setCalendarView("month")}>Mois</button>
                 </div>
@@ -573,13 +693,20 @@ export default function CoachDashboardPage() {
                   type="button"
                   className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70 transition hover:border-[color:var(--px-accent)]/30 hover:text-white"
                   onClick={() => {
-                    if (calendarView === "week") setWeekStart(startOfWeek(new Date()));
+                    if (calendarView === "day") setDayDate(new Date());
+                    else if (calendarView === "week") setWeekStart(startOfWeek(new Date()));
                     else setMonthCursor(new Date());
                   }}
                 >
                   Aujourd&apos;hui
                 </button>
-                {calendarView === "week" ? (
+                {calendarView === "day" ? (
+                  <div className="flex items-center gap-2">
+                    <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-white/70 hover:text-white" type="button" onClick={() => setDayDate((prev) => addDays(prev, -1))}>◀</button>
+                    <span className="px-pill text-xs">{formatLongDate(dayDate)}</span>
+                    <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-white/70 hover:text-white" type="button" onClick={() => setDayDate((prev) => addDays(prev, 1))}>▶</button>
+                  </div>
+                ) : calendarView === "week" ? (
                   <div className="flex items-center gap-2">
                     <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-white/70 hover:text-white" type="button" onClick={() => setWeekStart((prev) => addDays(prev, -7))}>◀</button>
                     <span className="px-pill text-xs">Sem. {formatShortDate(weekStart)}</span>
@@ -599,7 +726,46 @@ export default function CoachDashboardPage() {
               <div className="flex items-center gap-1.5"><span className="h-3 w-3 rounded border border-[color:var(--px-accent)]/40 bg-[color:var(--px-accent)]/15" /> Réservé</div>
             </div>
 
-            {calendarView === "week" ? (
+            {calendarView === "day" ? (
+              <div className="mt-4 space-y-2">
+                {(() => {
+                  const dayKey = toISODate(dayDate);
+                  const daySlots = timeSlots.map((time) => {
+                    const key = `${dayKey}-${time}`;
+                    const slot = availabilityMap.get(key);
+                    const reserved = reservedMap.get(key);
+                    return { time, slot, reserved };
+                  });
+                  return daySlots.map(({ time, slot, reserved }) => (
+                    <div
+                      key={time}
+                      className={`flex items-center gap-4 rounded-xl border p-4 transition ${
+                        reserved
+                          ? "border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/8"
+                          : slot
+                            ? "border-white/15 bg-white/8"
+                            : "border-white/5 bg-black/20"
+                      }`}
+                    >
+                      <span className="w-14 text-sm font-medium text-white/70">{time}</span>
+                      {slot && (
+                        <span className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-medium text-white/70">
+                          Disponible · {slot.durationMinutes} min
+                        </span>
+                      )}
+                      {!slot && reserved && (
+                        <span className="rounded-full bg-[color:var(--px-accent)]/15 px-3 py-1 text-[10px] font-medium text-[color:var(--px-accent)]">
+                          Réservé · {reserved.title}
+                        </span>
+                      )}
+                      {!slot && !reserved && (
+                        <span className="text-[10px] text-white/30">—</span>
+                      )}
+                    </div>
+                  ));
+                })()}
+              </div>
+            ) : calendarView === "week" ? (
               <div className="mt-4 -mx-2 overflow-x-auto scroll-smooth snap-x snap-mandatory px-2 pb-2 md:mx-0 md:snap-none md:px-0 md:pb-0">
                 <div className="min-w-[700px] md:min-w-0">
                   <div className="grid grid-cols-[60px_repeat(7,minmax(0,1fr))] md:grid-cols-[80px_repeat(7,minmax(0,1fr))] gap-2">

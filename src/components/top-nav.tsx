@@ -123,7 +123,7 @@ export default function TopNav({ active }: { active?: string }) {
 
           {/* Mobile hamburger */}
           <button
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 transition hover:border-white/20 hover:text-white lg:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-[color:var(--px-text-secondary)] transition hover:border-[color:var(--px-accent)]/40 hover:text-[color:var(--px-text)] lg:hidden"
             type="button"
             onClick={() => setMobileOpen(true)}
             aria-label="Ouvrir le menu"
@@ -157,7 +157,7 @@ export default function TopNav({ active }: { active?: string }) {
         <div className="flex items-center justify-between border-b border-white/10 p-4">
           <Logo />
           <button
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 transition hover:text-white"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-[color:var(--px-text-secondary)] transition hover:text-[color:var(--px-text)]"
             type="button"
             onClick={() => setMobileOpen(false)}
             aria-label="Fermer le menu"

@@ -17,6 +17,7 @@ import {
 import { formatLongDate } from "@/lib/date";
 import { supabase } from "@/lib/supabase";
 import { mockSessions, mockCoaches, mockBookings } from "@/lib/mock-data";
+import type { SessionFeedback } from "@/lib/types";
 
 type SessionRow = {
   id: string;
@@ -26,6 +27,7 @@ type SessionRow = {
   time: string;
   duration_minutes: number;
   status: string;
+  feedback?: SessionFeedback | null;
 };
 
 type CoachRow = {
@@ -44,6 +46,7 @@ export default function PlayerDashboardPage() {
   const [totalSpent, setTotalSpent] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -76,6 +79,7 @@ export default function PlayerDashboardPage() {
             time: s.time,
             duration_minutes: s.durationMinutes,
             status: s.status,
+            feedback: s.feedback ?? null,
           }));
         const coachNames: Record<string, string> = {};
         mockCoaches.forEach((c) => { coachNames[c.id] = c.name; });
@@ -279,32 +283,62 @@ export default function PlayerDashboardPage() {
                 </div>
               </ScrollReveal>
 
-              {/* Completed sessions */}
+              {/* Completed sessions with feedback */}
               {completed.length > 0 && (
                 <ScrollReveal>
                   <div className="px-card p-6">
                     <h3 className="text-lg text-white mb-4">Séances terminées</h3>
                     <div className="space-y-3">
-                      {completed.slice(0, 3).map((session) => (
-                        <div
-                          key={session.id}
-                          className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--px-success)]/15 text-[color:var(--px-success)]">
-                              <TrophyIcon className="h-4 w-4" />
+                      {completed.slice(0, 5).map((session) => (
+                        <div key={session.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--px-success)]/15 text-[color:var(--px-success)]">
+                                <TrophyIcon className="h-4 w-4" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-white">{session.title}</p>
+                                <p className="text-xs text-white/70">
+                                  {formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}
+                                  {coachMap[session.coach_id] && ` · ${coachMap[session.coach_id]}`}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm font-medium text-white">{session.title}</p>
-                              <p className="text-xs text-white/70">
-                                {formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}
-                                {coachMap[session.coach_id] && ` · ${coachMap[session.coach_id]}`}
-                              </p>
+                            <div className="flex items-center gap-2">
+                              {session.feedback ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setFeedbackOpen(feedbackOpen === session.id ? null : session.id)}
+                                  className="rounded-full border border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/10 px-2.5 py-1 text-[10px] font-semibold text-[color:var(--px-accent)] transition hover:bg-[color:var(--px-accent)]/20"
+                                >
+                                  {feedbackOpen === session.id ? "Masquer" : "Retour du coach"}
+                                </button>
+                              ) : (
+                                <span className="rounded-full border border-[color:var(--px-success)]/30 bg-[color:var(--px-success)]/10 px-2.5 py-1 text-[10px] font-semibold text-[color:var(--px-success)]">
+                                  Terminée
+                                </span>
+                              )}
                             </div>
                           </div>
-                          <span className="rounded-full border border-[color:var(--px-success)]/30 bg-[color:var(--px-success)]/10 px-2.5 py-1 text-[10px] font-semibold text-[color:var(--px-success)]">
-                            Terminée
-                          </span>
+                          {feedbackOpen === session.id && session.feedback && (
+                            <div className="mt-3 ml-13 rounded-xl border border-[color:var(--px-accent)]/20 bg-[color:var(--px-accent)]/5 p-4 space-y-2">
+                              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--px-accent)]">Retour du coach</p>
+                              {(["technique", "engagement", "progression"] as const).map((k) => (
+                                <div key={k} className="flex items-center gap-3">
+                                  <span className="w-24 text-xs capitalize text-white/70">{k}</span>
+                                  <div className="flex gap-0.5">
+                                    {[1, 2, 3, 4, 5].map((n) => (
+                                      <span key={n} className={`h-2 w-5 rounded-full ${n <= session.feedback!.ratings[k] ? "bg-[color:var(--px-accent)]" : "bg-white/10"}`} />
+                                    ))}
+                                  </div>
+                                  <span className="text-xs text-white/50">{session.feedback!.ratings[k]}/5</span>
+                                </div>
+                              ))}
+                              {session.feedback.comment && (
+                                <p className="text-sm italic text-white/60 mt-2 border-t border-white/10 pt-2">&ldquo;{session.feedback.comment}&rdquo;</p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

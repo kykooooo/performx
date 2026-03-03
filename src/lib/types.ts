@@ -39,6 +39,15 @@ export type Coach = {
 
 export type SessionStatus = "upcoming" | "completed" | "cancelled";
 
+export type SessionFeedback = {
+  ratings: {
+    technique: number;    // 1-5
+    engagement: number;   // 1-5
+    progression: number;  // 1-5
+  };
+  comment: string;
+};
+
 export type Session = {
   id: string;
   coachId: string;
@@ -48,6 +57,7 @@ export type Session = {
   time: string; // HH:mm
   durationMinutes: number;
   status: SessionStatus;
+  feedback?: SessionFeedback;
 };
 
 export type Booking = {

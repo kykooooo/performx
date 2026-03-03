@@ -156,16 +156,16 @@ export default function HomePage() {
               className="px-fade-up text-5xl leading-[1.1] text-white sm:text-6xl lg:text-7xl"
               style={{ animationDelay: "80ms" }}
             >
-              Passe au{" "}
-              <span className="px-gradient-text">niveau supérieur.</span>
+              L&apos;excellence du coaching football,{" "}
+              <span className="px-gradient-text">enfin accessible.</span>
             </h1>
 
             <p
               className="px-fade-up max-w-xl text-lg text-white/70"
               style={{ animationDelay: "160ms" }}
             >
-              Trouve un coach près de chez toi, réserve une séance individuelle en
-              quelques clics et suis la progression du joueur dans un espace dédié parents.
+              La plateforme de coaching football qui connecte joueurs motivés, coachs
+              diplômés et parents investis. Réserve ta séance en quelques clics.
             </p>
 
             <div
@@ -476,12 +476,12 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,106,0,0.25),transparent_60%)]" />
             <div className="relative">
               <h2 className="text-4xl text-white sm:text-5xl lg:text-6xl">
-                Prêt à passer au{" "}
-                <span className="px-gradient-text">niveau supérieur</span> ?
+                L&apos;excellence du coaching,{" "}
+                <span className="px-gradient-text">enfin accessible</span>.
               </h2>
               <p className="mx-auto mt-4 max-w-lg text-white/70">
-                Version demo en ligne pour valider les usages joueurs, coachs et parents
-                avant la mise en production.
+                Rejoins la communauté PerformX : joueurs, coachs diplômés et parents
+                réunis sur une seule plateforme.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-4">
                 <Link href="/auth/register" className="px-button text-base px-8 py-4">

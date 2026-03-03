@@ -18,6 +18,7 @@ import {
 } from "@/components/icons";
 import { supabase } from "@/lib/supabase";
 import { mockPlayers } from "@/lib/mock-data";
+import { SEINE_MARITIME_CITIES } from "@/lib/constants";
 
 type PlayerRow = {
   user_id: string;
@@ -32,7 +33,7 @@ type PlayerRow = {
   reviews_count: number | null;
 };
 
-const LEVEL_CHIPS = ["Tous", "Débutant", "Intermédiaire", "Avancé"];
+const LEVEL_CHIPS = ["Tous", "Débutant", "Intermédiaire", "Confirmé", "Élite"];
 
 function mapMockToRow(player: (typeof mockPlayers)[number]): PlayerRow {
   const [firstName, ...rest] = player.name.split(" ");
@@ -57,7 +58,7 @@ export default function PlayersPage() {
   const [query, setQuery] = useState("");
   const [activeLevel, setActiveLevel] = useState("Tous");
   const [positionFilter, setPositionFilter] = useState("all");
-  const [cityFilter, setCityFilter] = useState("all");
+  const [cityFilter, setCityFilter] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -89,10 +90,12 @@ export default function PlayersPage() {
     () => Array.from(new Set(players.map((p) => p.position).filter(Boolean))) as string[],
     [players],
   );
-  const cities = useMemo(
-    () => Array.from(new Set(players.map((p) => p.city).filter(Boolean))) as string[],
-    [players],
-  );
+  const allCities = useMemo(() => {
+    const playerCities = players.map((p) => p.city).filter(Boolean) as string[];
+    return Array.from(new Set([...playerCities, ...SEINE_MARITIME_CITIES])).sort((a, b) =>
+      a.localeCompare(b, "fr"),
+    );
+  }, [players]);
 
   const filteredPlayers = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -107,7 +110,8 @@ export default function PlayersPage() {
         activeLevel === "Tous" || player.level === activeLevel;
       const matchesPosition =
         positionFilter === "all" || player.position === positionFilter;
-      const matchesCity = cityFilter === "all" || player.city === cityFilter;
+      const matchesCity =
+        !cityFilter || (player.city ?? "").toLowerCase().includes(cityFilter.toLowerCase());
       return matchesQuery && matchesLevel && matchesPosition && matchesCity;
     });
   }, [players, query, activeLevel, positionFilter, cityFilter]);
@@ -183,7 +187,7 @@ export default function PlayersPage() {
             </div>
             <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-4">
               <p className="text-xs text-white/70 leading-relaxed">
-                <span className="font-semibold text-white/70">{cities.length} villes</span>{" "}
+                <span className="font-semibold text-white/70">{allCities.length} villes</span>{" "}
                 représentées. Des joueurs de tous niveaux prêts à progresser ensemble.
               </p>
             </div>
@@ -247,19 +251,19 @@ export default function PlayersPage() {
               </div>
               <div className="px-outline p-3">
                 <label htmlFor="filter-city" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Ville</label>
-                <select
+                <input
                   id="filter-city"
-                  className="px-select mt-2"
+                  list="city-suggestions"
+                  className="px-input mt-2"
+                  placeholder="Tapez une ville..."
                   value={cityFilter}
                   onChange={(e) => setCityFilter(e.target.value)}
-                >
-                  <option value="all">Toutes les villes</option>
-                  {cities.map((city) => (
-                    <option key={city} value={city}>
-                      {city}
-                    </option>
+                />
+                <datalist id="city-suggestions">
+                  {allCities.map((city) => (
+                    <option key={city} value={city} />
                   ))}
-                </select>
+                </datalist>
               </div>
             </div>
           </div>
@@ -309,7 +313,7 @@ export default function PlayersPage() {
             setQuery("");
             setActiveLevel("Tous");
             setPositionFilter("all");
-            setCityFilter("all");
+            setCityFilter("");
           }}
         />
       )}
