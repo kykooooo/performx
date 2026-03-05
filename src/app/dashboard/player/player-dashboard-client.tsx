@@ -18,7 +18,7 @@ import { formatLongDate } from "@/lib/date";
 import { supabase } from "@/lib/supabase";
 import { mockSessions, mockCoaches, mockBookings } from "@/lib/mock-data";
 import { ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { playerSkills, playerProgression, CHART_COLORS } from "@/lib/chart-data";
+import { playerSkills, playerProgression, CHART_COLORS, fetchPlayerSkills, fetchPlayerProgression } from "@/lib/chart-data";
 import type { SessionFeedback } from "@/lib/types";
 
 type SessionRow = {
@@ -49,6 +49,8 @@ export default function PlayerDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState<string | null>(null);
+  const [skillsData, setSkillsData] = useState(playerSkills);
+  const [progressionData, setProgressionData] = useState(playerProgression);
 
   useEffect(() => {
     let mounted = true;
@@ -144,6 +146,17 @@ export default function PlayerDashboardPage() {
       setCoachMap(names);
       setCoaches(coachData ?? []);
       setTotalSpent(bookingData?.reduce((sum, b) => sum + (b.price ?? 0), 0) ?? 0);
+
+      // Fetch chart data (real → mock fallback)
+      Promise.all([
+        fetchPlayerSkills(userId),
+        fetchPlayerProgression(userId),
+      ]).then(([skills, progression]) => {
+        if (!mounted) return;
+        setSkillsData(skills);
+        setProgressionData(progression);
+      });
+
       setLoading(false);
     };
 
@@ -246,7 +259,7 @@ export default function PlayerDashboardPage() {
                   <span className="rounded-full bg-[color:var(--px-accent)]/15 px-2 py-0.5 text-[10px] font-medium text-[color:var(--px-accent)]">Évaluation</span>
                 </div>
                 <ResponsiveContainer width="100%" height={260}>
-                  <RadarChart data={playerSkills} cx="50%" cy="50%" outerRadius="75%">
+                  <RadarChart data={skillsData} cx="50%" cy="50%" outerRadius="75%">
                     <PolarGrid stroke={CHART_COLORS.grid} />
                     <PolarAngleAxis dataKey="skill" tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} />
                     <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
@@ -262,7 +275,7 @@ export default function PlayerDashboardPage() {
                   <p className="text-xs text-[color:var(--px-text-secondary)]">6 derniers mois</p>
                 </div>
                 <ResponsiveContainer width="100%" height={240}>
-                  <AreaChart data={playerProgression}>
+                  <AreaChart data={progressionData}>
                     <defs>
                       <linearGradient id="progressGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={CHART_COLORS.accent} stopOpacity={0.3} />

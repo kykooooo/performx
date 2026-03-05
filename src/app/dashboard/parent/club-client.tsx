@@ -17,7 +17,7 @@ import {
 import { formatLongDate } from "@/lib/date";
 import { supabase } from "@/lib/supabase";
 import { mockCoaches, mockSessions, mockBookings } from "@/lib/mock-data";
-import { parentMetrics } from "@/lib/chart-data";
+import { parentMetrics, fetchParentMetrics } from "@/lib/chart-data";
 
 type CoachRow = {
   id: string;
@@ -53,6 +53,7 @@ export default function ClubDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [metricsData, setMetricsData] = useState(parentMetrics);
 
   useEffect(() => {
     let mounted = true;
@@ -142,6 +143,13 @@ export default function ClubDashboardPage() {
       setSessionCount(sessionRes.count ?? sessionRes.data?.length ?? 0);
       setCoaches((coachRes.data ?? []).slice(0, 4));
       setSessions(sessionRes.data ?? []);
+
+      // Fetch parent metrics (real → mock fallback)
+      fetchParentMetrics(userData.user.id).then((metrics) => {
+        if (!mounted) return;
+        setMetricsData(metrics);
+      });
+
       setLoading(false);
     };
 
@@ -272,7 +280,7 @@ export default function ClubDashboardPage() {
             <div className="mt-6 px-card p-6">
               <h3 className="mb-5 text-base font-semibold text-[color:var(--px-text)]">Suivi de progression</h3>
               <div className="space-y-5">
-                {parentMetrics.map((m) => (
+                {metricsData.map((m) => (
                   <div key={m.label}>
                     <div className="mb-1.5 flex items-center justify-between">
                       <span className="text-sm text-[color:var(--px-text-secondary)]">{m.label}</span>

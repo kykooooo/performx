@@ -17,7 +17,7 @@ import { addDays, formatDayLabel, formatLongDate, formatShortDate, startOfWeek, 
 import { supabase } from "@/lib/supabase";
 import { mockCoaches, mockSessions } from "@/lib/mock-data";
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { coachMonthlyActivity, coachDayDistribution, CHART_COLORS } from "@/lib/chart-data";
+import { coachMonthlyActivity, coachDayDistribution, CHART_COLORS, fetchCoachMonthlyActivity, fetchCoachDayDistribution } from "@/lib/chart-data";
 import type { AvailabilitySlot, SessionFeedback } from "@/lib/types";
 
 const normalizeTime = (value: string) => (value.length >= 5 ? value.slice(0, 5) : value);
@@ -90,6 +90,8 @@ export default function CoachDashboardPage() {
     tone: "danger" | "warning";
     onConfirm: () => void;
   } | null>(null);
+  const [activityData, setActivityData] = useState(coachMonthlyActivity);
+  const [dayData, setDayData] = useState(coachDayDistribution);
 
   const mock = useMockFallback();
 
@@ -139,6 +141,17 @@ export default function CoachDashboardPage() {
           time: normalizeTime(row.time),
         })),
       );
+
+      // Fetch chart data (real → mock fallback)
+      Promise.all([
+        fetchCoachMonthlyActivity(coachData.id),
+        fetchCoachDayDistribution(coachData.id),
+      ]).then(([actRes, dayRes]) => {
+        if (!mounted) return;
+        setActivityData(actRes);
+        setDayData(dayRes);
+      });
+
       setLoading(false);
     };
 
@@ -440,7 +453,7 @@ export default function CoachDashboardPage() {
               <p className="text-xs text-[color:var(--px-text-secondary)]">6 derniers mois</p>
             </div>
             <ResponsiveContainer width="100%" height={240}>
-              <LineChart data={coachMonthlyActivity}>
+              <LineChart data={activityData}>
                 <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="3 3" />
                 <XAxis dataKey="month" tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} width={30} />
@@ -461,7 +474,7 @@ export default function CoachDashboardPage() {
               <p className="text-xs text-[color:var(--px-text-secondary)]">Répartition hebdomadaire</p>
             </div>
             <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={coachDayDistribution}>
+              <BarChart data={dayData}>
                 <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="3 3" />
                 <XAxis dataKey="day" tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} width={30} />
