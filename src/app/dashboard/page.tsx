@@ -34,7 +34,7 @@ const DASHBOARD_ITEMS = [
     title: "Dashboard Parent",
     description:
       "Suivi des joueurs, séances programmées et coachs partenaires. Vue globale pour les parents.",
-    href: "/dashboard/club",
+    href: "/dashboard/parent",
     icon: <ShieldIcon className="h-6 w-6" />,
     primary: false,
     stats: [

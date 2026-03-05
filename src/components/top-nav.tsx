@@ -17,6 +17,7 @@ import {
   UserIcon,
   WhistleIcon,
 } from "./icons";
+import { MOCK_TOTAL_UNREAD } from "@/lib/mock-data";
 
 type NavItem = {
   label: string;
@@ -24,7 +25,7 @@ type NavItem = {
   icon: ReactNode;
 };
 
-const UNREAD_COUNT = 3; // demo
+const UNREAD_COUNT = MOCK_TOTAL_UNREAD;
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Accueil", href: "/", icon: <HomeIcon className="h-4 w-4" /> },

@@ -26,7 +26,7 @@ const average = (values: number[]) => {
   return total / values.length;
 };
 
-function useCountUp(target: number, duration: number = 1200, decimals: number = 0) {
+function useCountUp(target: number, duration: number = 2000, decimals: number = 0) {
   const [value, setValue] = useState(0);
 
   useEffect(() => {

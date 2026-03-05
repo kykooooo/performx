@@ -12,6 +12,8 @@ import {
   ArrowRightIcon,
   ShieldIcon,
   TrophyIcon,
+  StarIcon,
+  UsersIcon,
 } from "@/components/icons";
 import { SITE_URL } from "@/lib/constants";
 import PublicStats from "@/components/public-stats";
@@ -63,22 +65,31 @@ const FEATURES = [
 
 const TESTIMONIALS = [
   {
-    name: "Lucas M.",
-    role: "Joueur – U17",
+    name: "Lucas, 16 ans",
+    role: "U17 · FC Rouen",
     quote:
-      "Grâce à PerformX j'ai trouvé un coach spécialisé en technique individuelle à côté de chez moi. En 2 mois mon niveau a explosé.",
+      "Depuis 3 mois avec coach Amina, ma frappe enroulée est devenue mon arme secrète. Elle m'a fait travailler le placement du pied d'appui et ça a tout changé. Mon entraîneur en club a remarqué la diff.",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucas&backgroundColor=c0aede",
+    badge: "Membre depuis 3 mois",
+    rating: 5,
   },
   {
-    name: "Sophie R.",
-    role: "Coach – Spécialiste vitesse",
+    name: "Sophie Renaud",
+    role: "Coach certifiée UEFA B",
     quote:
-      "La plateforme me permet de gérer mes créneaux facilement et d'avoir une visibilité auprès de nouveaux joueurs. Un vrai gain de temps.",
+      "En 4 mois sur PerformX, j'ai rempli 80% de mes créneaux sans prospecter. La gestion du planning est fluide et les joueurs arrivent motivés. Je me concentre sur ce que je sais faire : coacher.",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie&backgroundColor=ffd5dc",
+    badge: "Coach vérifiée ✓",
+    rating: 0,
   },
   {
-    name: "Thomas D.",
-    role: "Parent d'un joueur U15",
+    name: "Thomas, papa de Maxime",
+    role: "Parent · U15 Dieppe",
     quote:
-      "Je peux suivre les séances, les retours des coachs et réserver rapidement pour mon fils. C'est clair et efficace.",
+      "Je vois les séances de Maxime, je lis les retours du coach après chaque entraînement. C'est rassurant de savoir exactement ce qu'il travaille et comment il progresse. La réservation prend 30 secondes.",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Thomas&backgroundColor=b6e3f4",
+    badge: "Parent depuis 6 mois",
+    rating: 0,
   },
 ];
 
@@ -143,7 +154,7 @@ export default function HomePage() {
         }}
       />
       {/* ── Hero ── */}
-      <section className="relative py-8 lg:py-16">
+      <section className="px-hero-bg relative -mx-4 rounded-3xl px-4 py-8 lg:py-16">
         <div className="grid items-center gap-10 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="space-y-8">
             <div className="flex items-center gap-3 px-fade-up">
@@ -169,22 +180,15 @@ export default function HomePage() {
             </p>
 
             <div
-              className="px-fade-up flex flex-wrap gap-4"
+              className="px-fade-up flex flex-col items-start gap-4 sm:flex-row sm:items-center"
               style={{ animationDelay: "240ms" }}
             >
-              <Link href="/coach" className="px-button text-base px-7 py-4">
+              <Link href="/coach" className="px-button text-base px-8 py-4 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(255,106,0,0.4)]">
                 <BoltIcon className="h-5 w-5" />
                 Trouver un coach
               </Link>
-              <Link href="/players" className="px-button-ghost text-base px-7 py-4">
-                Trouver un joueur
-              </Link>
-              <Link href="/auth/register" className="px-button-ghost text-base px-7 py-4">
-                Créer un compte
-                <ArrowRightIcon className="h-4 w-4" />
-              </Link>
-              <Link href="/auth/login" className="px-button-ghost text-base px-7 py-4 border-[color:var(--px-accent)]/30 text-[color:var(--px-accent)]">
-                Connexion démo
+              <Link href="/auth/register" className="text-sm text-white/50 transition-colors hover:text-[color:var(--px-accent)]">
+                Créer un compte →
               </Link>
             </div>
 
@@ -365,7 +369,7 @@ export default function HomePage() {
                   Cette version démo met l&apos;accent sur le parcours parent : réservation, suivi et échanges coach-joueur.
                 </p>
               </div>
-              <Link href="/dashboard/club" className="px-button-ghost">
+              <Link href="/dashboard/parent" className="px-button-ghost">
                 Voir l&apos;espace parent
               </Link>
             </div>
@@ -430,6 +434,44 @@ export default function HomePage() {
         </section>
       </ScrollReveal>
 
+      {/* ── Devenir coach ── */}
+      <ScrollReveal>
+        <section className="py-16">
+          <div className="rounded-3xl border border-[color:var(--px-accent)]/10 bg-gradient-to-br from-[color:var(--px-accent)]/5 via-transparent to-transparent p-8 sm:p-12">
+            <div className="mb-10 text-center">
+              <h2 className="text-4xl text-white sm:text-5xl">
+                Tu es coach diplômé<span className="text-[color:var(--px-accent)]"> ?</span>
+              </h2>
+              <p className="mx-auto mt-4 max-w-lg text-white/70">
+                Rejoins +120 coachs qui développent leur activité sur PerformX.
+              </p>
+            </div>
+
+            <div className="mx-auto mb-10 grid max-w-3xl gap-6 sm:grid-cols-3">
+              {[
+                { icon: <CalendarIcon className="h-6 w-6" />, text: "Gère tes créneaux facilement" },
+                { icon: <UsersIcon className="h-6 w-6" />, text: "Trouve des joueurs motivés" },
+                { icon: <ShieldIcon className="h-6 w-6" />, text: "Reçois tes paiements simplement" },
+              ].map((item) => (
+                <div key={item.text} className="flex flex-col items-center gap-3 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">
+                    {item.icon}
+                  </div>
+                  <p className="text-sm font-medium text-white/80">{item.text}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center">
+              <Link href="/auth/register" className="px-button text-base px-8 py-4 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(255,106,0,0.4)]">
+                Créer mon profil coach
+                <ArrowRightIcon className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
+      </ScrollReveal>
+
       {/* ── Témoignages ── */}
       <ScrollReveal>
         <section className="py-16">
@@ -447,19 +489,39 @@ export default function HomePage() {
           <div className="grid gap-6 md:grid-cols-3">
             {TESTIMONIALS.map((testimonial, index) => (
               <ScrollReveal key={testimonial.name} delay={index * 100}>
-                <div className="px-card relative flex flex-col gap-4 p-6">
-                  <QuoteIcon className="h-8 w-8 text-[color:var(--px-accent)]/30" />
-                  <p className="text-sm leading-relaxed text-white/70">
+                <div className="px-card relative flex flex-col gap-5 p-6">
+                  <span className="pointer-events-none absolute right-4 top-2 select-none text-7xl font-bold leading-none text-[color:var(--px-accent)]/[0.06]">
+                    &ldquo;
+                  </span>
+
+                  <p className="relative text-sm leading-relaxed text-white/70">
                     &ldquo;{testimonial.quote}&rdquo;
                   </p>
+
+                  {testimonial.rating > 0 && (
+                    <div className="flex gap-0.5">
+                      {Array.from({ length: testimonial.rating }).map((_, i) => (
+                        <StarIcon key={i} className="h-4 w-4 fill-[color:var(--px-accent)] text-[color:var(--px-accent)]" />
+                      ))}
+                    </div>
+                  )}
+
                   <div className="mt-auto flex items-center gap-3 border-t border-white/10 pt-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-[color:var(--px-accent)]/15 text-sm font-semibold text-[color:var(--px-accent)]">
-                      {testimonial.name.charAt(0)}
-                    </div>
-                    <div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={testimonial.avatar}
+                      alt={testimonial.name}
+                      width={44}
+                      height={44}
+                      className="h-11 w-11 rounded-full border border-white/20 bg-[color:var(--px-surface)]"
+                    />
+                    <div className="flex-1">
                       <p className="text-sm font-semibold text-white">{testimonial.name}</p>
-                      <p className="text-xs text-white/70">{testimonial.role}</p>
+                      <p className="text-xs text-white/50">{testimonial.role}</p>
                     </div>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-medium text-white/60">
+                      {testimonial.badge}
+                    </span>
                   </div>
                 </div>
               </ScrollReveal>

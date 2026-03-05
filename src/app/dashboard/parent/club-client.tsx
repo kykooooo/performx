@@ -17,6 +17,7 @@ import {
 import { formatLongDate } from "@/lib/date";
 import { supabase } from "@/lib/supabase";
 import { mockCoaches, mockSessions, mockBookings } from "@/lib/mock-data";
+import { parentMetrics } from "@/lib/chart-data";
 
 type CoachRow = {
   id: string;
@@ -265,6 +266,29 @@ export default function ClubDashboardPage() {
               </ScrollReveal>
             ))}
           </div>
+
+          {/* ── Progress metrics ── */}
+          <ScrollReveal>
+            <div className="mt-6 px-card p-6">
+              <h3 className="mb-5 text-base font-semibold text-[color:var(--px-text)]">Suivi de progression</h3>
+              <div className="space-y-5">
+                {parentMetrics.map((m) => (
+                  <div key={m.label}>
+                    <div className="mb-1.5 flex items-center justify-between">
+                      <span className="text-sm text-[color:var(--px-text-secondary)]">{m.label}</span>
+                      <span className="text-sm font-semibold text-[color:var(--px-text)]">{m.value}%</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className="h-full rounded-full transition-all duration-1000 ease-out"
+                        style={{ width: `${m.value}%`, backgroundColor: m.color }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </ScrollReveal>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             {/* Left */}

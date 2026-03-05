@@ -130,7 +130,7 @@ export default function PlayersPage() {
           <div className="px-stack-3">
             <div className="flex items-center gap-3 px-fade-up">
               <span className="px-badge px-pulse">Communauté</span>
-              <span className="px-pill">+{players.length} joueurs inscrits</span>
+              <span className="px-pill">+640 joueurs inscrits</span>
             </div>
 
             <h1

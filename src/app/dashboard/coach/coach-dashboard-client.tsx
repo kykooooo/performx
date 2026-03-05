@@ -16,6 +16,8 @@ import {
 import { addDays, formatDayLabel, formatLongDate, formatShortDate, startOfWeek, toISODate } from "@/lib/date";
 import { supabase } from "@/lib/supabase";
 import { mockCoaches, mockSessions } from "@/lib/mock-data";
+import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import { coachMonthlyActivity, coachDayDistribution, CHART_COLORS } from "@/lib/chart-data";
 import type { AvailabilitySlot, SessionFeedback } from "@/lib/types";
 
 const normalizeTime = (value: string) => (value.length >= 5 ? value.slice(0, 5) : value);
@@ -425,6 +427,54 @@ export default function CoachDashboardPage() {
               </div>
             </div>
           ))}
+        </div>
+      </ScrollReveal>
+
+      {/* ── Charts ── */}
+      <ScrollReveal>
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          {/* LineChart — Activité 6 mois */}
+          <div className="px-card p-6">
+            <div className="mb-4">
+              <h3 className="text-base font-semibold text-[color:var(--px-text)]">Activité</h3>
+              <p className="text-xs text-[color:var(--px-text-secondary)]">6 derniers mois</p>
+            </div>
+            <ResponsiveContainer width="100%" height={240}>
+              <LineChart data={coachMonthlyActivity}>
+                <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="3 3" />
+                <XAxis dataKey="month" tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} width={30} />
+                <Tooltip
+                  contentStyle={{ background: "#1a1a1f", border: "1px solid rgba(255,106,0,0.2)", borderRadius: 12, padding: "8px 12px", color: "#fff" }}
+                  itemStyle={{ color: CHART_COLORS.accent }}
+                  labelStyle={{ color: "rgba(255,255,255,0.6)", fontSize: 12 }}
+                />
+                <Line type="monotone" dataKey="seances" stroke={CHART_COLORS.accent} strokeWidth={2} dot={{ fill: CHART_COLORS.accent, r: 4 }} activeDot={{ r: 6 }} name="Séances" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* BarChart — Répartition par jour */}
+          <div className="px-card p-6">
+            <div className="mb-4">
+              <h3 className="text-base font-semibold text-[color:var(--px-text)]">Séances par jour</h3>
+              <p className="text-xs text-[color:var(--px-text-secondary)]">Répartition hebdomadaire</p>
+            </div>
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={coachDayDistribution}>
+                <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="3 3" />
+                <XAxis dataKey="day" tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} width={30} />
+                <Tooltip
+                  contentStyle={{ background: "#1a1a1f", border: "1px solid rgba(255,106,0,0.2)", borderRadius: 12, padding: "8px 12px", color: "#fff" }}
+                  itemStyle={{ color: CHART_COLORS.accent }}
+                  labelStyle={{ color: "rgba(255,255,255,0.6)", fontSize: 12 }}
+                  cursor={{ fill: "rgba(255,106,0,0.05)" }}
+                />
+                <Bar dataKey="count" fill={CHART_COLORS.accent} radius={[6, 6, 0, 0]} name="Séances" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </ScrollReveal>
 

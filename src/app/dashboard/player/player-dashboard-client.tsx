@@ -17,6 +17,8 @@ import {
 import { formatLongDate } from "@/lib/date";
 import { supabase } from "@/lib/supabase";
 import { mockSessions, mockCoaches, mockBookings } from "@/lib/mock-data";
+import { ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import { playerSkills, playerProgression, CHART_COLORS } from "@/lib/chart-data";
 import type { SessionFeedback } from "@/lib/types";
 
 type SessionRow = {
@@ -233,6 +235,54 @@ export default function PlayerDashboardPage() {
               </ScrollReveal>
             ))}
           </div>
+
+          {/* ── Charts ── */}
+          <ScrollReveal>
+            <div className="mt-6 grid gap-4 lg:grid-cols-2">
+              {/* RadarChart — Profil technique */}
+              <div className="px-card p-6">
+                <div className="mb-2 flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-[color:var(--px-text)]">Mon profil</h3>
+                  <span className="rounded-full bg-[color:var(--px-accent)]/15 px-2 py-0.5 text-[10px] font-medium text-[color:var(--px-accent)]">Évaluation</span>
+                </div>
+                <ResponsiveContainer width="100%" height={260}>
+                  <RadarChart data={playerSkills} cx="50%" cy="50%" outerRadius="75%">
+                    <PolarGrid stroke={CHART_COLORS.grid} />
+                    <PolarAngleAxis dataKey="skill" tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} />
+                    <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
+                    <Radar dataKey="value" stroke={CHART_COLORS.accent} fill={CHART_COLORS.accent} fillOpacity={0.25} strokeWidth={2} name="Score" />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* AreaChart — Progression */}
+              <div className="px-card p-6">
+                <div className="mb-4">
+                  <h3 className="text-base font-semibold text-[color:var(--px-text)]">Progression</h3>
+                  <p className="text-xs text-[color:var(--px-text-secondary)]">6 derniers mois</p>
+                </div>
+                <ResponsiveContainer width="100%" height={240}>
+                  <AreaChart data={playerProgression}>
+                    <defs>
+                      <linearGradient id="progressGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={CHART_COLORS.accent} stopOpacity={0.3} />
+                        <stop offset="100%" stopColor={CHART_COLORS.accent} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="3 3" />
+                    <XAxis dataKey="month" tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} width={30} domain={[0, 100]} />
+                    <Tooltip
+                      contentStyle={{ background: "#1a1a1f", border: "1px solid rgba(255,106,0,0.2)", borderRadius: 12, padding: "8px 12px", color: "#fff" }}
+                      itemStyle={{ color: CHART_COLORS.accent }}
+                      labelStyle={{ color: "rgba(255,255,255,0.6)", fontSize: 12 }}
+                    />
+                    <Area type="monotone" dataKey="score" stroke={CHART_COLORS.accent} strokeWidth={2} fill="url(#progressGradient)" name="Score global" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </ScrollReveal>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             {/* Left column */}

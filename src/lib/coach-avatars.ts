@@ -4,7 +4,7 @@ const COACH_AVATAR_POOL = [
   "https://images.pexels.com/photos/2202685/pexels-photo-2202685.jpeg?auto=compress&cs=tinysrgb&w=200",
   "https://images.pexels.com/photos/274506/pexels-photo-274506.jpeg?auto=compress&cs=tinysrgb&w=200",
   "https://images.pexels.com/photos/8622140/pexels-photo-8622140.jpeg?auto=compress&cs=tinysrgb&w=200",
-  "https://images.pexels.com/photos/7691735/pexels-photo-7691735.jpeg?auto=compress&cs=tinysrgb&w=200",
+  "https://images.pexels.com/photos/3621168/pexels-photo-3621168.jpeg?auto=compress&cs=tinysrgb&w=200",
 ];
 
 function hashString(value: string) {

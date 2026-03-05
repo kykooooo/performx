@@ -166,11 +166,17 @@ export default function LoginPage() {
         )}
         <p className="text-center text-xs text-white/70">Ou se connecter avec</p>
         <div className="grid grid-cols-2 gap-3">
-          <button className="px-button-ghost" type="button" onClick={() => handleOAuth("google")}>
+          <button className="px-button-ghost opacity-50 cursor-not-allowed relative group" type="button" disabled>
             Google
+            <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-black/90 px-2.5 py-1 text-[10px] text-white/70 opacity-0 transition group-hover:opacity-100">
+              Bientôt disponible
+            </span>
           </button>
-          <button className="px-button-ghost" type="button" onClick={() => handleOAuth("facebook")}>
+          <button className="px-button-ghost opacity-50 cursor-not-allowed relative group" type="button" disabled>
             Facebook
+            <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-black/90 px-2.5 py-1 text-[10px] text-white/70 opacity-0 transition group-hover:opacity-100">
+              Bientôt disponible
+            </span>
           </button>
         </div>
         <p className="text-center text-xs text-white/70">

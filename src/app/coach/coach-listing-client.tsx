@@ -151,7 +151,7 @@ export default function CoachPage() {
           <div className="px-stack-3">
             <div className="flex items-center gap-3 px-fade-up">
               <span className="px-badge px-pulse">Annuaire</span>
-              <span className="px-pill">+{coaches.length} coachs actifs</span>
+              <span className="px-pill">+120 coachs actifs</span>
             </div>
 
             <h1

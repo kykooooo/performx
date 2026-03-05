@@ -20,7 +20,7 @@ export default function AuthListener() {
         router.replace("/dashboard/coach");
         break;
       case "club":
-        router.replace("/dashboard/club");
+        router.replace("/dashboard/parent");
         break;
       case "player":
       default:

@@ -2,17 +2,25 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import AppShell from "@/components/app-shell";
 import { FeedbackState, LoadingState } from "@/components/feedback-state";
-import { AlertIcon, ChatIcon, InboxIcon } from "@/components/icons";
-import { mockConversations, mockMessages } from "@/lib/mock-data";
+import { AlertIcon, ChatIcon, InboxIcon, ArrowRightIcon } from "@/components/icons";
+import { mockConversations, mockMessages, type MockConversation } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
+
+/* ── Types ── */
 
 type Conversation = {
   id: string;
   created_at: string;
   otherUserId: string | null;
   otherName: string;
+  role?: string;
+  avatarSeed?: string;
+  unread: number;
+  online?: boolean;
+  lastSeen?: string;
 };
 
 type MessageRow = {
@@ -27,6 +35,11 @@ type ProfileRow = {
   first_name: string | null;
   last_name: string | null;
 };
+
+/* ── Helpers ── */
+
+const getAvatar = (seed: string) =>
+  `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
 
 const formatMessageTime = (value: string) => {
   const date = new Date(value);
@@ -53,6 +66,29 @@ const formatMessageTime = (value: string) => {
   return `${new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" }).format(date)} · ${time}`;
 };
 
+const formatListTime = (value: string) => {
+  const date = new Date(value);
+  const now = new Date();
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear();
+
+  if (isToday)
+    return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" }).format(date);
+  if (isYesterday) return "Hier";
+  return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" }).format(date);
+};
+
+/* ── Component ── */
+
 export default function MessagesClient() {
   const searchParams = useSearchParams();
   const coachId = searchParams.get("coach");
@@ -64,22 +100,19 @@ export default function MessagesClient() {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [mobileChatOpen, setMobileChatOpen] = useState(Boolean(coachId));
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const conversationsRef = useRef<Conversation[]>([]);
+  const isDemoMode = useRef(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     conversationsRef.current = conversations;
   }, [conversations]);
 
-  useEffect(() => {
-    if (!notice) return;
-    const timer = setTimeout(() => setNotice(null), 4000);
-    return () => clearTimeout(timer);
-  }, [notice]);
+  /* ── Load Supabase conversations ── */
 
   const loadConversations = async (currentUserId: string, preferredCoachId?: string | null) => {
     setLoading(true);
@@ -142,6 +175,8 @@ export default function MessagesClient() {
         created_at: createdAt,
         otherUserId: other?.user_id ?? null,
         otherName,
+        avatarSeed: otherName,
+        unread: 0,
       };
     });
 
@@ -192,6 +227,8 @@ export default function MessagesClient() {
                   coachProfile
                     ? [coachProfile.first_name, coachProfile.last_name].filter(Boolean).join(" ") || "Coach"
                     : "Coach",
+                avatarSeed: "Coach",
+                unread: 0,
               },
               ...prev,
             ]);
@@ -210,6 +247,8 @@ export default function MessagesClient() {
     setLoading(false);
   };
 
+  /* ── Demo mode ── */
+
   const loadDemoMode = () => {
     isDemoMode.current = true;
     const demoUserId = "user_1";
@@ -219,8 +258,18 @@ export default function MessagesClient() {
       created_at: c.created_at,
       otherUserId: c.otherUserId,
       otherName: c.otherName,
+      role: c.role,
+      avatarSeed: c.avatarSeed,
+      unread: c.unread,
+      online: c.online,
+      lastSeen: c.lastSeen,
     }));
     setConversations(demoConversations);
+    const initialUnread: Record<string, number> = {};
+    demoConversations.forEach((c) => {
+      initialUnread[c.id] = c.unread;
+    });
+    setUnreadCounts(initialUnread);
     const firstId = demoConversations[0]?.id ?? null;
     setActiveConversationId(firstId);
     if (firstId) {
@@ -229,9 +278,14 @@ export default function MessagesClient() {
           .filter((m) => m.conversationId === firstId)
           .map((m) => ({ id: m.id, sender_id: m.senderId, body: m.body, created_at: m.created_at })),
       );
+      // Clear unread for first conversation
+      initialUnread[firstId] = 0;
+      setUnreadCounts({ ...initialUnread });
     }
     setLoading(false);
   };
+
+  /* ── Init ── */
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -246,7 +300,7 @@ export default function MessagesClient() {
     });
   }, [coachId]);
 
-  const isDemoMode = useRef(false);
+  /* ── Load messages when conversation changes ── */
 
   useEffect(() => {
     if (!activeConversationId) return;
@@ -273,6 +327,8 @@ export default function MessagesClient() {
     fetchMessages();
   }, [activeConversationId]);
 
+  /* ── Realtime subscription ── */
+
   useEffect(() => {
     if (!userId) return;
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -298,9 +354,6 @@ export default function MessagesClient() {
                 if (prev.some((item) => item.id === message.id)) return prev;
                 return [...prev, message];
               });
-              if (message.sender_id !== userId) {
-                setNotice("Nouveau message reçu.");
-              }
             } else {
               setUnreadCounts((prev) => ({
                 ...prev,
@@ -319,15 +372,50 @@ export default function MessagesClient() {
     };
   }, [userId, activeConversationId]);
 
+  /* ── Auto-scroll ── */
+
   useEffect(() => {
     if (!messagesEndRef.current) return;
     messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isTyping]);
+
+  /* ── Computed ── */
 
   const activeConversation = useMemo(
     () => conversations.find((conversation) => conversation.id === activeConversationId),
     [conversations, activeConversationId],
   );
+
+  const totalUnread = useMemo(
+    () => Object.values(unreadCounts).reduce((sum, n) => sum + n, 0),
+    [unreadCounts],
+  );
+
+  // Last message per conversation (for sidebar preview)
+  const lastMessageMap = useMemo(() => {
+    const map: Record<string, { body: string; time: string; isMine: boolean }> = {};
+    if (isDemoMode.current) {
+      for (const conv of conversations) {
+        const convMsgs = mockMessages.filter((m) => m.conversationId === conv.id);
+        const last = convMsgs[convMsgs.length - 1];
+        if (last) {
+          map[conv.id] = { body: last.body, time: last.created_at, isMine: last.senderId === userId };
+        }
+      }
+    }
+    // Also include locally sent messages
+    if (messages.length > 0 && activeConversationId) {
+      const last = messages[messages.length - 1];
+      map[activeConversationId] = {
+        body: last.body,
+        time: last.created_at,
+        isMine: last.sender_id === userId,
+      };
+    }
+    return map;
+  }, [conversations, messages, activeConversationId, userId]);
+
+  /* ── Send message ── */
 
   const handleSend = async () => {
     if (!userId || !activeConversationId || !newMessage.trim()) return;
@@ -352,7 +440,8 @@ export default function MessagesClient() {
           "Bien reçu, je prépare la séance.",
           "Super, n'oublie pas tes crampons !",
           "OK ! On travaillera la technique.",
-          "C'est noté, à bientôt !",
+          "C'est noté, à bientôt ! 💪",
+          "Top, j'ai hâte de voir tes progrès.",
         ];
         const replyMsg: MessageRow = {
           id: `demo-reply-${Date.now()}`,
@@ -365,14 +454,14 @@ export default function MessagesClient() {
       return;
     }
 
-    const { data, error } = await supabase
+    const { data, error: sendError } = await supabase
       .from("messages")
       .insert({ conversation_id: activeConversationId, sender_id: userId, body: newMessage })
       .select("id, sender_id, body, created_at")
       .single();
 
-    if (error || !data) {
-      setError(error?.message ?? "Impossible d'envoyer le message.");
+    if (sendError || !data) {
+      setError(sendError?.message ?? "Impossible d'envoyer le message.");
       return;
     }
 
@@ -380,136 +469,309 @@ export default function MessagesClient() {
     setNewMessage("");
   };
 
-  return (
-    <AppShell
-      active="/messages"
-      title="Messagerie"
-      description="Discute avec les coachs et organise tes séances."
-    >
-      {error && (
-        <FeedbackState
-          tone="error"
-          icon={<AlertIcon className="h-7 w-7 text-[color:var(--px-danger)]" />}
-          title="Messagerie indisponible"
-          description={error}
-          actionLabel="Réessayer"
-          onAction={() => window.location.reload()}
-        />
-      )}
-      {notice && (
-        <div className="px-card p-4 transition duration-200">
-          <p className="text-xs text-white/70">{notice}</p>
-        </div>
-      )}
+  /* ── Select conversation ── */
 
-      <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
-        <aside className={`px-card p-4 ${mobileChatOpen ? "hidden lg:block" : ""}`}>
-          <h3 className="text-lg text-white">Conversations</h3>
-          <div className="mt-4 space-y-2">
+  const selectConversation = (convId: string) => {
+    setActiveConversationId(convId);
+    setUnreadCounts((prev) => ({ ...prev, [convId]: 0 }));
+    setMobileChatOpen(true);
+    // Focus input after switch
+    setTimeout(() => inputRef.current?.focus(), 100);
+  };
+
+  /* ── Render ── */
+
+  if (error) {
+    return (
+      <AppShell active="/messages" hideTitle>
+        <div className="py-16">
+          <FeedbackState
+            tone="error"
+            icon={<AlertIcon className="h-7 w-7 text-[color:var(--px-danger)]" />}
+            title="Messagerie indisponible"
+            description={error}
+            actionLabel="Réessayer"
+            onAction={() => window.location.reload()}
+          />
+        </div>
+      </AppShell>
+    );
+  }
+
+  return (
+    <AppShell active="/messages" hideTitle>
+      <div className="flex h-[calc(100vh-90px)] min-h-[500px] overflow-hidden rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-card)]">
+        {/* ═══════ LEFT — Conversation list ═══════ */}
+        <aside
+          className={`w-full flex-col border-r border-[color:var(--px-border)] lg:flex lg:w-[340px] ${
+            mobileChatOpen ? "hidden" : "flex"
+          }`}
+        >
+          {/* Header */}
+          <div className="border-b border-[color:var(--px-border)] p-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-[color:var(--px-text)]">Messagerie</h2>
+              {totalUnread > 0 && (
+                <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[color:var(--px-accent)] px-2 text-xs font-bold text-black">
+                  {totalUnread}
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-[color:var(--px-text-secondary)]">
+              {conversations.length} conversation{conversations.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+
+          {/* List */}
+          <div className="flex-1 overflow-y-auto">
             {loading && (
-              <LoadingState title="Chargement des conversations" description="Synchronisation de la messagerie..." />
+              <div className="p-6">
+                <LoadingState title="Chargement" description="Synchronisation..." />
+              </div>
             )}
             {!loading && conversations.length === 0 && (
-              <FeedbackState
-                icon={<InboxIcon className="h-7 w-7 text-white/35" />}
-                title="Aucune conversation"
-                description="Commence par réserver une séance pour ouvrir une discussion."
-                actionLabel="Réserver une séance"
-                actionHref="/booking"
-              />
+              <div className="p-6">
+                <FeedbackState
+                  icon={<InboxIcon className="h-7 w-7 text-[color:var(--px-text-secondary)]" />}
+                  title="Aucune conversation"
+                  description="Réserve une séance pour ouvrir une discussion."
+                  actionLabel="Réserver"
+                  actionHref="/booking"
+                />
+              </div>
             )}
-            {conversations.map((conversation) => (
-              <button
-                key={conversation.id}
-                className={`w-full rounded-xl border px-3 py-3 text-left text-sm transition duration-200 ${
-                  conversation.id === activeConversationId
-                    ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-white"
-                    : "border-white/10 bg-white/5 text-white/70 hover:border-[color:var(--px-accent)] hover:bg-white/10"
-                }`}
-                onClick={() => {
-                  setActiveConversationId(conversation.id);
-                  setUnreadCounts((prev) => ({ ...prev, [conversation.id]: 0 }));
-                  setMobileChatOpen(true);
-                }}
-                type="button"
-              >
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold">{conversation.otherName}</p>
-                  {unreadCounts[conversation.id] ? (
-                    <span className="rounded-full bg-[color:var(--px-accent)] px-2 py-0.5 text-[10px] text-black">
-                      {unreadCounts[conversation.id]}
-                    </span>
-                  ) : null}
-                </div>
-                <p className="text-xs text-white/70">Conversation privée</p>
-              </button>
-            ))}
+            {conversations.map((conv) => {
+              const isActive = conv.id === activeConversationId && !mobileChatOpen || (conv.id === activeConversationId);
+              const unread = unreadCounts[conv.id] ?? 0;
+              const lastMsg = lastMessageMap[conv.id];
+
+              return (
+                <button
+                  key={conv.id}
+                  type="button"
+                  onClick={() => selectConversation(conv.id)}
+                  className={`group flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors duration-150 ${
+                    isActive
+                      ? "bg-[color:var(--px-accent)]/10 border-l-2 border-l-[color:var(--px-accent)]"
+                      : "border-l-2 border-l-transparent hover:bg-[color:var(--px-surface)]"
+                  }`}
+                >
+                  {/* Avatar */}
+                  <div className="relative shrink-0">
+                    <img
+                      src={getAvatar(conv.avatarSeed ?? conv.otherName)}
+                      alt=""
+                      className="h-12 w-12 rounded-full bg-[color:var(--px-surface)]"
+                    />
+                    {conv.online && (
+                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[color:var(--px-card)] bg-emerald-500" />
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 truncate">
+                        <span className={`truncate text-sm font-semibold ${isActive ? "text-[color:var(--px-accent)]" : "text-[color:var(--px-text)]"}`}>
+                          {conv.otherName}
+                        </span>
+                        {conv.role && (
+                          <span className="hidden shrink-0 rounded-full bg-[color:var(--px-accent)]/10 px-2 py-0.5 text-[9px] font-medium text-[color:var(--px-accent)] sm:inline-flex">
+                            {conv.role}
+                          </span>
+                        )}
+                      </div>
+                      <span className="shrink-0 text-[11px] text-[color:var(--px-text-secondary)]">
+                        {lastMsg ? formatListTime(lastMsg.time) : ""}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 flex items-center justify-between gap-2">
+                      <p className="truncate text-xs text-[color:var(--px-text-secondary)]">
+                        {lastMsg
+                          ? (lastMsg.isMine ? "Toi : " : "") + lastMsg.body
+                          : "Pas encore de messages"}
+                      </p>
+                      {unread > 0 && (
+                        <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--px-accent)] px-1.5 text-[10px] font-bold text-black">
+                          {unread}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </aside>
 
-        <section className={`px-card-strong h-[72vh] min-h-[420px] flex-col p-4 md:h-[560px] ${mobileChatOpen ? "flex" : "hidden lg:flex"}`}>
-          <div className="border-b border-white/10 pb-3">
-            <button
-              type="button"
-              className="px-button-ghost mb-3 px-3 py-2 text-xs lg:hidden"
-              onClick={() => setMobileChatOpen(false)}
-            >
-              Retour aux conversations
-            </button>
-            <p className="text-sm text-white/70">Discussion avec</p>
-            <h3 className="text-lg text-white">{activeConversation?.otherName ?? "Sélectionne une conversation"}</h3>
-          </div>
-          <div className="flex-1 overflow-y-auto py-4">
-            {messages.length === 0 && (
-              <FeedbackState
-                icon={<ChatIcon className="h-7 w-7 text-white/35" />}
-                title="Aucun message"
-                description="Envoie le premier message pour lancer la discussion."
-              />
-            )}
-            <div className="space-y-3">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm transition duration-200 ${
-                    message.sender_id === userId
-                      ? "ml-auto bg-[color:var(--px-accent)]/20 text-white"
-                      : "bg-white/10 text-white/80"
-                  }`}
+        {/* ═══════ RIGHT — Chat area ═══════ */}
+        <section
+          className={`flex flex-1 flex-col ${mobileChatOpen ? "flex" : "hidden lg:flex"}`}
+        >
+          {!activeConversation ? (
+            /* Empty state */
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--px-accent)]/10">
+                <ChatIcon className="h-8 w-8 text-[color:var(--px-accent)]" />
+              </div>
+              <div>
+                <p className="text-lg font-semibold text-[color:var(--px-text)]">Sélectionne une conversation</p>
+                <p className="mt-1 text-sm text-[color:var(--px-text-secondary)]">
+                  Choisis un coach à gauche pour commencer
+                </p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* ── Chat Header ── */}
+              <div className="flex items-center gap-3 border-b border-[color:var(--px-border)] px-4 py-3">
+                {/* Mobile back button */}
+                <button
+                  type="button"
+                  onClick={() => setMobileChatOpen(false)}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[color:var(--px-text-secondary)] transition hover:bg-[color:var(--px-surface)] hover:text-[color:var(--px-text)] lg:hidden"
+                  aria-label="Retour"
                 >
-                  <p>{message.body}</p>
-                  <p className="mt-1 text-[10px] text-white/45">{formatMessageTime(message.created_at)}</p>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                  </svg>
+                </button>
+
+                {/* Avatar */}
+                <div className="relative shrink-0">
+                  <img
+                    src={getAvatar(activeConversation.avatarSeed ?? activeConversation.otherName)}
+                    alt=""
+                    className="h-10 w-10 rounded-full bg-[color:var(--px-surface)]"
+                  />
+                  {activeConversation.online && (
+                    <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[color:var(--px-card)] bg-emerald-500" />
+                  )}
                 </div>
-              ))}
-              {isTyping && (
-                <div className="flex items-center gap-1 rounded-2xl bg-white/10 px-3 py-2 w-fit">
-                  <span className="h-2 w-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <span className="h-2 w-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <span className="h-2 w-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: "300ms" }} />
+
+                {/* Name & status */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="truncate text-sm font-semibold text-[color:var(--px-text)]">
+                      {activeConversation.otherName}
+                    </h3>
+                    {activeConversation.role && (
+                      <span className="shrink-0 rounded-full bg-[color:var(--px-accent)]/10 px-2 py-0.5 text-[9px] font-medium text-[color:var(--px-accent)]">
+                        {activeConversation.role}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs">
+                    {activeConversation.online ? (
+                      <span className="text-emerald-400">En ligne</span>
+                    ) : (
+                      <span className="text-[color:var(--px-text-secondary)]">
+                        {activeConversation.lastSeen ? `Vu ${activeConversation.lastSeen}` : "Hors ligne"}
+                      </span>
+                    )}
+                  </p>
                 </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
-          <div className="border-t border-white/10 pt-3">
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <input
-                className="px-input"
-                placeholder="Écrire un message..."
-                value={newMessage}
-                onChange={(event) => setNewMessage(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    handleSend();
-                  }
-                }}
-              />
-              <button className="px-button sm:w-auto" type="button" onClick={handleSend}>
-                Envoyer
-              </button>
-            </div>
-          </div>
+
+                {/* Profile link */}
+                <Link
+                  href="/coach"
+                  className="hidden shrink-0 items-center gap-1 rounded-full border border-[color:var(--px-border)] px-3 py-1.5 text-xs text-[color:var(--px-text-secondary)] transition hover:border-[color:var(--px-accent)]/40 hover:text-[color:var(--px-accent)] sm:flex"
+                >
+                  Voir le profil
+                  <ArrowRightIcon className="h-3 w-3" />
+                </Link>
+              </div>
+
+              {/* ── Messages body ── */}
+              <div className="flex-1 overflow-y-auto px-4 py-4">
+                {messages.length === 0 && !loading && (
+                  <div className="flex h-full items-center justify-center">
+                    <FeedbackState
+                      icon={<ChatIcon className="h-7 w-7 text-[color:var(--px-text-secondary)]" />}
+                      title="Aucun message"
+                      description="Envoie le premier message pour lancer la discussion."
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  {messages.map((message, idx) => {
+                    const isMine = message.sender_id === userId;
+                    const isNew = idx >= messages.length - 1 && message.id.startsWith("demo");
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex ${isMine ? "justify-end" : "justify-start"} ${isNew ? "px-message-in" : ""}`}
+                      >
+                        <div
+                          className={`max-w-[80%] px-4 py-2.5 text-sm leading-relaxed sm:max-w-[70%] ${
+                            isMine
+                              ? "rounded-2xl rounded-br-md bg-[color:var(--px-accent)]/15 text-[color:var(--px-text)]"
+                              : "rounded-2xl rounded-bl-md bg-[color:var(--px-surface)] text-[color:var(--px-text)]"
+                          }`}
+                        >
+                          <p>{message.body}</p>
+                          <div className={`mt-1 flex items-center gap-1 ${isMine ? "justify-end" : "justify-start"}`}>
+                            <span className="text-[10px] text-[color:var(--px-text-secondary)]">
+                              {formatMessageTime(message.created_at)}
+                            </span>
+                            {isMine && (
+                              <span className="text-[10px] text-[color:var(--px-accent)]">✓✓</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Typing indicator */}
+                  {isTyping && (
+                    <div className="flex justify-start px-message-in">
+                      <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-[color:var(--px-surface)] px-4 py-3">
+                        <span className="h-2 w-2 rounded-full bg-[color:var(--px-text-secondary)] animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="h-2 w-2 rounded-full bg-[color:var(--px-text-secondary)] animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="h-2 w-2 rounded-full bg-[color:var(--px-text-secondary)] animate-bounce" style={{ animationDelay: "300ms" }} />
+                      </div>
+                    </div>
+                  )}
+
+                  <div ref={messagesEndRef} />
+                </div>
+              </div>
+
+              {/* ── Input bar ── */}
+              <div className="border-t border-[color:var(--px-border)] p-3 sm:p-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-1 items-center gap-2 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-2.5 transition-colors focus-within:border-[color:var(--px-accent)]/40">
+                    <input
+                      ref={inputRef}
+                      className="flex-1 bg-transparent text-sm text-[color:var(--px-text)] outline-none placeholder:text-[color:var(--px-text-secondary)]"
+                      placeholder="Écris un message..."
+                      value={newMessage}
+                      onChange={(event) => setNewMessage(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" && !event.shiftKey) {
+                          event.preventDefault();
+                          handleSend();
+                        }
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSend}
+                    disabled={!newMessage.trim()}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--px-accent)] text-white transition-all duration-200 hover:scale-105 hover:shadow-[0_0_20px_rgba(255,106,0,0.3)] disabled:opacity-30 disabled:hover:scale-100 disabled:hover:shadow-none"
+                    aria-label="Envoyer"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </section>
       </div>
     </AppShell>

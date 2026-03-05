@@ -465,6 +465,11 @@ export type MockConversation = {
   id: string;
   otherName: string;
   otherUserId: string;
+  role: string;
+  avatarSeed: string;
+  unread: number;
+  online: boolean;
+  lastSeen?: string;
   created_at: string;
 };
 
@@ -483,29 +488,57 @@ const msgDate = (daysAgo: number, hours: number, minutes: number) => {
 };
 
 export const mockConversations: MockConversation[] = [
-  { id: "conv_1", otherName: "Jean Dupont", otherUserId: "user_10", created_at: msgDate(2, 14, 0) },
-  { id: "conv_2", otherName: "Sarah Mbappé", otherUserId: "user_12", created_at: msgDate(5, 10, 30) },
-  { id: "conv_3", otherName: "Amina Reza", otherUserId: "user_14", created_at: msgDate(1, 18, 15) },
+  { id: "conv_3", otherName: "Amina Reza", otherUserId: "user_14", role: "Coach frappe", avatarSeed: "Amina", unread: 2, online: true, created_at: msgDate(0, 18, 40) },
+  { id: "conv_1", otherName: "Jean Dupont", otherUserId: "user_10", role: "Coach technique", avatarSeed: "Jean", unread: 1, online: true, created_at: msgDate(0, 9, 30) },
+  { id: "conv_4", otherName: "Sophie Renaud", otherUserId: "user_16", role: "Prépa physique", avatarSeed: "Sophie", unread: 1, online: false, lastSeen: "il y a 2h", created_at: msgDate(1, 16, 5) },
+  { id: "conv_5", otherName: "Kevin Morel", otherUserId: "user_18", role: "Vision de jeu", avatarSeed: "Kevin", unread: 0, online: false, lastSeen: "Hier", created_at: msgDate(3, 12, 10) },
+  { id: "conv_2", otherName: "Sarah Mbappé", otherUserId: "user_12", role: "Coach gardien", avatarSeed: "Sarah", unread: 0, online: false, lastSeen: "il y a 30 min", created_at: msgDate(5, 11, 25) },
 ];
 
+export const MOCK_TOTAL_UNREAD = mockConversations.reduce((sum, c) => sum + c.unread, 0);
+
 export const mockMessages: MockMessage[] = [
-  // Conv 1 — Jean Dupont (technique)
-  { id: "msg_1", conversationId: "conv_1", senderId: "user_10", body: "Salut Alex ! Prêt pour la séance de mardi ?", created_at: msgDate(2, 14, 0) },
-  { id: "msg_2", conversationId: "conv_1", senderId: "user_1", body: "Oui, j'ai hâte ! On travaille les tirs cadrés ?", created_at: msgDate(2, 14, 5) },
-  { id: "msg_3", conversationId: "conv_1", senderId: "user_10", body: "Exactement, on va bosser le contrôle orienté + frappe enchaînée. Pense à tes crampons moulés.", created_at: msgDate(2, 14, 8) },
+  // Conv 1 — Jean Dupont (technique) — 6 messages
+  { id: "msg_1", conversationId: "conv_1", senderId: "user_10", body: "Salut Alex ! Tu as bien récupéré de la dernière séance ?", created_at: msgDate(2, 14, 0) },
+  { id: "msg_2", conversationId: "conv_1", senderId: "user_1", body: "Oui, un peu de courbatures mais ça va. On fait quoi mardi ?", created_at: msgDate(2, 14, 5) },
+  { id: "msg_3", conversationId: "conv_1", senderId: "user_10", body: "On va bosser le contrôle orienté + frappe enchaînée. Pense à tes crampons moulés.", created_at: msgDate(2, 14, 8) },
   { id: "msg_4", conversationId: "conv_1", senderId: "user_1", body: "Parfait, j'apporte aussi de l'eau. À mardi !", created_at: msgDate(2, 14, 12) },
   { id: "msg_5", conversationId: "conv_1", senderId: "user_10", body: "Top ! On se retrouve au terrain synthétique à 18h. 💪", created_at: msgDate(2, 14, 15) },
-  // Conv 2 — Sarah Mbappé (gardienne)
-  { id: "msg_6", conversationId: "conv_2", senderId: "user_12", body: "Bonjour Alex, j'ai regardé ta dernière séance. Tu progresses bien sur les sorties aériennes.", created_at: msgDate(5, 10, 30) },
-  { id: "msg_7", conversationId: "conv_2", senderId: "user_1", body: "Merci Sarah ! J'aimerais travailler les réflexes la prochaine fois.", created_at: msgDate(5, 11, 0) },
-  { id: "msg_8", conversationId: "conv_2", senderId: "user_12", body: "Bonne idée, je prépare un circuit réactivité. On se cale ça jeudi ?", created_at: msgDate(5, 11, 15) },
-  { id: "msg_9", conversationId: "conv_2", senderId: "user_1", body: "Jeudi c'est bon pour moi. 16h ça te va ?", created_at: msgDate(5, 11, 20) },
-  { id: "msg_10", conversationId: "conv_2", senderId: "user_12", body: "Parfait, c'est noté. À jeudi !", created_at: msgDate(5, 11, 25) },
-  // Conv 3 — Amina Reza (frappe)
-  { id: "msg_11", conversationId: "conv_3", senderId: "user_1", body: "Bonjour Amina, est-ce que tu as des créneaux cette semaine ?", created_at: msgDate(1, 18, 15) },
-  { id: "msg_12", conversationId: "conv_3", senderId: "user_14", body: "Salut ! Oui, j'ai un créneau mardi à 17h et un autre jeudi à 19h.", created_at: msgDate(1, 18, 30) },
-  { id: "msg_13", conversationId: "conv_3", senderId: "user_1", body: "Je prends mardi 17h ! On continue sur les frappes enroulées ?", created_at: msgDate(1, 18, 35) },
-  { id: "msg_14", conversationId: "conv_3", senderId: "user_14", body: "Oui, et on ajoutera du travail de placement avant la frappe. Tu vas voir la différence.", created_at: msgDate(1, 18, 40) },
+  { id: "msg_6", conversationId: "conv_1", senderId: "user_10", body: "Salut ! Prêt pour demain ? Je t'ai préparé un circuit technique spécial.", created_at: msgDate(0, 9, 30) },
+
+  // Conv 2 — Sarah Mbappé (gardienne) — 6 messages
+  { id: "msg_7", conversationId: "conv_2", senderId: "user_12", body: "Bonjour Alex, j'ai regardé ta dernière séance. Tu progresses bien sur les sorties aériennes.", created_at: msgDate(5, 10, 30) },
+  { id: "msg_8", conversationId: "conv_2", senderId: "user_1", body: "Merci Sarah ! J'aimerais travailler les réflexes la prochaine fois.", created_at: msgDate(5, 11, 0) },
+  { id: "msg_9", conversationId: "conv_2", senderId: "user_12", body: "Bonne idée, je prépare un circuit réactivité. On se cale ça jeudi ?", created_at: msgDate(5, 11, 5) },
+  { id: "msg_10", conversationId: "conv_2", senderId: "user_1", body: "Jeudi c'est bon pour moi. 16h ça te va ?", created_at: msgDate(5, 11, 10) },
+  { id: "msg_11", conversationId: "conv_2", senderId: "user_12", body: "Parfait, c'est noté. On fera aussi du jeu au pied pour varier.", created_at: msgDate(5, 11, 20) },
+  { id: "msg_12", conversationId: "conv_2", senderId: "user_1", body: "Super, j'ai hâte ! À jeudi coach 🧤", created_at: msgDate(5, 11, 25) },
+
+  // Conv 3 — Amina Reza (frappe) — 7 messages
+  { id: "msg_13", conversationId: "conv_3", senderId: "user_1", body: "Bonjour Amina, est-ce que tu as des créneaux cette semaine ?", created_at: msgDate(1, 18, 15) },
+  { id: "msg_14", conversationId: "conv_3", senderId: "user_14", body: "Salut ! Oui, j'ai un créneau mardi à 17h et un autre jeudi à 19h.", created_at: msgDate(1, 18, 20) },
+  { id: "msg_15", conversationId: "conv_3", senderId: "user_1", body: "Je prends mardi 17h ! On continue sur les frappes enroulées ?", created_at: msgDate(1, 18, 25) },
+  { id: "msg_16", conversationId: "conv_3", senderId: "user_14", body: "Oui, et on ajoutera du travail de placement avant la frappe. Tu vas voir la différence.", created_at: msgDate(1, 18, 30) },
+  { id: "msg_17", conversationId: "conv_3", senderId: "user_1", body: "Trop bien, j'ai vraiment envie de progresser sur ça.", created_at: msgDate(1, 18, 35) },
+  { id: "msg_18", conversationId: "conv_3", senderId: "user_14", body: "T'inquiète, après 3 séances tu sentiras déjà la diff. Prévois des chaussettes montantes.", created_at: msgDate(0, 18, 35) },
+  { id: "msg_19", conversationId: "conv_3", senderId: "user_14", body: "Au fait, j'ai mis en ligne une vidéo d'exercices à faire chez toi. Je t'envoie le lien demain !", created_at: msgDate(0, 18, 40) },
+
+  // Conv 4 — Sophie Renaud (prépa physique) — 6 messages
+  { id: "msg_20", conversationId: "conv_4", senderId: "user_16", body: "Salut Alex ! J'ai préparé ton programme de la semaine. Tu es dispo mercredi ?", created_at: msgDate(2, 10, 0) },
+  { id: "msg_21", conversationId: "conv_4", senderId: "user_1", body: "Mercredi c'est parfait. On fait du fractionné ?", created_at: msgDate(2, 10, 15) },
+  { id: "msg_22", conversationId: "conv_4", senderId: "user_16", body: "Oui, 30/30 et du travail de coordination. Prévois une tenue légère.", created_at: msgDate(2, 10, 20) },
+  { id: "msg_23", conversationId: "conv_4", senderId: "user_1", body: "Super, j'ai hâte de tester. À mercredi !", created_at: msgDate(2, 10, 25) },
+  { id: "msg_24", conversationId: "conv_4", senderId: "user_16", body: "Tes résultats au test VMA étaient excellents, on va pouvoir intensifier.", created_at: msgDate(1, 15, 50) },
+  { id: "msg_25", conversationId: "conv_4", senderId: "user_16", body: "N'oublie pas de bien t'hydrater avant la séance de demain 💧", created_at: msgDate(1, 16, 5) },
+
+  // Conv 5 — Kevin Morel (vision de jeu) — 7 messages
+  { id: "msg_26", conversationId: "conv_5", senderId: "user_18", body: "J'ai analysé ta vidéo du dernier match. Ta lecture du jeu s'améliore.", created_at: msgDate(4, 14, 0) },
+  { id: "msg_27", conversationId: "conv_5", senderId: "user_1", body: "Merci Kevin ! Il y a des points à corriger ?", created_at: msgDate(4, 14, 10) },
+  { id: "msg_28", conversationId: "conv_5", senderId: "user_18", body: "Oui, sur les transitions défensives tu te replaces trop tard. On travaillera ça.", created_at: msgDate(4, 14, 15) },
+  { id: "msg_29", conversationId: "conv_5", senderId: "user_1", body: "D'accord, c'est vrai que je reste trop haut parfois.", created_at: msgDate(4, 14, 20) },
+  { id: "msg_30", conversationId: "conv_5", senderId: "user_18", body: "Exactement. Samedi on fait une séance vidéo + terrain. Prêt ?", created_at: msgDate(3, 11, 50) },
+  { id: "msg_31", conversationId: "conv_5", senderId: "user_1", body: "C'est noté, à samedi coach !", created_at: msgDate(3, 12, 0) },
+  { id: "msg_32", conversationId: "conv_5", senderId: "user_18", body: "Pense à revoir le match PSG-Marseille, on s'en servira comme support. À samedi 🎬", created_at: msgDate(3, 12, 10) },
 ];
 
 // ── Mock player reviews (avis de coachs sur les joueurs) ──
