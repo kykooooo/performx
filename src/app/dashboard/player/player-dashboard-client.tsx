@@ -1,25 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/app-shell";
 import ScrollReveal from "@/components/scroll-reveal";
 import {
-  CalendarIcon,
-  StarIcon,
-  BoltIcon,
   ArrowRightIcon,
+  BoltIcon,
+  CalendarIcon,
+  TrophyIcon,
   UserIcon,
   WhistleIcon,
-  TrophyIcon,
-  ChatIcon,
 } from "@/components/icons";
 import { formatLongDate } from "@/lib/date";
+import { fetchPlayerProgression, fetchPlayerSkills, playerProgression, playerSkills, CHART_COLORS } from "@/lib/chart-data";
+import { mockBookings, mockCoaches, mockPlayer, mockSessions } from "@/lib/mock-data";
+import { normalizeSessionFeedback } from "@/lib/session-feedback";
 import { supabase } from "@/lib/supabase";
-import { mockSessions, mockCoaches, mockBookings } from "@/lib/mock-data";
 import { ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { playerSkills, playerProgression, CHART_COLORS, fetchPlayerSkills, fetchPlayerProgression } from "@/lib/chart-data";
-import type { SessionFeedback } from "@/lib/types";
+import type { PlayerProgressionPoint, PlayerRadarPoint, SessionFeedbackRecord } from "@/lib/types";
 
 type SessionRow = {
   id: string;
@@ -29,7 +28,7 @@ type SessionRow = {
   time: string;
   duration_minutes: number;
   status: string;
-  feedback?: SessionFeedback | null;
+  feedback?: SessionFeedbackRecord | null;
 };
 
 type CoachRow = {
@@ -40,6 +39,12 @@ type CoachRow = {
   price_per_session: number | null;
 };
 
+type PlayerProfileSnapshot = {
+  currentClub: string | null;
+  dominantFoot: string | null;
+  trainingFrequencyPerWeek: number | null;
+};
+
 export default function PlayerDashboardPage() {
   const [upcoming, setUpcoming] = useState<SessionRow[]>([]);
   const [completed, setCompleted] = useState<SessionRow[]>([]);
@@ -48,9 +53,13 @@ export default function PlayerDashboardPage() {
   const [totalSpent, setTotalSpent] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
-  const [feedbackOpen, setFeedbackOpen] = useState<string | null>(null);
-  const [skillsData, setSkillsData] = useState(playerSkills);
-  const [progressionData, setProgressionData] = useState(playerProgression);
+  const [skillsData, setSkillsData] = useState<PlayerRadarPoint[]>(playerSkills);
+  const [progressionData, setProgressionData] = useState<PlayerProgressionPoint[]>(playerProgression);
+  const [playerSnapshot, setPlayerSnapshot] = useState<PlayerProfileSnapshot>({
+    currentClub: null,
+    dominantFoot: null,
+    trainingFrequencyPerWeek: null,
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -60,47 +69,56 @@ export default function PlayerDashboardPage() {
       const { data: userData } = await supabase.auth.getUser();
 
       if (!userData.user) {
-        // Demo mode with mock data
         if (!mounted) return;
         const upcomingMock = mockSessions
-          .filter((s) => s.status === "upcoming")
-          .map((s) => ({
-            id: s.id,
-            coach_id: s.coachId,
-            title: s.title,
-            date: s.date,
-            time: s.time,
-            duration_minutes: s.durationMinutes,
-            status: s.status,
+          .filter((session) => session.status === "upcoming")
+          .map((session) => ({
+            id: session.id,
+            coach_id: session.coachId,
+            title: session.title,
+            date: session.date,
+            time: session.time,
+            duration_minutes: session.durationMinutes,
+            status: session.status,
+            feedback: session.feedback ?? null,
           }));
         const completedMock = mockSessions
-          .filter((s) => s.status === "completed")
-          .map((s) => ({
-            id: s.id,
-            coach_id: s.coachId,
-            title: s.title,
-            date: s.date,
-            time: s.time,
-            duration_minutes: s.durationMinutes,
-            status: s.status,
-            feedback: s.feedback ?? null,
-          }));
+          .filter((session) => session.status === "completed")
+          .map((session) => ({
+            id: session.id,
+            coach_id: session.coachId,
+            title: session.title,
+            date: session.date,
+            time: session.time,
+            duration_minutes: session.durationMinutes,
+            status: session.status,
+            feedback: session.feedback ?? null,
+          }))
+          .sort((a, b) => `${b.date}${b.time}`.localeCompare(`${a.date}${a.time}`));
+
         const coachNames: Record<string, string> = {};
-        mockCoaches.forEach((c) => { coachNames[c.id] = c.name; });
+        mockCoaches.forEach((coach) => {
+          coachNames[coach.id] = coach.name;
+        });
 
         setUpcoming(upcomingMock);
         setCompleted(completedMock);
         setCoachMap(coachNames);
         setCoaches(
-          mockCoaches.slice(0, 4).map((c) => ({
-            id: c.id,
-            name: c.name,
-            speciality: c.speciality,
-            rating: c.rating,
-            price_per_session: c.pricePerSession,
+          mockCoaches.slice(0, 4).map((coach) => ({
+            id: coach.id,
+            name: coach.name,
+            speciality: coach.speciality,
+            rating: coach.rating,
+            price_per_session: coach.pricePerSession,
           })),
         );
-        setTotalSpent(mockBookings.reduce((sum, b) => sum + b.price, 0));
+        setPlayerSnapshot({
+          currentClub: mockPlayer.currentClub ?? null,
+          dominantFoot: mockPlayer.dominantFoot ?? null,
+          trainingFrequencyPerWeek: mockPlayer.trainingFrequencyPerWeek ?? null,
+        });
+        setTotalSpent(mockBookings.reduce((sum, booking) => sum + booking.price, 0));
         setIsDemo(true);
         setLoading(false);
         return;
@@ -108,46 +126,52 @@ export default function PlayerDashboardPage() {
 
       const userId = userData.user.id;
 
-      // Fetch sessions
-      const { data: sessionData } = await supabase
-        .from("sessions")
-        .select("id, coach_id, title, date, time, duration_minutes, status")
-        .eq("player_id", userId)
-        .order("date", { ascending: true });
-
-      // Fetch bookings for total spent
-      const { data: bookingData } = await supabase
-        .from("bookings")
-        .select("price")
-        .eq("player_id", userId)
-        .eq("payment_status", "paid");
-
-      // Fetch coaches for recommendations
-      const { data: coachData } = await supabase
-        .from("public_coaches")
-        .select("id, name, speciality, rating, price_per_session")
-        .order("rating", { ascending: false })
-        .limit(4);
+      const [sessionRes, bookingRes, coachRes, profileRes] = await Promise.all([
+        supabase
+          .from("sessions")
+          .select("id, coach_id, title, date, time, duration_minutes, status, feedback")
+          .eq("player_id", userId)
+          .order("date", { ascending: true }),
+        supabase
+          .from("bookings")
+          .select("price")
+          .eq("player_id", userId)
+          .eq("payment_status", "paid"),
+        supabase
+          .from("public_coaches")
+          .select("id, name, speciality, rating, price_per_session")
+          .order("rating", { ascending: false })
+          .limit(4),
+        supabase
+          .from("profiles")
+          .select("current_club, dominant_foot, training_frequency_per_week")
+          .eq("user_id", userId)
+          .single(),
+      ]);
 
       if (!mounted) return;
 
-      const sessions = sessionData ?? [];
-      const upcomingSessions = sessions.filter((s) => s.status === "upcoming");
-      const completedSessions = sessions.filter((s) => s.status === "completed");
-
-      // Build coach name map
+      const sessionRows = sessionRes.data ?? [];
+      const upcomingSessions = sessionRows.filter((session) => session.status === "upcoming");
+      const completedSessions = sessionRows
+        .filter((session) => session.status === "completed")
+        .sort((a, b) => `${b.date}${b.time}`.localeCompare(`${a.date}${a.time}`));
       const names: Record<string, string> = {};
-      if (coachData) {
-        coachData.forEach((c) => { names[c.id] = c.name; });
-      }
+      (coachRes.data ?? []).forEach((coach) => {
+        names[coach.id] = coach.name;
+      });
 
       setUpcoming(upcomingSessions);
       setCompleted(completedSessions);
       setCoachMap(names);
-      setCoaches(coachData ?? []);
-      setTotalSpent(bookingData?.reduce((sum, b) => sum + (b.price ?? 0), 0) ?? 0);
+      setCoaches(coachRes.data ?? []);
+      setPlayerSnapshot({
+        currentClub: profileRes.data?.current_club ?? null,
+        dominantFoot: profileRes.data?.dominant_foot ?? null,
+        trainingFrequencyPerWeek: profileRes.data?.training_frequency_per_week ?? null,
+      });
+      setTotalSpent(bookingRes.data?.reduce((sum, booking) => sum + (booking.price ?? 0), 0) ?? 0);
 
-      // Fetch chart data (real → mock fallback)
       Promise.all([
         fetchPlayerSkills(userId),
         fetchPlayerProgression(userId),
@@ -161,18 +185,25 @@ export default function PlayerDashboardPage() {
     };
 
     fetchData();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
+
+  const latestFeedback = useMemo(
+    () => normalizeSessionFeedback(completed[0]?.feedback),
+    [completed],
+  );
 
   const statCards = [
     {
-      label: "Séances à venir",
+      label: "Seances a venir",
       value: upcoming.length,
       icon: <CalendarIcon className="h-5 w-5" />,
       color: "text-[color:var(--px-accent)]",
     },
     {
-      label: "Séances terminées",
+      label: "Seances terminees",
       value: completed.length,
       icon: <TrophyIcon className="h-5 w-5" />,
       color: "text-[color:var(--px-success)]",
@@ -187,13 +218,12 @@ export default function PlayerDashboardPage() {
 
   return (
     <AppShell active="/dashboard" hideTitle>
-      {/* Hero */}
       <section className="py-8 lg:py-12">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="space-y-4">
             <div className="flex items-center gap-3 px-fade-up">
               <span className="px-badge px-pulse">Dashboard</span>
-              {isDemo && <span className="px-pill">Mode démo</span>}
+              {isDemo && <span className="px-pill">Mode demo</span>}
             </div>
             <h1
               className="px-fade-up text-4xl leading-[1.1] text-white sm:text-5xl"
@@ -206,7 +236,7 @@ export default function PlayerDashboardPage() {
               className="px-fade-up max-w-md text-base text-white/70"
               style={{ animationDelay: "160ms" }}
             >
-              Retrouve tes séances, tes stats et tes coachs préférés.
+              Suis ta progression sur les 5 axes foot, retrouve tes seances et lis le dernier feedback coach.
             </p>
           </div>
           <div className="px-fade-up flex gap-3" style={{ animationDelay: "200ms" }}>
@@ -216,7 +246,7 @@ export default function PlayerDashboardPage() {
             </Link>
             <Link href="/booking" className="px-button text-sm">
               <BoltIcon className="h-4 w-4" />
-              Réserver
+              Reserver
             </Link>
           </div>
         </div>
@@ -232,7 +262,6 @@ export default function PlayerDashboardPage() {
         </div>
       ) : (
         <>
-          {/* Stat cards */}
           <div className="grid gap-4 md:grid-cols-3">
             {statCards.map((stat, i) => (
               <ScrollReveal key={stat.label} delay={i * 60}>
@@ -249,14 +278,14 @@ export default function PlayerDashboardPage() {
             ))}
           </div>
 
-          {/* ── Charts ── */}
           <ScrollReveal>
             <div className="mt-6 grid gap-4 lg:grid-cols-2">
-              {/* RadarChart — Profil technique */}
               <div className="px-card p-6">
                 <div className="mb-2 flex items-center gap-2">
-                  <h3 className="text-base font-semibold text-[color:var(--px-text)]">Mon profil</h3>
-                  <span className="rounded-full bg-[color:var(--px-accent)]/15 px-2 py-0.5 text-[10px] font-medium text-[color:var(--px-accent)]">Évaluation</span>
+                  <h3 className="text-base font-semibold text-[color:var(--px-text)]">Profil de progression</h3>
+                  <span className="rounded-full bg-[color:var(--px-accent)]/15 px-2 py-0.5 text-[10px] font-medium text-[color:var(--px-accent)]">
+                    5 axes
+                  </span>
                 </div>
                 <ResponsiveContainer width="100%" height={260}>
                   <RadarChart data={skillsData} cx="50%" cy="50%" outerRadius="75%">
@@ -268,11 +297,10 @@ export default function PlayerDashboardPage() {
                 </ResponsiveContainer>
               </div>
 
-              {/* AreaChart — Progression */}
               <div className="px-card p-6">
                 <div className="mb-4">
                   <h3 className="text-base font-semibold text-[color:var(--px-text)]">Progression</h3>
-                  <p className="text-xs text-[color:var(--px-text-secondary)]">6 derniers mois</p>
+                  <p className="text-xs text-[color:var(--px-text-secondary)]">Moyenne des feedbacks v2 sur 6 mois</p>
                 </div>
                 <ResponsiveContainer width="100%" height={240}>
                   <AreaChart data={progressionData}>
@@ -298,13 +326,11 @@ export default function PlayerDashboardPage() {
           </ScrollReveal>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            {/* Left column */}
             <div className="space-y-6">
-              {/* Upcoming sessions */}
               <ScrollReveal>
                 <div className="px-card-strong p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg text-white">Séances à venir</h3>
+                    <h3 className="text-lg text-white">Seances a venir</h3>
                     <Link href="/sessions" className="text-xs text-[color:var(--px-accent)] hover:underline">
                       Voir tout
                     </Link>
@@ -312,9 +338,9 @@ export default function PlayerDashboardPage() {
                   {upcoming.length === 0 ? (
                     <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
                       <CalendarIcon className="mx-auto h-8 w-8 text-white/20" />
-                      <p className="mt-2 text-sm text-white/70">Aucune séance programmée</p>
+                      <p className="mt-2 text-sm text-white/70">Aucune seance programmee</p>
                       <Link href="/booking" className="px-button mt-4 text-sm">
-                        Réserver une séance
+                        Reserver une seance
                       </Link>
                     </div>
                   ) : (
@@ -337,7 +363,7 @@ export default function PlayerDashboardPage() {
                             </div>
                           </div>
                           <span className="rounded-full border border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/10 px-2.5 py-1 text-[10px] font-semibold text-[color:var(--px-accent)]">
-                            À venir
+                            A venir
                           </span>
                         </div>
                       ))}
@@ -346,90 +372,19 @@ export default function PlayerDashboardPage() {
                 </div>
               </ScrollReveal>
 
-              {/* Completed sessions with feedback */}
-              {completed.length > 0 && (
-                <ScrollReveal>
-                  <div className="px-card p-6">
-                    <h3 className="text-lg text-white mb-4">Séances terminées</h3>
-                    <div className="space-y-3">
-                      {completed.slice(0, 5).map((session) => (
-                        <div key={session.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--px-success)]/15 text-[color:var(--px-success)]">
-                                <TrophyIcon className="h-4 w-4" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-white">{session.title}</p>
-                                <p className="text-xs text-white/70">
-                                  {formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}
-                                  {coachMap[session.coach_id] && ` · ${coachMap[session.coach_id]}`}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {session.feedback ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setFeedbackOpen(feedbackOpen === session.id ? null : session.id)}
-                                  className="rounded-full border border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/10 px-2.5 py-1 text-[10px] font-semibold text-[color:var(--px-accent)] transition hover:bg-[color:var(--px-accent)]/20"
-                                >
-                                  {feedbackOpen === session.id ? "Masquer" : "Retour du coach"}
-                                </button>
-                              ) : (
-                                <span className="rounded-full border border-[color:var(--px-success)]/30 bg-[color:var(--px-success)]/10 px-2.5 py-1 text-[10px] font-semibold text-[color:var(--px-success)]">
-                                  Terminée
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          {feedbackOpen === session.id && session.feedback && (
-                            <div className="mt-3 ml-13 rounded-xl border border-[color:var(--px-accent)]/20 bg-[color:var(--px-accent)]/5 p-4 space-y-2">
-                              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--px-accent)]">Retour du coach</p>
-                              {(["technique", "engagement", "progression"] as const).map((k) => (
-                                <div key={k} className="flex items-center gap-3">
-                                  <span className="w-24 text-xs capitalize text-white/70">{k}</span>
-                                  <div className="flex gap-0.5">
-                                    {[1, 2, 3, 4, 5].map((n) => (
-                                      <span key={n} className={`h-2 w-5 rounded-full ${n <= session.feedback!.ratings[k] ? "bg-[color:var(--px-accent)]" : "bg-white/10"}`} />
-                                    ))}
-                                  </div>
-                                  <span className="text-xs text-white/50">{session.feedback!.ratings[k]}/5</span>
-                                </div>
-                              ))}
-                              {session.feedback.comment && (
-                                <p className="text-sm italic text-white/60 mt-2 border-t border-white/10 pt-2">&ldquo;{session.feedback.comment}&rdquo;</p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </ScrollReveal>
-              )}
-            </div>
-
-            {/* Right column */}
-            <div className="space-y-6">
-              {/* Top coaches */}
               <ScrollReveal>
                 <div className="px-card p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg text-white">Coachs recommandés</h3>
+                    <h3 className="text-lg text-white">Coachs recommandes</h3>
                     <Link href="/coach" className="text-xs text-[color:var(--px-accent)] hover:underline">
-                      Voir tout
+                      Voir annuaire
                     </Link>
                   </div>
                   <div className="space-y-3">
                     {coaches.map((coach) => (
-                      <Link
-                        key={coach.id}
-                        href={`/coach/${coach.id}`}
-                        className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-3 transition hover:border-white/20"
-                      >
+                      <div key={coach.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-transparent text-white/70">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-white/70">
                             <WhistleIcon className="h-4 w-4" />
                           </div>
                           <div>
@@ -437,45 +392,61 @@ export default function PlayerDashboardPage() {
                             <p className="text-xs text-white/70">{coach.speciality}</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="flex items-center gap-1">
-                            <StarIcon className="h-3 w-3 text-[color:var(--px-accent)]" />
-                            <span className="text-xs text-white">{(coach.rating ?? 0).toFixed(1)}</span>
-                          </div>
-                          <p className="text-[10px] text-white/70">{coach.price_per_session ?? 0} €/séance</p>
-                        </div>
-                      </Link>
+                        <Link href={`/coach/${coach.id}`} className="text-xs text-[color:var(--px-accent)] hover:underline">
+                          Voir profil
+                        </Link>
+                      </div>
                     ))}
                   </div>
                 </div>
               </ScrollReveal>
+            </div>
 
-              {/* Quick actions */}
+            <div className="space-y-6">
               <ScrollReveal>
                 <div className="px-card-strong p-6">
-                  <h3 className="text-lg text-white mb-4">Actions rapides</h3>
-                  <div className="grid gap-3">
-                    <Link href="/booking" className="px-button inline-flex items-center gap-2">
-                      <BoltIcon className="h-4 w-4" />
-                      Réserver une séance
-                      <ArrowRightIcon className="ml-auto h-4 w-4" />
-                    </Link>
-                    <Link href="/messages" className="px-button-ghost inline-flex items-center gap-2">
-                      <ChatIcon className="h-4 w-4" />
-                      Mes messages
-                      <ArrowRightIcon className="ml-auto h-4 w-4" />
-                    </Link>
-                    <Link href="/sessions" className="px-button-ghost inline-flex items-center gap-2">
-                      <CalendarIcon className="h-4 w-4" />
-                      Mon calendrier
-                      <ArrowRightIcon className="ml-auto h-4 w-4" />
-                    </Link>
-                    <Link href="/dashboard/player/profile" className="px-button-ghost inline-flex items-center gap-2">
-                      <UserIcon className="h-4 w-4" />
-                      Modifier mon profil
-                      <ArrowRightIcon className="ml-auto h-4 w-4" />
-                    </Link>
-                  </div>
+                  <h3 className="text-lg text-white">Dernier feedback coach</h3>
+                  {latestFeedback ? (
+                    <div className="mt-4 space-y-4">
+                      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                        <p className="text-xs uppercase tracking-[0.2em] text-white/50">Synthese</p>
+                        <p className="mt-2 text-sm leading-relaxed text-white/80">{latestFeedback.summary}</p>
+                      </div>
+                      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                        <p className="text-xs uppercase tracking-[0.2em] text-white/50">Prochain focus</p>
+                        <p className="mt-2 text-sm leading-relaxed text-white/80">{latestFeedback.next_focus || "Feedback en cours de structuration."}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-6 text-center">
+                      <p className="text-sm text-white/70">
+                        Aucun feedback structure disponible pour l&apos;instant. Termine une seance pour debloquer le suivi detaille.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </ScrollReveal>
+
+              <ScrollReveal>
+                <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-5">
+                  <p className="text-xs font-semibold text-white/70 mb-2">Snapshot profil</p>
+                  <ul className="space-y-2 text-xs text-white/70 leading-relaxed">
+                    <li className="flex items-start gap-2">
+                      <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--px-accent)]" />
+                      Club actuel: {playerSnapshot.currentClub ?? "A renseigner dans ton profil"}
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--px-accent)]" />
+                      Pied fort: {playerSnapshot.dominantFoot ?? "A renseigner"}
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--px-accent)]" />
+                      Charge hebdo:{" "}
+                      {playerSnapshot.trainingFrequencyPerWeek == null
+                        ? "A renseigner"
+                        : `${playerSnapshot.trainingFrequencyPerWeek} seance(s)`}
+                    </li>
+                  </ul>
                 </div>
               </ScrollReveal>
             </div>

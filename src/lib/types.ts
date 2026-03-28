@@ -1,4 +1,5 @@
-export type UserRole = "player" | "coach" | "club";
+export type UserRole = "player" | "coach" | "parent";
+export type LegacyUserRole = UserRole | "club";
 
 export type User = {
   id: string;
@@ -7,12 +8,29 @@ export type User = {
   createdAt: string;
 };
 
+export type PositionFamily = "goalkeeper" | "defender" | "midfielder" | "attacker";
+export type DominantFoot = "Droitier" | "Gaucher" | "Ambidextre";
+export type AgeCategory = "U9" | "U11" | "U13" | "U15" | "U17" | "U19" | "Senior";
+export type LoadRecommendation = "normal" | "lighten" | "recover";
+
 export type Profile = {
   userId: string;
+  role?: UserRole;
   firstName: string;
   lastName: string;
   city: string;
   avatarUrl?: string;
+  level?: string;
+  position?: string;
+  positionFamily?: PositionFamily;
+  objectives?: string;
+  dominantFoot?: DominantFoot;
+  trainingFrequencyPerWeek?: number;
+  currentClub?: string;
+  ageCategory?: AgeCategory;
+  positionObjectives?: string[];
+  injuryHistory?: string;
+  loadConstraints?: string;
 };
 
 export type AvailabilitySlot = {
@@ -30,7 +48,11 @@ export type Coach = {
   location: string;
   department?: string;
   diplomas?: string[];
-  experience?: number;
+  experienceYears?: number;
+  certifications?: string[];
+  focusAreas?: string[];
+  sessionFormats?: string[];
+  pedagogy?: string;
   pricePerSession: number;
   rating: number;
   reviews: number;
@@ -39,14 +61,33 @@ export type Coach = {
 
 export type SessionStatus = "upcoming" | "completed" | "cancelled";
 
-export type SessionFeedback = {
+export type LegacySessionFeedback = {
   ratings: {
-    technique: number;    // 1-5
-    engagement: number;   // 1-5
-    progression: number;  // 1-5
+    technique: number;
+    engagement: number;
+    progression: number;
   };
   comment: string;
 };
+
+export type SessionFeedback = {
+  version?: 2;
+  ratings: {
+    technique: number;
+    tactique?: number;
+    physique?: number;
+    intensite?: number;
+    mental?: number;
+    engagement?: number;
+    progression?: number;
+  };
+  summary?: string;
+  next_focus?: string;
+  load_recommendation?: LoadRecommendation;
+  comment?: string;
+};
+
+export type SessionFeedbackRecord = SessionFeedback | LegacySessionFeedback;
 
 export type Session = {
   id: string;
@@ -57,7 +98,7 @@ export type Session = {
   time: string; // HH:mm
   durationMinutes: number;
   status: SessionStatus;
-  feedback?: SessionFeedback;
+  feedback?: SessionFeedbackRecord | null;
 };
 
 export type Booking = {
@@ -76,7 +117,15 @@ export type Player = {
   city: string;
   level: string;
   position: string;
+  positionFamily?: PositionFamily;
   objectives?: string;
+  dominantFoot?: DominantFoot;
+  trainingFrequencyPerWeek?: number;
+  currentClub?: string;
+  ageCategory?: AgeCategory;
+  positionObjectives?: string[];
+  injuryHistory?: string;
+  loadConstraints?: string;
   rating: number;
   reviews: number;
 };
@@ -88,4 +137,35 @@ export type Review = {
   rating: number;
   comment: string;
   date: string; // YYYY-MM-DD
+};
+
+export type PlayerRadarPoint = {
+  skill: string;
+  value: number;
+};
+
+export type PlayerProgressionPoint = {
+  month: string;
+  score: number;
+};
+
+export type ParentOverview = {
+  attendance: number;
+  progression: number;
+  lastLoadRecommendation: LoadRecommendation;
+  nextFocus: string;
+};
+
+export type ParentChildSummary = {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  birthDate: string | null;
+  city: string | null;
+  level: string | null;
+  position: string | null;
+  positionFamily: PositionFamily | null;
+  ageCategory: AgeCategory | null;
+  dominantFoot: DominantFoot | null;
+  currentClub: string | null;
 };

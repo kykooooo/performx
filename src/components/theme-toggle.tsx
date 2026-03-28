@@ -2,6 +2,21 @@
 
 import { useEffect, useState } from "react";
 
+type ThemeMode = "dark" | "light";
+
+const getStoredTheme = (): ThemeMode => {
+  if (typeof window === "undefined") {
+    return "dark";
+  }
+
+  try {
+    const stored = localStorage.getItem("px-theme");
+    return stored === "light" ? "light" : "dark";
+  } catch {
+    return "dark";
+  }
+};
+
 function SunIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" {...props}>
@@ -20,23 +35,15 @@ function MoonIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<ThemeMode>(getStoredTheme);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("px-theme") as "dark" | "light" | null;
-      const initial = stored ?? "dark";
-      setTheme(initial);
-      document.documentElement.setAttribute("data-theme", initial);
-    } catch {
-      // localStorage unavailable (e.g. private browsing)
-    }
-  }, []);
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
   const toggle = () => {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
-    document.documentElement.setAttribute("data-theme", next);
     try {
       localStorage.setItem("px-theme", next);
     } catch {

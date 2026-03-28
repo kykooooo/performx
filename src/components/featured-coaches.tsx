@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import CoachCard from "./coach-card";
 import { SkeletonCard } from "./skeleton";
+import { parseTextArray } from "@/lib/football";
 import { supabase } from "@/lib/supabase";
 import { buildCoachAvatarMap } from "@/lib/coach-avatars";
 import { mockCoaches } from "@/lib/mock-data";
@@ -17,6 +18,9 @@ type CoachRow = {
   rating: number | null;
   reviews_count: number | null;
   avatar_url: string | null;
+  experience_years?: number | null;
+  focus_areas?: string[] | string | null;
+  session_formats?: string[] | string | null;
 };
 
 function mockToCoachRow(c: (typeof mockCoaches)[number]): CoachRow {
@@ -30,6 +34,9 @@ function mockToCoachRow(c: (typeof mockCoaches)[number]): CoachRow {
     rating: c.rating,
     reviews_count: c.reviews,
     avatar_url: null,
+    experience_years: c.experienceYears ?? null,
+    focus_areas: c.focusAreas ?? [],
+    session_formats: c.sessionFormats ?? [],
   };
 }
 
@@ -43,7 +50,7 @@ export default function FeaturedCoaches() {
     const fetchCoaches = async () => {
       const { data } = await supabase
         .from("public_coaches")
-        .select("id, name, speciality, bio, location, price_per_session, rating, reviews_count, avatar_url")
+        .select("id, name, speciality, bio, location, price_per_session, rating, reviews_count, avatar_url, experience_years, focus_areas, session_formats")
         .order("rating", { ascending: false })
         .limit(4);
 
@@ -87,6 +94,9 @@ export default function FeaturedCoaches() {
             price={`${coach.price_per_session ?? 0}€`}
             rating={coach.rating ?? 0}
             reviews={coach.reviews_count ?? 0}
+            experienceYears={coach.experience_years ?? null}
+            focusAreas={parseTextArray(coach.focus_areas ?? [])}
+            sessionFormats={parseTextArray(coach.session_formats ?? [])}
           />
         </div>
       ))}

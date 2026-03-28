@@ -6,7 +6,7 @@ import Link from "next/link";
 import AppShell from "@/components/app-shell";
 import { FeedbackState, LoadingState } from "@/components/feedback-state";
 import { AlertIcon, ChatIcon, InboxIcon, ArrowRightIcon } from "@/components/icons";
-import { mockConversations, mockMessages, type MockConversation } from "@/lib/mock-data";
+import { mockConversations, mockMessages } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
 
 /* ── Types ── */
@@ -103,9 +103,9 @@ export default function MessagesClient() {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [mobileChatOpen, setMobileChatOpen] = useState(Boolean(coachId));
   const [isTyping, setIsTyping] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const conversationsRef = useRef<Conversation[]>([]);
-  const isDemoMode = useRef(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -117,6 +117,7 @@ export default function MessagesClient() {
   const loadConversations = async (currentUserId: string, preferredCoachId?: string | null) => {
     setLoading(true);
     setError(null);
+    setIsDemoMode(false);
 
     const { data: convoLinks } = await supabase
       .from("conversation_participants")
@@ -250,7 +251,7 @@ export default function MessagesClient() {
   /* ── Demo mode ── */
 
   const loadDemoMode = () => {
-    isDemoMode.current = true;
+    setIsDemoMode(true);
     const demoUserId = "user_1";
     setUserId(demoUserId);
     const demoConversations: Conversation[] = mockConversations.map((c) => ({
@@ -305,12 +306,7 @@ export default function MessagesClient() {
   useEffect(() => {
     if (!activeConversationId) return;
 
-    if (isDemoMode.current) {
-      setMessages(
-        mockMessages
-          .filter((m) => m.conversationId === activeConversationId)
-          .map((m) => ({ id: m.id, sender_id: m.senderId, body: m.body, created_at: m.created_at })),
-      );
+    if (isDemoMode) {
       return;
     }
 
@@ -325,7 +321,7 @@ export default function MessagesClient() {
     };
 
     fetchMessages();
-  }, [activeConversationId]);
+  }, [activeConversationId, isDemoMode]);
 
   /* ── Realtime subscription ── */
 
@@ -394,7 +390,7 @@ export default function MessagesClient() {
   // Last message per conversation (for sidebar preview)
   const lastMessageMap = useMemo(() => {
     const map: Record<string, { body: string; time: string; isMine: boolean }> = {};
-    if (isDemoMode.current) {
+    if (isDemoMode) {
       for (const conv of conversations) {
         const convMsgs = mockMessages.filter((m) => m.conversationId === conv.id);
         const last = convMsgs[convMsgs.length - 1];
@@ -413,14 +409,14 @@ export default function MessagesClient() {
       };
     }
     return map;
-  }, [conversations, messages, activeConversationId, userId]);
+  }, [conversations, messages, activeConversationId, isDemoMode, userId]);
 
   /* ── Send message ── */
 
   const handleSend = async () => {
     if (!userId || !activeConversationId || !newMessage.trim()) return;
 
-    if (isDemoMode.current) {
+    if (isDemoMode) {
       const demoMsg: MessageRow = {
         id: `demo-${Date.now()}`,
         sender_id: userId,
@@ -474,6 +470,18 @@ export default function MessagesClient() {
   const selectConversation = (convId: string) => {
     setActiveConversationId(convId);
     setUnreadCounts((prev) => ({ ...prev, [convId]: 0 }));
+    if (isDemoMode) {
+      setMessages(
+        mockMessages
+          .filter((message) => message.conversationId === convId)
+          .map((message) => ({
+            id: message.id,
+            sender_id: message.senderId,
+            body: message.body,
+            created_at: message.created_at,
+          })),
+      );
+    }
     setMobileChatOpen(true);
     // Focus input after switch
     setTimeout(() => inputRef.current?.focus(), 100);

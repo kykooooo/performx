@@ -14,6 +14,9 @@ type CoachCardProps = {
   price: string;
   rating: number;
   reviews: number;
+  experienceYears?: number | null;
+  focusAreas?: string[];
+  sessionFormats?: string[];
 };
 
 export default function CoachCard({
@@ -27,6 +30,9 @@ export default function CoachCard({
   price,
   rating,
   reviews,
+  experienceYears,
+  focusAreas = [],
+  sessionFormats = [],
 }: CoachCardProps) {
   const initials = name
     .split(" ")
@@ -78,6 +84,26 @@ export default function CoachCard({
 
       {/* Description */}
       <p className="line-clamp-2 text-sm leading-relaxed text-white/70">{description}</p>
+
+      {(focusAreas.length > 0 || experienceYears || sessionFormats.length > 0) && (
+        <div className="flex flex-wrap gap-2">
+          {focusAreas.slice(0, 2).map((focus) => (
+            <span key={focus} className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-white/70">
+              {focus}
+            </span>
+          ))}
+          {experienceYears ? (
+            <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-white/70">
+              {experienceYears} ans
+            </span>
+          ) : null}
+          {sessionFormats[0] ? (
+            <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-white/70">
+              {sessionFormats[0]}
+            </span>
+          ) : null}
+        </div>
+      )}
 
       {/* Location */}
       <div className="flex items-center gap-2 text-xs text-white/70">

@@ -1,5 +1,6 @@
 import { addDays, startOfWeek, toISODate } from "./date";
-import type { Booking, Coach, Player, Profile, Review, Session, User } from "./types";
+import { getPlayerAgeCategory, getPositionFamily } from "./football";
+import type { Booking, Coach, ParentChildSummary, Player, Profile, Review, Session, User } from "./types";
 
 const baseWeek = startOfWeek(new Date());
 
@@ -9,12 +10,39 @@ const buildSlot = (dayOffset: number, time: string, durationMinutes = 60) => ({
   durationMinutes,
 });
 
+const buildFeedback = (
+  ratings: {
+    technique: number;
+    tactique: number;
+    physique: number;
+    intensite: number;
+    mental: number;
+  },
+  summary: string,
+  nextFocus: string,
+  loadRecommendation: "normal" | "lighten" | "recover" = "normal",
+) => ({
+  version: 2 as const,
+  ratings,
+  summary,
+  next_focus: nextFocus,
+  load_recommendation: loadRecommendation,
+});
+
 export const mockPlayer: Player = {
   id: "player_1",
   name: "Alex Martin",
   city: "Rouen",
   level: "Intermédiaire",
   position: "Milieu de terrain offensif",
+  positionFamily: "midfielder",
+  dominantFoot: "Droitier",
+  trainingFrequencyPerWeek: 4,
+  currentClub: "FC Rouen",
+  ageCategory: "U19",
+  positionObjectives: ["Orientation du corps", "Jeu entre les lignes"],
+  injuryHistory: "Entorse légère de la cheville droite en 2024, reprise complète.",
+  loadConstraints: "Éviter deux grosses charges explosives sur 48h.",
   rating: 4.2,
   reviews: 8,
 };
@@ -29,6 +57,7 @@ export const mockUsers: User[] = [
   { id: "user_15", email: "hugo@performx.fr", role: "coach", createdAt: new Date().toISOString() },
   { id: "user_16", email: "noa@performx.fr", role: "coach", createdAt: new Date().toISOString() },
   { id: "user_17", email: "lina@performx.fr", role: "coach", createdAt: new Date().toISOString() },
+  { id: "user_20", email: "marie@performx.fr", role: "parent", createdAt: new Date().toISOString() },
 ];
 
 export const mockProfiles: Profile[] = [
@@ -41,6 +70,7 @@ export const mockProfiles: Profile[] = [
   { userId: "user_15", firstName: "Hugo", lastName: "Lambert", city: "Dieppe" },
   { userId: "user_16", firstName: "Noa", lastName: "El Mahdi", city: "Rouen" },
   { userId: "user_17", firstName: "Lina", lastName: "Pereira", city: "Fécamp" },
+  { userId: "user_20", firstName: "Marie", lastName: "Dupont", city: "Rouen" },
 ];
 
 export const mockCoaches: Coach[] = [
@@ -53,7 +83,11 @@ export const mockCoaches: Coach[] = [
     location: "Rouen",
     department: "76 – Seine-Maritime",
     diplomas: ["UEFA B", "BEPF – Brevet d'Entraîneur Professionnel"],
-    experience: 12,
+    experienceYears: 12,
+    certifications: ["UEFA B"],
+    focusAreas: ["Premier contrôle", "Finition", "Prise d'information"],
+    sessionFormats: ["Individuel", "Analyse vidéo"],
+    pedagogy: "Coaching exigeant, orienté répétitions de qualité et feedback immédiat.",
     pricePerSession: 39,
     rating: 4.7,
     reviews: 52,
@@ -72,7 +106,11 @@ export const mockCoaches: Coach[] = [
     location: "Le Havre",
     department: "76 – Seine-Maritime",
     diplomas: ["DEJEPS Football", "BPJEPS Football"],
-    experience: 8,
+    experienceYears: 8,
+    certifications: [],
+    focusAreas: ["Explosivité", "Prévention blessures", "Intensité"],
+    sessionFormats: ["Individuel", "Petit groupe"],
+    pedagogy: "Séances rythmées avec tests terrain et suivi de charge.",
     pricePerSession: 55,
     rating: 4.3,
     reviews: 38,
@@ -91,7 +129,11 @@ export const mockCoaches: Coach[] = [
     location: "Dieppe",
     department: "76 – Seine-Maritime",
     diplomas: ["UEFA A", "BEF – Brevet d'Entraîneur de Football"],
-    experience: 10,
+    experienceYears: 10,
+    certifications: ["UEFA A"],
+    focusAreas: ["Jeu aérien", "Jeu au pied", "Explosivité"],
+    sessionFormats: ["Individuel", "Duo"],
+    pedagogy: "Pédagogie rassurante, beaucoup de mises en situation réelles.",
     pricePerSession: 45,
     rating: 4.9,
     reviews: 64,
@@ -110,7 +152,11 @@ export const mockCoaches: Coach[] = [
     location: "Elbeuf",
     department: "76 – Seine-Maritime",
     diplomas: ["UEFA C", "BMF – Brevet de Moniteur de Football"],
-    experience: 5,
+    experienceYears: 5,
+    certifications: ["UEFA C"],
+    focusAreas: ["Prise d'information", "Vision de jeu", "Relance"],
+    sessionFormats: ["Individuel", "Analyse vidéo"],
+    pedagogy: "Alternance vidéo + terrain pour accélérer la compréhension du jeu.",
     pricePerSession: 42,
     rating: 4.6,
     reviews: 29,
@@ -129,7 +175,11 @@ export const mockCoaches: Coach[] = [
     location: "Rouen",
     department: "76 – Seine-Maritime",
     diplomas: ["UEFA B", "DEJEPS Football"],
-    experience: 7,
+    experienceYears: 7,
+    certifications: ["UEFA B"],
+    focusAreas: ["Finition", "Premier contrôle", "Appels"],
+    sessionFormats: ["Individuel", "Petit groupe"],
+    pedagogy: "Décompose chaque geste et finit toujours par des séquences match.",
     pricePerSession: 48,
     rating: 4.8,
     reviews: 47,
@@ -148,7 +198,11 @@ export const mockCoaches: Coach[] = [
     location: "Dieppe",
     department: "76 – Seine-Maritime",
     diplomas: ["BPJEPS Football"],
-    experience: 3,
+    experienceYears: 3,
+    certifications: [],
+    focusAreas: ["Endurance", "Intensité", "Récupération"],
+    sessionFormats: ["Petit groupe", "Individuel"],
+    pedagogy: "Suivi simple, orienté routines et discipline d'entraînement.",
     pricePerSession: 35,
     rating: 4.2,
     reviews: 19,
@@ -166,7 +220,11 @@ export const mockCoaches: Coach[] = [
     location: "Sotteville-lès-Rouen",
     department: "76 – Seine-Maritime",
     diplomas: ["UEFA A", "DEJEPS Football", "BEF – Brevet d'Entraîneur de Football"],
-    experience: 15,
+    experienceYears: 15,
+    certifications: ["UEFA A"],
+    focusAreas: ["1 contre 1", "Changements de rythme", "Mental offensif"],
+    sessionFormats: ["Individuel", "Duo", "Analyse vidéo"],
+    pedagogy: "Beaucoup d'oppositions et de retours courts après chaque série.",
     pricePerSession: 50,
     rating: 4.9,
     reviews: 71,
@@ -185,7 +243,11 @@ export const mockCoaches: Coach[] = [
     location: "Fécamp",
     department: "76 – Seine-Maritime",
     diplomas: ["UEFA C"],
-    experience: 4,
+    experienceYears: 4,
+    certifications: ["UEFA C"],
+    focusAreas: ["Lecture du jeu", "Duels", "Communication"],
+    sessionFormats: ["Individuel", "Petit groupe"],
+    pedagogy: "Accent sur les repères défensifs et les automatismes sans ballon.",
     pricePerSession: 38,
     rating: 4.4,
     reviews: 22,
@@ -203,6 +265,14 @@ export const mockPlayers: Player[] = [
     city: "Rouen",
     level: "Intermédiaire",
     position: "Milieu de terrain offensif",
+    positionFamily: getPositionFamily("Milieu de terrain offensif") ?? undefined,
+    dominantFoot: "Droitier",
+    trainingFrequencyPerWeek: 4,
+    currentClub: "FC Rouen",
+    ageCategory: getPlayerAgeCategory("2007-03-15") ?? undefined,
+    positionObjectives: ["Orientation du corps", "Jeu entre les lignes"],
+    injuryHistory: "Entorse légère de la cheville droite en 2024, reprise complète.",
+    loadConstraints: "Éviter deux grosses charges explosives sur 48h.",
     objectives: "Améliorer ma vision de jeu et mes passes décisives.",
     rating: 4.2,
     reviews: 8,
@@ -213,6 +283,12 @@ export const mockPlayers: Player[] = [
     city: "Rouen",
     level: "Confirmé",
     position: "Avant-centre",
+    positionFamily: getPositionFamily("Avant-centre") ?? undefined,
+    dominantFoot: "Droitier",
+    trainingFrequencyPerWeek: 5,
+    currentClub: "US Quevilly",
+    ageCategory: "U19",
+    positionObjectives: ["Finition premier contact", "Timing dans la surface"],
     objectives: "Travailler la finition et les frappes enroulées.",
     rating: 4.5,
     reviews: 14,
@@ -276,6 +352,35 @@ export const mockPlayers: Player[] = [
     objectives: "Perfectionner les coups de pied arrêtés.",
     rating: 4.6,
     reviews: 22,
+  },
+];
+
+export const mockParentChildren: ParentChildSummary[] = [
+  {
+    userId: "user_1",
+    firstName: "Alex",
+    lastName: "Martin",
+    birthDate: "2007-03-15",
+    city: "Rouen",
+    level: "IntermÃ©diaire",
+    position: "Milieu de terrain offensif",
+    positionFamily: "midfielder",
+    ageCategory: "U19",
+    dominantFoot: "Droitier",
+    currentClub: "FC Rouen",
+  },
+  {
+    userId: "player_2",
+    firstName: "Lucas",
+    lastName: "Bertin",
+    birthDate: "2008-09-04",
+    city: "Rouen",
+    level: "ConfirmÃ©",
+    position: "Avant-centre",
+    positionFamily: "attacker",
+    ageCategory: "U19",
+    dominantFoot: "Droitier",
+    currentClub: "US Quevilly",
   },
 ];
 

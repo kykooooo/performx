@@ -10,16 +10,16 @@ export default function AuthListener() {
   const pathname = usePathname();
 
   const redirectByRole = useCallback(async (userId: string, roleHint?: string | null) => {
-    let role = roleHint ?? null;
+    let role = roleHint === "club" ? "parent" : roleHint ?? null;
     if (!role) {
       const { data } = await supabase.from("profiles").select("role").eq("user_id", userId).single();
-      role = data?.role ?? null;
+      role = data?.role === "club" ? "parent" : data?.role ?? null;
     }
     switch (role) {
       case "coach":
         router.replace("/dashboard/coach");
         break;
-      case "club":
+      case "parent":
         router.replace("/dashboard/parent");
         break;
       case "player":

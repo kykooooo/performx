@@ -11,6 +11,7 @@ import { Notice, type NoticeData } from "@/components/notice";
 import { getAvailableSlots, normalizeTime } from "@/lib/booking";
 import { getCoachAvatarUrl } from "@/lib/coach-avatars";
 import { formatLongDate } from "@/lib/date";
+import { parseTextArray } from "@/lib/football";
 import { getAverageRating, getReviewTotal } from "@/lib/reviews";
 import { supabase } from "@/lib/supabase";
 import { mockCoaches, mockReviews } from "@/lib/mock-data";
@@ -24,7 +25,12 @@ type CoachRow = {
   location: string | null;
   department: string | null;
   diplomas: string[] | null;
-  experience: number | null;
+  experience?: number | null;
+  experience_years: number | null;
+  certifications: string[] | null;
+  focus_areas: string[] | null;
+  session_formats: string[] | null;
+  pedagogy: string | null;
   price_per_session: number | null;
   rating: number | null;
   reviews_count: number | null;
@@ -83,7 +89,7 @@ export default function CoachProfileClient() {
       setLoading(true);
       const { data: coachData } = await supabase
         .from("public_coaches")
-        .select("id, name, speciality, bio, location, price_per_session, rating, reviews_count, availability, avatar_url")
+        .select("id, name, speciality, bio, location, department, diplomas, experience_years, certifications, focus_areas, session_formats, pedagogy, price_per_session, rating, reviews_count, availability, avatar_url")
         .eq("id", coachId)
         .single();
 
@@ -140,9 +146,11 @@ export default function CoachProfileClient() {
       if (coachData) {
         setCoach({
           ...coachData,
-          department: null,
-          diplomas: null,
-          experience: null,
+          experience: coachData.experience_years ?? null,
+          diplomas: parseTextArray(coachData.diplomas as string[] | string | null),
+          certifications: parseTextArray(coachData.certifications as string[] | string | null),
+          focus_areas: parseTextArray(coachData.focus_areas as string[] | string | null),
+          session_formats: parseTextArray(coachData.session_formats as string[] | string | null),
         });
         setReviews(reviewsData ?? []);
       } else {
@@ -156,7 +164,12 @@ export default function CoachProfileClient() {
             location: mock.location,
             department: mock.department ?? null,
             diplomas: mock.diplomas ?? null,
-            experience: mock.experience ?? null,
+            experience: mock.experienceYears ?? null,
+            experience_years: mock.experienceYears ?? null,
+            certifications: mock.certifications ?? null,
+            focus_areas: mock.focusAreas ?? null,
+            session_formats: mock.sessionFormats ?? null,
+            pedagogy: mock.pedagogy ?? null,
             price_per_session: mock.pricePerSession,
             rating: mock.rating,
             reviews_count: mock.reviews,
@@ -306,7 +319,7 @@ export default function CoachProfileClient() {
                 {coach.department}
               </span>
             )}
-            {coach.experience != null && coach.experience > 0 && (
+            {coach.experience_years != null && coach.experience_years > 0 && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
                 {coach.experience} ans d&apos;expérience
               </span>
@@ -327,6 +340,36 @@ export default function CoachProfileClient() {
                   </span>
                 ))}
               </div>
+            </div>
+          )}
+
+          {coach.focus_areas && coach.focus_areas.length > 0 && (
+            <div>
+              <p className="mb-2 text-xs uppercase tracking-[0.3em] text-white/70">Focus metier</p>
+              <div className="flex flex-wrap gap-2">
+                {coach.focus_areas.slice(0, 4).map((focus) => (
+                  <span key={focus} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
+                    {focus}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(coach.session_formats?.length || coach.pedagogy) && (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              {coach.session_formats && coach.session_formats.length > 0 && (
+                <>
+                  <p className="text-xs uppercase tracking-[0.3em] text-white/70">Formats de seance</p>
+                  <p className="mt-2 text-sm text-white/80">{coach.session_formats.join(" · ")}</p>
+                </>
+              )}
+              {coach.pedagogy && (
+                <>
+                  <p className="mt-4 text-xs uppercase tracking-[0.3em] text-white/70">Pedagogie</p>
+                  <p className="mt-2 text-sm leading-relaxed text-white/70">{coach.pedagogy}</p>
+                </>
+              )}
             </div>
           )}
 

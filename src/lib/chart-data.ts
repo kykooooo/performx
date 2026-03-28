@@ -1,6 +1,5 @@
-// ── Shared chart colors, mock data & async Supabase fetchers ──
-
 import { supabase } from "./supabase";
+import type { ParentOverview, PlayerProgressionPoint, PlayerRadarPoint } from "./types";
 
 export const CHART_COLORS = {
   accent: "#ff6a00",
@@ -12,14 +11,12 @@ export const CHART_COLORS = {
   tick: "rgba(150,150,150,0.6)",
 };
 
-// ── Coach data ──
-
 export const coachMonthlyActivity = [
   { month: "Oct", seances: 8, revenus: 320 },
   { month: "Nov", seances: 12, revenus: 480 },
-  { month: "Déc", seances: 10, revenus: 400 },
+  { month: "Dec", seances: 10, revenus: 400 },
   { month: "Jan", seances: 15, revenus: 600 },
-  { month: "Fév", seances: 18, revenus: 720 },
+  { month: "Fev", seances: 18, revenus: 720 },
   { month: "Mar", seances: 22, revenus: 880 },
 ];
 
@@ -33,34 +30,51 @@ export const coachDayDistribution = [
   { day: "Dim", count: 3 },
 ];
 
-// ── Player data ──
-
-export const playerSkills = [
+export const playerSkills: PlayerRadarPoint[] = [
   { skill: "Technique", value: 78 },
-  { skill: "Vitesse", value: 65 },
-  { skill: "Endurance", value: 82 },
-  { skill: "Tactique", value: 70 },
-  { skill: "Mental", value: 88 },
+  { skill: "Tactique", value: 74 },
+  { skill: "Physique", value: 71 },
+  { skill: "Intensite", value: 83 },
+  { skill: "Mental", value: 80 },
 ];
 
-export const playerProgression = [
-  { month: "Oct", score: 52 },
-  { month: "Nov", score: 58 },
-  { month: "Déc", score: 61 },
-  { month: "Jan", score: 68 },
-  { month: "Fév", score: 74 },
-  { month: "Mar", score: 79 },
+export const playerProgression: PlayerProgressionPoint[] = [
+  { month: "Oct", score: 54 },
+  { month: "Nov", score: 59 },
+  { month: "Dec", score: 63 },
+  { month: "Jan", score: 69 },
+  { month: "Fev", score: 75 },
+  { month: "Mar", score: 81 },
 ];
 
-// ── Parent data ──
+export const parentOverviewFallback: ParentOverview = {
+  attendance: 85,
+  progression: 72,
+  lastLoadRecommendation: "normal",
+  nextFocus: "Continuer le jeu entre les lignes et la qualité du premier contrôle.",
+};
 
-export const parentMetrics = [
-  { label: "Assiduité", value: 85, color: "#ff6a00" },
-  { label: "Progression", value: 72, color: "#22c55e" },
-  { label: "Satisfaction", value: 96, color: "#f59e0b" },
-];
-
-// ── Async fetchers: try Supabase RPCs, fallback to mocks above ──
+export function buildParentMetricBars(overview: ParentOverview) {
+  return [
+    { label: "Assiduite", value: overview.attendance, color: "#ff6a00" },
+    { label: "Progression", value: overview.progression, color: "#22c55e" },
+    {
+      label: "Charge",
+      value:
+        overview.lastLoadRecommendation === "recover"
+          ? 35
+          : overview.lastLoadRecommendation === "lighten"
+            ? 60
+            : 85,
+      color:
+        overview.lastLoadRecommendation === "recover"
+          ? "#ef4444"
+          : overview.lastLoadRecommendation === "lighten"
+            ? "#f59e0b"
+            : "#22c55e",
+    },
+  ];
+}
 
 export async function fetchCoachMonthlyActivity(coachId: string) {
   try {
@@ -80,7 +94,7 @@ export async function fetchCoachDayDistribution(coachId: string) {
   }
 }
 
-export async function fetchPlayerProgression(playerId: string) {
+export async function fetchPlayerProgression(playerId: string): Promise<PlayerProgressionPoint[]> {
   try {
     const { data } = await supabase.rpc("get_player_progression", { p_player_id: playerId });
     return data && data.length > 0 ? data : playerProgression;
@@ -89,7 +103,7 @@ export async function fetchPlayerProgression(playerId: string) {
   }
 }
 
-export async function fetchPlayerSkills(playerId: string) {
+export async function fetchPlayerSkills(playerId: string): Promise<PlayerRadarPoint[]> {
   try {
     const { data } = await supabase.rpc("get_player_skills", { p_player_id: playerId });
     return data && data.length > 0 ? data : playerSkills;
@@ -98,11 +112,25 @@ export async function fetchPlayerSkills(playerId: string) {
   }
 }
 
-export async function fetchParentMetrics(playerId: string) {
+export async function fetchParentChildOverview(playerId: string): Promise<ParentOverview> {
   try {
-    const { data } = await supabase.rpc("get_parent_metrics", { p_player_id: playerId });
-    return data && data.length > 0 ? data : parentMetrics;
+    const { data } = await supabase.rpc("get_parent_child_overview", { p_player_id: playerId });
+    const row = Array.isArray(data) ? data[0] : data;
+    if (row) {
+      return {
+        attendance: Number(row.attendance ?? 0),
+        progression: Number(row.progression ?? 0),
+        lastLoadRecommendation: row.last_load_recommendation ?? "normal",
+        nextFocus: row.next_focus ?? parentOverviewFallback.nextFocus,
+      };
+    }
   } catch {
-    return parentMetrics;
+    return parentOverviewFallback;
   }
+  return parentOverviewFallback;
+}
+
+export async function fetchParentMetrics(playerId: string) {
+  const overview = await fetchParentChildOverview(playerId);
+  return buildParentMetricBars(overview);
 }

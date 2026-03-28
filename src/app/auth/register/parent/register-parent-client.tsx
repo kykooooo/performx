@@ -6,7 +6,7 @@ import AuthShell from "@/components/auth-shell";
 import { FieldError, Notice, type NoticeData } from "@/components/notice";
 import { syncProfile } from "@/lib/profile-sync";
 import { supabase } from "@/lib/supabase";
-import { DEPARTMENTS, PLAYER_LEVELS, PLAYER_POSITIONS } from "@/lib/constants";
+import { DEPARTMENTS } from "@/lib/constants";
 import {
   sanitizeInput,
   validateEmail,
@@ -16,7 +16,7 @@ import {
   type FieldErrors,
 } from "@/lib/validation";
 
-const stepLabels = ["Compte", "Enfant"];
+const stepLabels = ["Compte", "Activation"];
 
 export default function RegisterParentPage() {
   const [step, setStep] = useState<1 | 2>(1);
@@ -24,11 +24,6 @@ export default function RegisterParentPage() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [city, setCity] = useState("");
-  const [childFirstName, setChildFirstName] = useState("");
-  const [childLastName, setChildLastName] = useState("");
-  const [childBirthDate, setChildBirthDate] = useState("");
-  const [childLevel, setChildLevel] = useState("");
-  const [childPosition, setChildPosition] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -40,7 +35,7 @@ export default function RegisterParentPage() {
 
   const validateStep1 = (): boolean => {
     const next: FieldErrors = {};
-    const fnErr = validateRequired(firstName, "Le prénom");
+    const fnErr = validateRequired(firstName, "Le prenom");
     if (fnErr) next.firstName = fnErr;
     const lnErr = validateRequired(lastName, "Le nom");
     if (lnErr) next.lastName = lnErr;
@@ -57,14 +52,7 @@ export default function RegisterParentPage() {
 
   const validateStep2 = (): boolean => {
     const next: FieldErrors = {};
-    if (!city) next.city = "Le département est requis.";
-    const cfnErr = validateRequired(childFirstName, "Le prénom de l'enfant");
-    if (cfnErr) next.childFirstName = cfnErr;
-    const clnErr = validateRequired(childLastName, "Le nom de l'enfant");
-    if (clnErr) next.childLastName = clnErr;
-    if (!childBirthDate) next.childBirthDate = "La date de naissance est requise.";
-    if (!childLevel) next.childLevel = "Le niveau est requis.";
-    if (!childPosition) next.childPosition = "Le poste est requis.";
+    if (!city) next.city = "Le departement est requis.";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -81,15 +69,10 @@ export default function RegisterParentPage() {
       password,
       options: {
         data: {
-          role: "club",
+          role: "parent",
           first_name: sanitizeInput(firstName),
           last_name: sanitizeInput(lastName),
           city,
-          child_first_name: sanitizeInput(childFirstName),
-          child_last_name: sanitizeInput(childLastName),
-          child_birth_date: childBirthDate,
-          child_level: childLevel,
-          child_position: childPosition,
         },
       },
     });
@@ -102,7 +85,7 @@ export default function RegisterParentPage() {
       }
       setNotice({
         type: "success",
-        text: "Compte parent créé. Vérifie ton e-mail pour valider l'inscription.",
+        text: "Compte parent cree. Verifie ton e-mail puis lie un compte joueur depuis ton dashboard.",
       });
     }
 
@@ -118,7 +101,7 @@ export default function RegisterParentPage() {
   return (
     <AuthShell
       title="Inscription parent"
-      subtitle={`Étape ${step}/2 : ${stepLabels[step - 1].toLowerCase()}.`}
+      subtitle={`Etape ${step}/2 : ${stepLabels[step - 1].toLowerCase()}.`}
     >
       <form className="space-y-4" onSubmit={handleRegister} noValidate>
         <div className="flex items-center justify-between">
@@ -145,14 +128,13 @@ export default function RegisterParentPage() {
           <>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label htmlFor="reg-parent-firstName" className="mb-1 block text-xs text-white/70">Ton prénom <span className="text-[color:var(--px-danger)]">*</span></label>
+                <label htmlFor="reg-parent-firstName" className="mb-1 block text-xs text-white/70">Ton prenom <span className="text-[color:var(--px-danger)]">*</span></label>
                 <input
                   id="reg-parent-firstName"
                   className={`px-input ${errors.firstName ? "border-[color:var(--px-danger)]" : ""}`}
-                  placeholder="Prénom"
+                  placeholder="Prenom"
                   value={firstName}
                   onChange={(e) => { setFirstName(e.target.value); clearField("firstName"); }}
-                  aria-invalid={!!errors.firstName}
                 />
                 <FieldError error={errors.firstName} />
               </div>
@@ -164,7 +146,6 @@ export default function RegisterParentPage() {
                   placeholder="Nom"
                   value={lastName}
                   onChange={(e) => { setLastName(e.target.value); clearField("lastName"); }}
-                  aria-invalid={!!errors.lastName}
                 />
                 <FieldError error={errors.lastName} />
               </div>
@@ -178,7 +159,6 @@ export default function RegisterParentPage() {
                 placeholder="Adresse e-mail"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); clearField("email"); }}
-                aria-invalid={!!errors.email}
               />
               <FieldError error={errors.email} />
             </div>
@@ -192,7 +172,6 @@ export default function RegisterParentPage() {
                   placeholder="Mot de passe"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); clearField("password"); }}
-                  aria-invalid={!!errors.password}
                 />
                 <FieldError error={errors.password} />
               </div>
@@ -205,12 +184,11 @@ export default function RegisterParentPage() {
                   placeholder="Confirmer le mot de passe"
                   value={confirmPassword}
                   onChange={(e) => { setConfirmPassword(e.target.value); clearField("confirmPassword"); }}
-                  aria-invalid={!!errors.confirmPassword}
                 />
                 <FieldError error={errors.confirmPassword} />
               </div>
             </div>
-            <p className="text-[10px] text-white/30">Min. 8 caractères, 1 majuscule, 1 chiffre, 1 caractère spécial.</p>
+            <p className="text-[10px] text-white/30">Min. 8 caracteres, 1 majuscule, 1 chiffre, 1 caractere special.</p>
             <div>
               <label className="flex items-center gap-2 text-xs text-white/70">
                 <input
@@ -218,9 +196,8 @@ export default function RegisterParentPage() {
                   className="h-4 w-4"
                   checked={acceptedTerms}
                   onChange={(e) => { setAcceptedTerms(e.target.checked); clearField("terms"); }}
-                  aria-invalid={!!errors.terms}
                 />
-                J&apos;accepte la politique de confidentialité et les conditions d&apos;utilisation.
+                J&apos;accepte la politique de confidentialite et les conditions d&apos;utilisation.
               </label>
               <FieldError error={errors.terms} />
             </div>
@@ -233,78 +210,23 @@ export default function RegisterParentPage() {
 
         {step === 2 && (
           <>
-            <p className="text-xs text-white/70">
-              Ces informations nous aident à personnaliser l&apos;expérience de ton enfant.
-            </p>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
+              Le compte parent n&apos;embarque plus une fiche enfant statique. Une fois inscrit, tu lieras un vrai compte joueur depuis ton dashboard avec un code temporaire genere cote joueur.
+            </div>
             <div>
-              <label htmlFor="reg-parent-city" className="mb-1 block text-xs text-white/70">Département <span className="text-[color:var(--px-danger)]">*</span></label>
-              <select id="reg-parent-city" className={`px-select ${errors.city ? "border-[color:var(--px-danger)]" : ""}`} value={city} onChange={(e) => { setCity(e.target.value); clearField("city"); }} aria-invalid={!!errors.city}>
-                <option value="">Sélectionner un département</option>
-                {DEPARTMENTS.map((d) => (
-                  <option key={d} value={d}>{d}</option>
+              <label htmlFor="reg-parent-city" className="mb-1 block text-xs text-white/70">Departement <span className="text-[color:var(--px-danger)]">*</span></label>
+              <select
+                id="reg-parent-city"
+                className={`px-select ${errors.city ? "border-[color:var(--px-danger)]" : ""}`}
+                value={city}
+                onChange={(e) => { setCity(e.target.value); clearField("city"); }}
+              >
+                <option value="">Selectionner un departement</option>
+                {DEPARTMENTS.map((department) => (
+                  <option key={department} value={department}>{department}</option>
                 ))}
               </select>
               <FieldError error={errors.city} />
-            </div>
-            <div className="grid gap-3 md:grid-cols-2">
-              <div>
-                <label htmlFor="reg-parent-childFirstName" className="mb-1 block text-xs text-white/70">Prénom de l&apos;enfant <span className="text-[color:var(--px-danger)]">*</span></label>
-                <input
-                  id="reg-parent-childFirstName"
-                  className={`px-input ${errors.childFirstName ? "border-[color:var(--px-danger)]" : ""}`}
-                  placeholder="Prénom"
-                  value={childFirstName}
-                  onChange={(e) => { setChildFirstName(e.target.value); clearField("childFirstName"); }}
-                  aria-invalid={!!errors.childFirstName}
-                />
-                <FieldError error={errors.childFirstName} />
-              </div>
-              <div>
-                <label htmlFor="reg-parent-childLastName" className="mb-1 block text-xs text-white/70">Nom de l&apos;enfant <span className="text-[color:var(--px-danger)]">*</span></label>
-                <input
-                  id="reg-parent-childLastName"
-                  className={`px-input ${errors.childLastName ? "border-[color:var(--px-danger)]" : ""}`}
-                  placeholder="Nom"
-                  value={childLastName}
-                  onChange={(e) => { setChildLastName(e.target.value); clearField("childLastName"); }}
-                  aria-invalid={!!errors.childLastName}
-                />
-                <FieldError error={errors.childLastName} />
-              </div>
-            </div>
-            <div>
-              <label htmlFor="reg-parent-childBirthDate" className="mb-1 block text-xs text-white/70">Date de naissance <span className="text-[color:var(--px-danger)]">*</span></label>
-              <input
-                id="reg-parent-childBirthDate"
-                className={`px-input ${errors.childBirthDate ? "border-[color:var(--px-danger)]" : ""}`}
-                type="date"
-                value={childBirthDate}
-                onChange={(e) => { setChildBirthDate(e.target.value); clearField("childBirthDate"); }}
-                aria-invalid={!!errors.childBirthDate}
-              />
-              <FieldError error={errors.childBirthDate} />
-            </div>
-            <div className="grid gap-3 md:grid-cols-2">
-              <div>
-                <label htmlFor="reg-parent-childLevel" className="mb-1 block text-xs text-white/70">Niveau <span className="text-[color:var(--px-danger)]">*</span></label>
-                <select id="reg-parent-childLevel" className={`px-select ${errors.childLevel ? "border-[color:var(--px-danger)]" : ""}`} value={childLevel} onChange={(e) => { setChildLevel(e.target.value); clearField("childLevel"); }} aria-invalid={!!errors.childLevel}>
-                  <option value="">Sélectionner</option>
-                  {PLAYER_LEVELS.map((l) => (
-                    <option key={l} value={l}>{l}</option>
-                  ))}
-                </select>
-                <FieldError error={errors.childLevel} />
-              </div>
-              <div>
-                <label htmlFor="reg-parent-childPosition" className="mb-1 block text-xs text-white/70">Poste <span className="text-[color:var(--px-danger)]">*</span></label>
-                <select id="reg-parent-childPosition" className={`px-select ${errors.childPosition ? "border-[color:var(--px-danger)]" : ""}`} value={childPosition} onChange={(e) => { setChildPosition(e.target.value); clearField("childPosition"); }} aria-invalid={!!errors.childPosition}>
-                  <option value="">Sélectionner</option>
-                  {PLAYER_POSITIONS.map((p) => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
-                <FieldError error={errors.childPosition} />
-              </div>
             </div>
             <Notice notice={notice} />
             <div className="flex gap-3">
@@ -312,14 +234,14 @@ export default function RegisterParentPage() {
                 Retour
               </button>
               <button className="px-button w-full" type="submit" disabled={loading}>
-                {loading ? <><span className="px-spinner mr-2" /> Création...</> : "Créer le compte parent"}
+                {loading ? <><span className="px-spinner mr-2" /> Creation...</> : "Creer le compte parent"}
               </button>
             </div>
           </>
         )}
 
         <p className="text-center text-xs text-white/70">
-          Déjà un compte ? <Link className="text-[color:var(--px-accent)]" href="/auth/login">Se connecter</Link>
+          Deja un compte ? <Link className="text-[color:var(--px-accent)]" href="/auth/login">Se connecter</Link>
         </p>
       </form>
     </AuthShell>

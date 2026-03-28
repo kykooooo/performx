@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import * as Sentry from "@sentry/nextjs";
 import AppShell from "@/components/app-shell";
 
@@ -23,16 +24,17 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold text-white">Une erreur est survenue</h2>
           <p className="text-sm text-white/70">
-            L&apos;incident a été remonté automatiquement. Tu peux réessayer ou retourner à l&apos;accueil.
+            L&apos;incident a ete remonte automatiquement. Tu peux reessayer ou retourner a
+            l&apos;accueil.
           </p>
         </div>
         <div className="grid w-full gap-3 sm:grid-cols-2">
           <button type="button" onClick={reset} className="px-button">
-            Réessayer
+            Reessayer
           </button>
-          <a href="/" className="px-button-ghost text-center">
-            Retour à l&apos;accueil
-          </a>
+          <Link href="/" className="px-button-ghost text-center">
+            Retour a l&apos;accueil
+          </Link>
         </div>
       </section>
     </AppShell>

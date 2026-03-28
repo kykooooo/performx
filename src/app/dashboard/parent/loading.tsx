@@ -1,6 +1,6 @@
 import AppShell from "@/components/app-shell";
 
-export default function ClubLoading() {
+export default function ParentLoading() {
   return (
     <AppShell active="/dashboard">
       <div className="px-stack-3 py-8">

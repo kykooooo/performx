@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircleIcon } from "@/components/icons";
 
@@ -52,21 +52,18 @@ export default function VerifyClient() {
     }
   };
 
-  const handlePaste = useCallback(
-    (event: React.ClipboardEvent<HTMLInputElement>) => {
-      event.preventDefault();
-      const pasted = event.clipboardData.getData("text").replace(/\D/g, "").slice(0, CODE_LENGTH);
-      if (!pasted) return;
-      const next = [...digits];
-      for (let i = 0; i < pasted.length; i++) {
-        next[i] = pasted[i];
-      }
-      setDigits(next);
-      setError(null);
-      focusInput(Math.min(pasted.length, CODE_LENGTH - 1));
-    },
-    [digits],
-  );
+  const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    const pasted = event.clipboardData.getData("text").replace(/\D/g, "").slice(0, CODE_LENGTH);
+    if (!pasted) return;
+    const next = [...digits];
+    for (let i = 0; i < pasted.length; i++) {
+      next[i] = pasted[i];
+    }
+    setDigits(next);
+    setError(null);
+    focusInput(Math.min(pasted.length, CODE_LENGTH - 1));
+  };
 
   const handleVerify = async (event: React.FormEvent) => {
     event.preventDefault();

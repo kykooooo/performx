@@ -13,6 +13,7 @@ import {
   BoltIcon,
   UserIcon,
 } from "@/components/icons";
+import { parseTextArray } from "@/lib/football";
 import { supabase } from "@/lib/supabase";
 import { mockCoaches } from "@/lib/mock-data";
 
@@ -34,6 +35,13 @@ export default function CoachProfileEditPage() {
   const [speciality, setSpeciality] = useState("");
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
+  const [department, setDepartment] = useState("");
+  const [experienceYears, setExperienceYears] = useState<number>(0);
+  const [diplomas, setDiplomas] = useState("");
+  const [certifications, setCertifications] = useState("");
+  const [focusAreas, setFocusAreas] = useState("");
+  const [sessionFormats, setSessionFormats] = useState("");
+  const [pedagogy, setPedagogy] = useState("");
   const [price, setPrice] = useState<number>(0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -41,6 +49,31 @@ export default function CoachProfileEditPage() {
   const [isDemo, setIsDemo] = useState(false);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const syncCoachMetadata = async (nextAvatarUrl: string | null) => {
+    if (!userId) return null;
+    const [firstName, ...lastNameParts] = name.trim().split(" ").filter(Boolean);
+    const metadata = {
+      role: "coach",
+      first_name: firstName ?? "",
+      last_name: lastNameParts.join(" "),
+      speciality,
+      bio,
+      location,
+      department,
+      price_per_session: price,
+      diplomas: parseTextArray(diplomas),
+      experience_years: experienceYears || null,
+      certifications: parseTextArray(certifications),
+      focus_areas: parseTextArray(focusAreas),
+      session_formats: parseTextArray(sessionFormats),
+      pedagogy,
+      avatar_url: nextAvatarUrl,
+    };
+
+    const { error } = await supabase.auth.updateUser({ data: metadata });
+    return error;
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -55,6 +88,13 @@ export default function CoachProfileEditPage() {
           setSpeciality(mock.speciality);
           setBio(mock.bio);
           setLocation(mock.location);
+          setDepartment(mock.department ?? "");
+          setExperienceYears(mock.experienceYears ?? 0);
+          setDiplomas((mock.diplomas ?? []).join(", "));
+          setCertifications((mock.certifications ?? []).join(", "));
+          setFocusAreas((mock.focusAreas ?? []).join(", "));
+          setSessionFormats((mock.sessionFormats ?? []).join(", "));
+          setPedagogy(mock.pedagogy ?? "");
           setPrice(mock.pricePerSession);
           setIsDemo(true);
           setLoading(false);
@@ -64,7 +104,7 @@ export default function CoachProfileEditPage() {
 
       const { data: coachData, error } = await supabase
         .from("coaches")
-        .select("id, name, speciality, bio, location, price_per_session")
+        .select("id, name, speciality, bio, location, department, diplomas, experience_years, certifications, focus_areas, session_formats, pedagogy, price_per_session")
         .eq("user_id", userData.user.id)
         .single();
 
@@ -81,6 +121,13 @@ export default function CoachProfileEditPage() {
         setSpeciality(mock.speciality);
         setBio(mock.bio);
         setLocation(mock.location);
+        setDepartment(mock.department ?? "");
+        setExperienceYears(mock.experienceYears ?? 0);
+        setDiplomas((mock.diplomas ?? []).join(", "));
+        setCertifications((mock.certifications ?? []).join(", "));
+        setFocusAreas((mock.focusAreas ?? []).join(", "));
+        setSessionFormats((mock.sessionFormats ?? []).join(", "));
+        setPedagogy(mock.pedagogy ?? "");
         setPrice(mock.pricePerSession);
         setIsDemo(true);
         setLoading(false);
@@ -93,6 +140,13 @@ export default function CoachProfileEditPage() {
       setSpeciality(coachData.speciality ?? "");
       setBio(coachData.bio ?? "");
       setLocation(coachData.location ?? "");
+      setDepartment(coachData.department ?? "");
+      setExperienceYears(coachData.experience_years ?? 0);
+      setDiplomas(parseTextArray(coachData.diplomas as string[] | string | null).join(", "));
+      setCertifications(parseTextArray(coachData.certifications as string[] | string | null).join(", "));
+      setFocusAreas(parseTextArray(coachData.focus_areas as string[] | string | null).join(", "));
+      setSessionFormats(parseTextArray(coachData.session_formats as string[] | string | null).join(", "));
+      setPedagogy(coachData.pedagogy ?? "");
       setPrice(coachData.price_per_session ?? 0);
       setAvatarUrl(profileData?.avatar_url ?? null);
       setLoading(false);
@@ -113,6 +167,13 @@ export default function CoachProfileEditPage() {
     if (!coachId) return;
     setSaving(true);
 
+    const authError = await syncCoachMetadata(avatarUrl);
+    if (authError) {
+      setSaving(false);
+      setNotice({ type: "error", text: authError.message });
+      return;
+    }
+
     const { error } = await supabase
       .from("coaches")
       .update({
@@ -120,6 +181,13 @@ export default function CoachProfileEditPage() {
         speciality,
         bio,
         location,
+        department,
+        experience_years: experienceYears || null,
+        diplomas: parseTextArray(diplomas),
+        certifications: parseTextArray(certifications),
+        focus_areas: parseTextArray(focusAreas),
+        session_formats: parseTextArray(sessionFormats),
+        pedagogy,
         price_per_session: price,
       })
       .eq("id", coachId);
@@ -150,6 +218,12 @@ export default function CoachProfileEditPage() {
     }
     const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
     const publicUrl = data.publicUrl;
+    const authError = await syncCoachMetadata(publicUrl);
+    if (authError) {
+      setNotice({ type: "error", text: authError.message });
+      setUploading(false);
+      return;
+    }
     const { error: profileError } = await supabase
       .from("profiles")
       .update({ avatar_url: publicUrl })
@@ -372,6 +446,61 @@ export default function CoachProfileEditPage() {
                 </div>
               </ScrollReveal>
 
+              <ScrollReveal>
+                <div className="px-card-strong p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">
+                      <WhistleIcon className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg text-white">Expertise premium</h3>
+                      <p className="text-xs text-white/70">Diplomes, formats, focus et pedagogie</p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Departement</label>
+                      <input className="px-input mt-2" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="76 - Seine-Maritime" />
+                    </div>
+                    <div>
+                      <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Experience</label>
+                      <input className="px-input mt-2" type="number" min={0} value={experienceYears} onChange={(e) => setExperienceYears(Number(e.target.value) || 0)} placeholder="8" />
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Diplomes</label>
+                    <input className="px-input mt-2" value={diplomas} onChange={(e) => setDiplomas(e.target.value)} placeholder="UEFA B, BEF" />
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Certifications</label>
+                    <input className="px-input mt-2" value={certifications} onChange={(e) => setCertifications(e.target.value)} placeholder="UEFA B, analyse video" />
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Focus metier</label>
+                    <input className="px-input mt-2" value={focusAreas} onChange={(e) => setFocusAreas(e.target.value)} placeholder="Premier controle, finition, prise d'information" />
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Formats de seance</label>
+                    <input className="px-input mt-2" value={sessionFormats} onChange={(e) => setSessionFormats(e.target.value)} placeholder="Individuel, duo, analyse video" />
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Pedagogie</label>
+                    <textarea
+                      className="mt-2 min-h-[110px] w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30"
+                      value={pedagogy}
+                      onChange={(e) => setPedagogy(e.target.value)}
+                      placeholder="Explique ton approche et comment tu fais progresser un joueur."
+                    />
+                  </div>
+                </div>
+              </ScrollReveal>
+
               {/* Submit */}
               <ScrollReveal>
                 <div className="flex flex-wrap items-center gap-4">
@@ -444,6 +573,44 @@ export default function CoachProfileEditPage() {
 
                     {bio && (
                       <p className="mt-3 text-xs leading-relaxed text-white/70 line-clamp-3">{bio}</p>
+                    )}
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {experienceYears > 0 && (
+                        <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-white/70">
+                          {experienceYears} ans
+                        </span>
+                      )}
+                      {parseTextArray(sessionFormats).slice(0, 1).map((format) => (
+                        <span
+                          key={format}
+                          className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-white/70"
+                        >
+                          {format}
+                        </span>
+                      ))}
+                    </div>
+
+                    {parseTextArray(focusAreas).length > 0 && (
+                      <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
+                        <p className="mb-1 text-[11px] uppercase tracking-[0.2em] text-white/50">
+                          Focus metier
+                        </p>
+                        <p className="text-xs leading-relaxed text-white/70">
+                          {parseTextArray(focusAreas).slice(0, 3).join(" · ")}
+                        </p>
+                      </div>
+                    )}
+
+                    {pedagogy && (
+                      <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
+                        <p className="mb-1 text-[11px] uppercase tracking-[0.2em] text-white/50">
+                          Pedagogie
+                        </p>
+                        <p className="text-xs leading-relaxed text-white/70 line-clamp-3">
+                          {pedagogy}
+                        </p>
+                      </div>
                     )}
 
                     <div className="mt-4 flex items-center gap-1">

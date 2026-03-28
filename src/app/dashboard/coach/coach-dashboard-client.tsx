@@ -14,11 +14,13 @@ import {
   CheckCircleIcon,
 } from "@/components/icons";
 import { addDays, formatDayLabel, formatLongDate, formatShortDate, startOfWeek, toISODate } from "@/lib/date";
+import { FOOTBALL_SKILL_AXES } from "@/lib/football";
 import { supabase } from "@/lib/supabase";
 import { mockCoaches, mockSessions } from "@/lib/mock-data";
+import { createEmptyFeedbackDraft, normalizeSessionFeedback } from "@/lib/session-feedback";
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { coachMonthlyActivity, coachDayDistribution, CHART_COLORS, fetchCoachMonthlyActivity, fetchCoachDayDistribution } from "@/lib/chart-data";
-import type { AvailabilitySlot, SessionFeedback } from "@/lib/types";
+import type { AvailabilitySlot, SessionFeedback, SessionFeedbackRecord } from "@/lib/types";
 
 const normalizeTime = (value: string) => (value.length >= 5 ? value.slice(0, 5) : value);
 
@@ -37,7 +39,7 @@ type SessionRow = {
   date: string;
   time: string;
   status: string;
-  feedback?: SessionFeedback | null;
+  feedback?: SessionFeedbackRecord | null;
 };
 
 function useMockFallback() {
@@ -80,10 +82,7 @@ export default function CoachDashboardPage() {
   const [dayDate, setDayDate] = useState(() => new Date());
   const [monthCursor, setMonthCursor] = useState(() => new Date());
   const [feedbackOpen, setFeedbackOpen] = useState<string | null>(null);
-  const [feedbackDraft, setFeedbackDraft] = useState<SessionFeedback>({
-    ratings: { technique: 3, engagement: 3, progression: 3 },
-    comment: "",
-  });
+  const [feedbackDraft, setFeedbackDraft] = useState<SessionFeedback>(createEmptyFeedbackDraft());
   const [confirmAction, setConfirmAction] = useState<{
     title: string;
     description: string;
@@ -129,7 +128,7 @@ export default function CoachDashboardPage() {
 
       const { data: sessionData } = await supabase
         .from("sessions")
-        .select("id, title, date, time, status")
+        .select("id, title, date, time, status, feedback")
         .eq("coach_id", coachData.id)
         .order("date", { ascending: true });
 
@@ -372,12 +371,29 @@ export default function CoachDashboardPage() {
     }
   };
 
-  const handleFeedbackSubmit = (sessionId: string) => {
+  const openFeedbackEditor = (session: SessionRow) => {
+    const normalized = normalizeSessionFeedback(session.feedback);
+    setFeedbackDraft(normalized ?? createEmptyFeedbackDraft());
+    setFeedbackOpen((current) => (current === session.id ? null : session.id));
+  };
+
+  const handleFeedbackSubmit = async (sessionId: string) => {
+    if (!isDemo) {
+      const { error } = await supabase
+        .from("sessions")
+        .update({ feedback: feedbackDraft })
+        .eq("id", sessionId);
+      if (error) {
+        setSessionNotice({ type: "error", text: error.message });
+        return;
+      }
+    }
+
     setSessions((prev) =>
       prev.map((s) => (s.id === sessionId ? { ...s, feedback: { ...feedbackDraft } } : s)),
     );
     setFeedbackOpen(null);
-    setFeedbackDraft({ ratings: { technique: 3, engagement: 3, progression: 3 }, comment: "" });
+    setFeedbackDraft(createEmptyFeedbackDraft());
     setSessionNotice({ type: "success", text: "Retour envoyé au joueur." });
   };
 
@@ -585,34 +601,46 @@ export default function CoachDashboardPage() {
                             <button
                               type="button"
                               className="rounded-lg border border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/10 px-2.5 py-1 text-[10px] font-semibold uppercase text-[color:var(--px-accent)]"
-                              onClick={() => setFeedbackOpen(feedbackOpen === session.id ? null : session.id)}
+                              onClick={() => openFeedbackEditor(session)}
                             >
                               {feedbackOpen === session.id ? "Fermer" : "Donner un retour"}
                             </button>
                           )}
                         </div>
                         {session.feedback && (
-                          <div className="mt-2 ml-8 space-y-1">
-                            {(["technique", "engagement", "progression"] as const).map((k) => (
-                              <div key={k} className="flex items-center gap-2">
-                                <span className="w-24 text-[10px] capitalize text-white/50">{k}</span>
+                          <div className="mt-2 ml-8 space-y-3">
+                            {FOOTBALL_SKILL_AXES.map((axis) => (
+                              <div key={axis.key} className="flex items-center gap-2">
+                                <span className="w-24 text-[10px] text-white/50">{axis.label}</span>
                                 <div className="flex gap-0.5">
                                   {[1, 2, 3, 4, 5].map((n) => (
-                                    <span key={n} className={`h-1.5 w-4 rounded-full ${n <= session.feedback!.ratings[k] ? "bg-[color:var(--px-accent)]" : "bg-white/10"}`} />
+                                    <span key={n} className={`h-1.5 w-4 rounded-full ${n <= (normalizeSessionFeedback(session.feedback)?.ratings[axis.key] ?? 0) ? "bg-[color:var(--px-accent)]" : "bg-white/10"}`} />
                                   ))}
                                 </div>
                               </div>
                             ))}
-                            {session.feedback.comment && (
-                              <p className="text-[11px] italic text-white/50 mt-1">&ldquo;{session.feedback.comment}&rdquo;</p>
+                            {normalizeSessionFeedback(session.feedback)?.summary && (
+                              <p className="text-[11px] italic text-white/50 mt-1">&ldquo;{normalizeSessionFeedback(session.feedback)?.summary}&rdquo;</p>
                             )}
+                            {normalizeSessionFeedback(session.feedback)?.next_focus && (
+                              <p className="text-[11px] text-white/60">
+                                Prochain focus: {normalizeSessionFeedback(session.feedback)?.next_focus}
+                              </p>
+                            )}
+                            <button
+                              type="button"
+                              className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase text-white/70 transition hover:border-[color:var(--px-accent)]/30 hover:text-[color:var(--px-accent)]"
+                              onClick={() => openFeedbackEditor(session)}
+                            >
+                              {feedbackOpen === session.id ? "Fermer l'edition" : "Modifier le retour"}
+                            </button>
                           </div>
                         )}
-                        {feedbackOpen === session.id && !session.feedback && (
+                        {feedbackOpen === session.id && (
                           <div className="mt-3 ml-8 space-y-3 rounded-xl border border-[color:var(--px-accent)]/20 bg-[color:var(--px-accent)]/5 p-4">
-                            {(["technique", "engagement", "progression"] as const).map((k) => (
-                              <div key={k} className="flex items-center gap-3">
-                                <span className="w-24 text-xs capitalize text-white/70">{k}</span>
+                            {FOOTBALL_SKILL_AXES.map((axis) => (
+                              <div key={axis.key} className="flex items-center gap-3">
+                                <span className="w-24 text-xs text-white/70">{axis.label}</span>
                                 <div className="flex gap-1">
                                   {[1, 2, 3, 4, 5].map((n) => (
                                     <button
@@ -621,11 +649,11 @@ export default function CoachDashboardPage() {
                                       onClick={() =>
                                         setFeedbackDraft((prev) => ({
                                           ...prev,
-                                          ratings: { ...prev.ratings, [k]: n },
+                                          ratings: { ...prev.ratings, [axis.key]: n },
                                         }))
                                       }
                                       className={`h-6 w-6 rounded-md text-xs font-medium transition ${
-                                        n <= feedbackDraft.ratings[k]
+                                        n <= (feedbackDraft.ratings[axis.key] ?? 0)
                                           ? "bg-[color:var(--px-accent)] text-black"
                                           : "border border-white/15 bg-white/5 text-white/50 hover:bg-white/10"
                                       }`}
@@ -639,12 +667,34 @@ export default function CoachDashboardPage() {
                             <textarea
                               className="px-input w-full text-sm"
                               rows={2}
-                              placeholder="Commentaire pour le joueur..."
-                              value={feedbackDraft.comment}
+                              placeholder="Synthese pour le joueur..."
+                              value={feedbackDraft.summary ?? ""}
                               onChange={(e) =>
-                                setFeedbackDraft((prev) => ({ ...prev, comment: e.target.value }))
+                                setFeedbackDraft((prev) => ({ ...prev, summary: e.target.value }))
                               }
                             />
+                            <input
+                              className="px-input"
+                              placeholder="Prochain focus"
+                              value={feedbackDraft.next_focus ?? ""}
+                              onChange={(e) =>
+                                setFeedbackDraft((prev) => ({ ...prev, next_focus: e.target.value }))
+                              }
+                            />
+                            <select
+                              className="px-select"
+                              value={feedbackDraft.load_recommendation ?? "normal"}
+                              onChange={(e) =>
+                                setFeedbackDraft((prev) => ({
+                                  ...prev,
+                                  load_recommendation: e.target.value as SessionFeedback["load_recommendation"],
+                                }))
+                              }
+                            >
+                              <option value="normal">Charge normale</option>
+                              <option value="lighten">Alleger la charge</option>
+                              <option value="recover">Recuperation</option>
+                            </select>
                             <button
                               type="button"
                               className="px-button text-xs"

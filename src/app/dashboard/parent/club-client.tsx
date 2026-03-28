@@ -1,23 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/app-shell";
 import ScrollReveal from "@/components/scroll-reveal";
 import {
-  CalendarIcon,
-  StarIcon,
-  BoltIcon,
   ArrowRightIcon,
+  BoltIcon,
+  CalendarIcon,
+  ShieldIcon,
+  StarIcon,
   UserIcon,
   WhistleIcon,
-  ShieldIcon,
-  ChatIcon,
 } from "@/components/icons";
 import { formatLongDate } from "@/lib/date";
+import {
+  buildParentMetricBars,
+  fetchParentChildOverview,
+  parentOverviewFallback,
+} from "@/lib/chart-data";
+import { LOAD_RECOMMENDATION_LABELS } from "@/lib/football";
+import { mockBookings, mockCoaches, mockParentChildren, mockSessions } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
-import { mockCoaches, mockSessions, mockBookings } from "@/lib/mock-data";
-import { parentMetrics, fetchParentMetrics } from "@/lib/chart-data";
+import type { ParentChildSummary, ParentOverview, SessionFeedbackRecord } from "@/lib/types";
 
 type CoachRow = {
   id: string;
@@ -28,75 +33,96 @@ type CoachRow = {
 
 type SessionRow = {
   id: string;
+  coach_id: string;
   title: string;
   date: string;
   time: string;
+  status: string;
+  feedback?: SessionFeedbackRecord | null;
 };
 
-type ChildInfo = {
-  firstName: string;
-  lastName: string;
-  birthDate: string;
-  level: string;
-  position: string;
+type ChildProfileRow = {
+  user_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  birth_date: string | null;
+  city: string | null;
+  level: string | null;
+  position: string | null;
+  position_family: ParentChildSummary["positionFamily"];
+  age_category: ParentChildSummary["ageCategory"];
+  dominant_foot: ParentChildSummary["dominantFoot"];
+  current_club: string | null;
 };
 
-export default function ClubDashboardPage() {
+const getAge = (birthDate: string | null) => {
+  if (!birthDate) return null;
+  return Math.floor(
+    (Date.now() - new Date(birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000),
+  );
+};
+
+export default function ParentDashboardPage() {
   const [coachCount, setCoachCount] = useState<number>(0);
-  const [sessionCount, setSessionCount] = useState<number>(0);
+  const [children, setChildren] = useState<ParentChildSummary[]>([]);
+  const [activeChildId, setActiveChildId] = useState<string | null>(null);
   const [coaches, setCoaches] = useState<CoachRow[]>([]);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
-  const [childInfo, setChildInfo] = useState<ChildInfo | null>(null);
   const [parentName, setParentName] = useState("");
   const [totalSpent, setTotalSpent] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [metricsData, setMetricsData] = useState(parentMetrics);
+  const [overview, setOverview] = useState<ParentOverview>(parentOverviewFallback);
+  const [linkCode, setLinkCode] = useState("");
+  const [linkNotice, setLinkNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [legacyChildHint, setLegacyChildHint] = useState<Partial<ParentChildSummary> | null>(null);
+
+  const activeChild = useMemo(
+    () => children.find((child) => child.userId === activeChildId) ?? null,
+    [activeChildId, children],
+  );
+
+  const metricBars = useMemo(() => buildParentMetricBars(overview), [overview]);
+  const upcomingSessions = useMemo(
+    () => sessions.filter((session) => session.status === "upcoming").slice(0, 4),
+    [sessions],
+  );
 
   useEffect(() => {
     let mounted = true;
 
-    const fetchData = async () => {
+    const applyDemoState = () => {
+      if (!mounted) return;
+      setIsDemo(true);
+      setParentName("Marie Dupont");
+      setChildren(mockParentChildren);
+      setActiveChildId((current) => current ?? mockParentChildren[0]?.userId ?? null);
+      setCoachCount(mockCoaches.length);
+      setCoaches(
+        mockCoaches.slice(0, 4).map((coach) => ({
+          id: coach.id,
+          name: coach.name,
+          speciality: coach.speciality,
+          rating: coach.rating,
+        })),
+      );
+      setTotalSpent(mockBookings.reduce((sum, booking) => sum + booking.price, 0));
+      setCompletedCount(mockSessions.filter((session) => session.status === "completed").length);
+      setLoading(false);
+    };
+
+    const fetchParentHome = async () => {
       setLoading(true);
+      setError(null);
       const { data: userData } = await supabase.auth.getUser();
 
       if (!userData.user) {
-        // Demo mode
-        if (!mounted) return;
-        setIsDemo(true);
-        setParentName("Marie Dupont");
-        setChildInfo({
-          firstName: "Léo",
-          lastName: "Dupont",
-          birthDate: "2013-05-22",
-          level: "Intermédiaire",
-          position: "Milieu offensif",
-        });
-        setCoachCount(mockCoaches.length);
-        setSessionCount(4);
-        setCoaches(
-          mockCoaches.slice(0, 4).map((c) => ({
-            id: c.id,
-            name: c.name,
-            speciality: c.speciality,
-            rating: c.rating,
-          })),
-        );
-        setSessions(
-          mockSessions
-            .filter((s) => s.status === "upcoming")
-            .slice(0, 3)
-            .map((s) => ({ id: s.id, title: s.title, date: s.date, time: s.time })),
-        );
-        setTotalSpent(mockBookings.reduce((sum, b) => sum + b.price, 0));
-        setCompletedCount(mockSessions.filter((s) => s.status === "completed").length);
-        setLoading(false);
+        applyDemoState();
         return;
       }
 
-      // Auth: check role
       const { data: profileData } = await supabase
         .from("profiles")
         .select("role, first_name, last_name")
@@ -104,7 +130,7 @@ export default function ClubDashboardPage() {
         .single();
 
       const role = profileData?.role ?? null;
-      if (role !== "club") {
+      if (role !== "parent" && role !== "club") {
         if (mounted) {
           setError("Accès réservé aux comptes parent.");
           setLoading(false);
@@ -112,77 +138,190 @@ export default function ClubDashboardPage() {
         return;
       }
 
-      // Extract child info from user metadata
-      const meta = userData.user.user_metadata ?? {};
+      if (!mounted) return;
       setParentName(
         [profileData?.first_name, profileData?.last_name].filter(Boolean).join(" ") || "Parent",
       );
-      if (meta.child_first_name) {
-        setChildInfo({
-          firstName: (meta.child_first_name as string) || "",
-          lastName: (meta.child_last_name as string) || "",
-          birthDate: (meta.child_birth_date as string) || "",
-          level: (meta.child_level as string) || "",
-          position: (meta.child_position as string) || "",
+
+      const legacyMeta = userData.user.user_metadata ?? {};
+      if (legacyMeta.child_first_name) {
+        setLegacyChildHint({
+          firstName: (legacyMeta.child_first_name as string) || "",
+          lastName: (legacyMeta.child_last_name as string) || "",
+          birthDate: (legacyMeta.child_birth_date as string) || null,
+          level: (legacyMeta.child_level as string) || null,
+          position: (legacyMeta.child_position as string) || null,
         });
+      } else {
+        setLegacyChildHint(null);
       }
 
-      const [coachRes, sessionRes] = await Promise.all([
+      const { data: links } = await supabase
+        .from("parent_children")
+        .select("child_user_id")
+        .eq("parent_user_id", userData.user.id);
+
+      const childIds = (links ?? []).map((link) => link.child_user_id as string);
+      if (childIds.length === 0) {
+        if (mounted) {
+          setChildren([]);
+          setActiveChildId(null);
+          setSessions([]);
+          setOverview(parentOverviewFallback);
+          setCoachCount(0);
+          setCompletedCount(0);
+          setTotalSpent(0);
+          setLoading(false);
+        }
+        return;
+      }
+
+      const [childProfilesRes, coachRes, bookingsRes, sessionsRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select(
+            "user_id, first_name, last_name, birth_date, city, level, position, position_family, age_category, dominant_foot, current_club",
+          )
+          .in("user_id", childIds),
         supabase
           .from("public_coaches")
-          .select("id, name, speciality, rating", { count: "exact" }),
+          .select("id, name, speciality, rating", { count: "exact" })
+          .order("rating", { ascending: false })
+          .limit(4),
+        supabase
+          .from("bookings")
+          .select("price, player_id")
+          .in("player_id", childIds)
+          .eq("payment_status", "paid"),
         supabase
           .from("sessions")
-          .select("id, title, date, time", { count: "exact" })
-          .order("date", { ascending: true })
-          .limit(3),
+          .select("id, status, player_id")
+          .in("player_id", childIds),
       ]);
 
       if (!mounted) return;
+
+      const mappedChildren = (childProfilesRes.data ?? []).map((row: ChildProfileRow) => ({
+        userId: row.user_id,
+        firstName: row.first_name ?? "Joueur",
+        lastName: row.last_name ?? "",
+        birthDate: row.birth_date,
+        city: row.city,
+        level: row.level,
+        position: row.position,
+        positionFamily: row.position_family ?? null,
+        ageCategory: row.age_category ?? null,
+        dominantFoot: row.dominant_foot ?? null,
+        currentClub: row.current_club,
+      }));
+
+      setChildren(mappedChildren);
+      setActiveChildId((current) =>
+        current && mappedChildren.some((child) => child.userId === current)
+          ? current
+          : mappedChildren[0]?.userId ?? null,
+      );
       setCoachCount(coachRes.count ?? coachRes.data?.length ?? 0);
-      setSessionCount(sessionRes.count ?? sessionRes.data?.length ?? 0);
-      setCoaches((coachRes.data ?? []).slice(0, 4));
-      setSessions(sessionRes.data ?? []);
-
-      // Fetch parent metrics (real → mock fallback)
-      fetchParentMetrics(userData.user.id).then((metrics) => {
-        if (!mounted) return;
-        setMetricsData(metrics);
-      });
-
+      setCoaches(coachRes.data ?? []);
+      setTotalSpent(bookingsRes.data?.reduce((sum, booking) => sum + (booking.price ?? 0), 0) ?? 0);
+      setCompletedCount(
+        sessionsRes.data?.filter((session) => session.status === "completed").length ?? 0,
+      );
       setLoading(false);
     };
 
-    fetchData();
-    return () => { mounted = false; };
+    fetchParentHome();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const childAge = childInfo?.birthDate
-    ? Math.floor((Date.now() - new Date(childInfo.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-    : null;
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchChildData = async () => {
+      if (!activeChildId) return;
+
+      if (isDemo) {
+        const demoSessions = mockSessions
+          .filter((session) => session.playerId === activeChildId || activeChildId === mockParentChildren[0]?.userId)
+          .map((session) => ({
+            id: session.id,
+            coach_id: session.coachId,
+            title: session.title,
+            date: session.date,
+            time: session.time,
+            status: session.status,
+            feedback: session.feedback ?? null,
+          }));
+        if (!mounted) return;
+        setSessions(demoSessions);
+        setOverview(parentOverviewFallback);
+        return;
+      }
+
+      const { data: sessionData } = await supabase
+        .from("sessions")
+        .select("id, coach_id, title, date, time, status, feedback")
+        .eq("player_id", activeChildId)
+        .order("date", { ascending: true });
+
+      if (!mounted) return;
+      setSessions(sessionData ?? []);
+
+      const childOverview = await fetchParentChildOverview(activeChildId);
+      if (!mounted) return;
+      setOverview(childOverview);
+    };
+
+    fetchChildData();
+    return () => {
+      mounted = false;
+    };
+  }, [activeChildId, isDemo]);
+
+  const handleLinkChild = async () => {
+    const trimmedCode = linkCode.trim().toUpperCase();
+    if (!trimmedCode) {
+      setLinkNotice({ type: "error", text: "Entre un code de liaison valide." });
+      return;
+    }
+
+    const { error: linkError } = await supabase.rpc("link_parent_to_child", {
+      p_code: trimmedCode,
+    });
+
+    if (linkError) {
+      setLinkNotice({ type: "error", text: linkError.message });
+      return;
+    }
+
+    setLinkCode("");
+    setLinkNotice({ type: "success", text: "Compte joueur lie avec succes." });
+    window.location.reload();
+  };
 
   return (
     <AppShell active="/dashboard" hideTitle>
-      {/* Hero */}
       <section className="py-8 lg:py-12">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="space-y-4">
             <div className="flex items-center gap-3 px-fade-up">
               <span className="px-badge px-pulse">Parent</span>
-              {isDemo && <span className="px-pill">Mode démo</span>}
+              {isDemo && <span className="px-pill">Mode demo</span>}
             </div>
             <h1
               className="px-fade-up text-4xl leading-[1.1] text-white sm:text-5xl"
               style={{ animationDelay: "80ms" }}
             >
-              Bonjour{parentName ? `, ${parentName.split(" ")[0]}` : ""}{" "}
-              <span className="px-gradient-text">!</span>
+              Suivi{" "}
+              <span className="px-gradient-text">parent.</span>
             </h1>
             <p
-              className="px-fade-up max-w-md text-base text-white/70"
+              className="px-fade-up max-w-xl text-base text-white/70"
               style={{ animationDelay: "160ms" }}
             >
-              Suis la progression de ton enfant et gère ses séances d&apos;entraînement.
+              Visualise la progression de tes enfants lies, les recommandations de charge et les prochaines seances.
             </p>
           </div>
           <div className="px-fade-up flex gap-3" style={{ animationDelay: "200ms" }}>
@@ -192,7 +331,7 @@ export default function ClubDashboardPage() {
             </Link>
             <Link href="/booking" className="px-button text-sm">
               <BoltIcon className="h-4 w-4" />
-              Réserver
+              Reserver
             </Link>
           </div>
         </div>
@@ -201,9 +340,6 @@ export default function ClubDashboardPage() {
       {error && (
         <div className="px-card p-6">
           <p className="text-sm text-[color:var(--px-danger)]">{error}</p>
-          {error.includes("Connecte-toi") && (
-            <Link href="/auth/login" className="px-button mt-4">Se connecter</Link>
-          )}
         </div>
       )}
 
@@ -215,10 +351,78 @@ export default function ClubDashboardPage() {
           <div className="md:col-span-2 px-skeleton h-64 rounded-2xl" />
           <div className="px-skeleton h-64 rounded-2xl" />
         </div>
+      ) : children.length === 0 ? (
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="px-card-strong p-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">
+                <ShieldIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-lg text-white">Lier un compte joueur</h3>
+                <p className="text-xs text-white/70">Demande le code temporaire genere depuis le profil du joueur.</p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <input
+                className="px-input"
+                placeholder="Code de liaison"
+                value={linkCode}
+                onChange={(event) => setLinkCode(event.target.value.toUpperCase())}
+              />
+              <button className="px-button" type="button" onClick={handleLinkChild}>
+                Lier le joueur
+              </button>
+            </div>
+            {linkNotice && (
+              <div
+                className={`mt-4 rounded-xl border px-4 py-2 text-xs ${
+                  linkNotice.type === "success"
+                    ? "border-[color:var(--px-success)]/40 bg-[color:var(--px-success)]/15 text-[color:var(--px-success)]"
+                    : "border-[color:var(--px-danger)]/40 bg-[color:var(--px-danger)]/15 text-[color:var(--px-danger)]"
+                }`}
+              >
+                {linkNotice.text}
+              </div>
+            )}
+          </div>
+
+          <div className="px-card p-6">
+            <h3 className="text-lg text-white">Transition legacy</h3>
+            {legacyChildHint ? (
+              <p className="mt-3 text-sm leading-relaxed text-white/70">
+                Ancienne fiche detectee pour {legacyChildHint.firstName} {legacyChildHint.lastName}. Elle n&apos;est plus utilisee comme source principale: cree ou connecte maintenant un vrai compte joueur avec un code de liaison.
+              </p>
+            ) : (
+              <p className="mt-3 text-sm leading-relaxed text-white/70">
+                Aucun enfant lie pour le moment. Une fois un compte joueur connecte, tu retrouveras ici les seances, la progression et les recommandations coach.
+              </p>
+            )}
+          </div>
+        </div>
       ) : (
         <>
-          {/* Child card */}
-          {childInfo && (
+          <ScrollReveal>
+            <div className="mb-6 flex flex-wrap items-center gap-2">
+              <span className="text-xs uppercase tracking-[0.2em] text-white/50">Enfants lies</span>
+              {children.map((child) => (
+                <button
+                  key={child.userId}
+                  type="button"
+                  className={`rounded-full border px-3 py-1 text-xs transition ${
+                    activeChildId === child.userId
+                      ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]"
+                      : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
+                  }`}
+                  onClick={() => setActiveChildId(child.userId)}
+                >
+                  {child.firstName} {child.lastName}
+                </button>
+              ))}
+            </div>
+          </ScrollReveal>
+
+          {activeChild && (
             <ScrollReveal>
               <div className="mb-6 px-card-strong p-6">
                 <div className="flex items-center gap-3 mb-4">
@@ -227,25 +431,37 @@ export default function ClubDashboardPage() {
                   </div>
                   <div>
                     <h3 className="text-lg text-white">
-                      {childInfo.firstName} {childInfo.lastName}
+                      {activeChild.firstName} {activeChild.lastName}
                     </h3>
-                    <p className="text-xs text-white/70">Joueur suivi</p>
+                    <p className="text-xs text-white/70">
+                      {activeChild.currentClub || "Compte joueur lie"} {parentName ? `· suivi par ${parentName.split(" ")[0]}` : ""}
+                    </p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {childAge !== null && (
+                  {getAge(activeChild.birthDate) !== null && (
                     <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
-                      {childAge} ans
+                      {getAge(activeChild.birthDate)} ans
                     </span>
                   )}
-                  {childInfo.level && (
+                  {activeChild.ageCategory && (
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
+                      {activeChild.ageCategory}
+                    </span>
+                  )}
+                  {activeChild.level && (
                     <span className="rounded-full border border-[color:var(--px-warning)]/30 bg-[color:var(--px-warning)]/10 px-3 py-1 text-xs text-[color:var(--px-warning)]">
-                      {childInfo.level}
+                      {activeChild.level}
                     </span>
                   )}
-                  {childInfo.position && (
+                  {activeChild.position && (
                     <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
-                      {childInfo.position}
+                      {activeChild.position}
+                    </span>
+                  )}
+                  {activeChild.dominantFoot && (
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
+                      {activeChild.dominantFoot}
                     </span>
                   )}
                 </div>
@@ -253,13 +469,12 @@ export default function ClubDashboardPage() {
             </ScrollReveal>
           )}
 
-          {/* Stats */}
           <div className="grid gap-4 md:grid-cols-4">
             {[
-              { label: "Séances à venir", value: sessionCount, icon: <CalendarIcon className="h-5 w-5" />, color: "text-[color:var(--px-accent)]" },
-              { label: "Séances terminées", value: completedCount, icon: <BoltIcon className="h-5 w-5" />, color: "text-[color:var(--px-success)]" },
-              { label: "Total investi", value: `${totalSpent}€`, icon: <UserIcon className="h-5 w-5" />, color: "text-[color:var(--px-warning)]" },
-              { label: "Note moy. coachs", value: coaches.length > 0 ? (coaches.reduce((s, c) => s + (c.rating ?? 0), 0) / coaches.length).toFixed(1) : "-", icon: <StarIcon className="h-5 w-5" />, color: "text-[color:var(--px-accent)]" },
+              { label: "Enfants lies", value: children.length, icon: <UserIcon className="h-5 w-5" />, color: "text-[color:var(--px-accent)]" },
+              { label: "Seances terminees", value: completedCount, icon: <BoltIcon className="h-5 w-5" />, color: "text-[color:var(--px-success)]" },
+              { label: "Total investi", value: `${totalSpent}€`, icon: <CalendarIcon className="h-5 w-5" />, color: "text-[color:var(--px-warning)]" },
+              { label: "Coachs visibles", value: coachCount, icon: <StarIcon className="h-5 w-5" />, color: "text-[color:var(--px-accent)]" },
             ].map((stat, i) => (
               <ScrollReveal key={stat.label} delay={i * 60}>
                 <div className="px-card flex items-center gap-4 p-5">
@@ -275,51 +490,49 @@ export default function ClubDashboardPage() {
             ))}
           </div>
 
-          {/* ── Progress metrics ── */}
-          <ScrollReveal>
-            <div className="mt-6 px-card p-6">
-              <h3 className="mb-5 text-base font-semibold text-[color:var(--px-text)]">Suivi de progression</h3>
-              <div className="space-y-5">
-                {metricsData.map((m) => (
-                  <div key={m.label}>
-                    <div className="mb-1.5 flex items-center justify-between">
-                      <span className="text-sm text-[color:var(--px-text-secondary)]">{m.label}</span>
-                      <span className="text-sm font-semibold text-[color:var(--px-text)]">{m.value}%</span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                      <div
-                        className="h-full rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: `${m.value}%`, backgroundColor: m.color }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </ScrollReveal>
-
           <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            {/* Left */}
             <div className="space-y-6">
               <ScrollReveal>
                 <div className="px-card p-6">
+                  <h3 className="mb-5 text-base font-semibold text-[color:var(--px-text)]">Suivi de progression</h3>
+                  <div className="space-y-5">
+                    {metricBars.map((metric) => (
+                      <div key={metric.label}>
+                        <div className="mb-1.5 flex items-center justify-between">
+                          <span className="text-sm text-[color:var(--px-text-secondary)]">{metric.label}</span>
+                          <span className="text-sm font-semibold text-[color:var(--px-text)]">{metric.value}%</span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                          <div
+                            className="h-full rounded-full transition-all duration-1000 ease-out"
+                            style={{ width: `${metric.value}%`, backgroundColor: metric.color }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </ScrollReveal>
+
+              <ScrollReveal>
+                <div className="px-card-strong p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg text-white">Séances à venir</h3>
+                    <h3 className="text-lg text-white">Seances a venir</h3>
                     <Link href="/sessions" className="text-xs text-[color:var(--px-accent)] hover:underline">
                       Voir tout
                     </Link>
                   </div>
-                  {sessions.length === 0 ? (
+                  {upcomingSessions.length === 0 ? (
                     <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
                       <CalendarIcon className="mx-auto h-8 w-8 text-white/20" />
-                      <p className="mt-2 text-sm text-white/70">Aucune séance programmée</p>
+                      <p className="mt-2 text-sm text-white/70">Aucune seance programmee pour cet enfant.</p>
                       <Link href="/booking" className="px-button mt-4 text-sm">
-                        Réserver une séance
+                        Reserver une seance
                       </Link>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {sessions.map((session) => (
+                      {upcomingSessions.map((session) => (
                         <div
                           key={session.id}
                           className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4"
@@ -336,7 +549,7 @@ export default function ClubDashboardPage() {
                             </div>
                           </div>
                           <span className="rounded-full border border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/10 px-2.5 py-1 text-[10px] font-semibold text-[color:var(--px-accent)]">
-                            À venir
+                            A venir
                           </span>
                         </div>
                       ))}
@@ -346,8 +559,21 @@ export default function ClubDashboardPage() {
               </ScrollReveal>
             </div>
 
-            {/* Right */}
             <div className="space-y-6">
+              <ScrollReveal>
+                <div className="px-card p-6">
+                  <h3 className="text-lg text-white">Recommandation coach</h3>
+                  <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-white/50">Charge actuelle</p>
+                    <p className="mt-2 text-lg text-white">
+                      {LOAD_RECOMMENDATION_LABELS[overview.lastLoadRecommendation]}
+                    </p>
+                    <p className="mt-4 text-xs uppercase tracking-[0.2em] text-white/50">Prochain focus</p>
+                    <p className="mt-2 text-sm leading-relaxed text-white/70">{overview.nextFocus}</p>
+                  </div>
+                </div>
+              </ScrollReveal>
+
               <ScrollReveal>
                 <div className="px-card-strong p-6">
                   <div className="flex items-center justify-between mb-4">
@@ -358,10 +584,9 @@ export default function ClubDashboardPage() {
                   </div>
                   <div className="space-y-3">
                     {coaches.map((coach) => (
-                      <Link
+                      <div
                         key={coach.id}
-                        href={`/coach/${coach.id}`}
-                        className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-3 transition hover:border-white/20"
+                        className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4"
                       >
                         <div className="flex items-center gap-3">
                           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-transparent text-white/70">
@@ -372,11 +597,13 @@ export default function ClubDashboardPage() {
                             <p className="text-xs text-white/70">{coach.speciality}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <StarIcon className="h-3 w-3 text-[color:var(--px-accent)]" />
-                          <span className="text-xs text-white">{(coach.rating ?? 0).toFixed(1)}</span>
+                        <div className="text-right">
+                          <p className="text-sm text-white">{coach.rating?.toFixed(1) ?? "-"}</p>
+                          <Link href={`/coach/${coach.id}`} className="text-xs text-[color:var(--px-accent)] hover:underline">
+                            Voir profil
+                          </Link>
                         </div>
-                      </Link>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -388,53 +615,17 @@ export default function ClubDashboardPage() {
                   <div className="grid gap-3">
                     <Link href="/booking" className="px-button inline-flex items-center gap-2">
                       <BoltIcon className="h-4 w-4" />
-                      Réserver une séance
-                      <ArrowRightIcon className="ml-auto h-4 w-4" />
-                    </Link>
-                    <Link href="/coach" className="px-button-ghost inline-flex items-center gap-2">
-                      <WhistleIcon className="h-4 w-4" />
-                      Trouver un coach
+                      Reserver une seance
                       <ArrowRightIcon className="ml-auto h-4 w-4" />
                     </Link>
                     <Link href="/messages" className="px-button-ghost inline-flex items-center gap-2">
-                      <ChatIcon className="h-4 w-4" />
-                      Contacter un coach
+                      <UserIcon className="h-4 w-4" />
+                      Ecrire a un coach
                       <ArrowRightIcon className="ml-auto h-4 w-4" />
                     </Link>
                   </div>
                 </div>
               </ScrollReveal>
-
-              {/* Progression enfant */}
-              {childInfo && (
-                <ScrollReveal>
-                  <div className="px-card p-6">
-                    <h3 className="text-lg text-white mb-4">Progression de {childInfo.firstName}</h3>
-                    <div className="space-y-4">
-                      {[
-                        { label: "Technique", value: 72 },
-                        { label: "Endurance", value: 58 },
-                        { label: "Tactique", value: 65 },
-                        { label: "Mental", value: 80 },
-                      ].map((skill) => (
-                        <div key={skill.label}>
-                          <div className="flex items-center justify-between text-xs mb-1.5">
-                            <span className="text-white/70">{skill.label}</span>
-                            <span className="text-white">{skill.value}%</span>
-                          </div>
-                          <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-gradient-to-r from-[color:var(--px-accent)] to-[color:var(--px-accent-2)]"
-                              style={{ width: `${skill.value}%` }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="mt-4 text-[10px] text-white/30 uppercase tracking-wider">Basé sur les retours des coachs</p>
-                  </div>
-                </ScrollReveal>
-              )}
             </div>
           </div>
         </>
