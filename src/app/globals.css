@@ -228,6 +228,7 @@ a {
   .px-role-shell {
     position: relative;
     isolation: isolate;
+    overflow: visible;
     --px-role-accent: var(--px-accent);
     --px-role-soft: rgba(255, 106, 0, 0.18);
     --px-role-soft-2: rgba(255, 138, 0, 0.1);
@@ -241,14 +242,16 @@ a {
   .px-role-shell::before {
     content: "";
     position: absolute;
-    inset: 0 auto auto 0;
-    height: 280px;
-    width: 100%;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 320px;
+    width: 100vw;
     pointer-events: none;
     background:
-      radial-gradient(circle at 12% 0%, var(--px-role-soft), transparent 40%),
-      radial-gradient(circle at 88% 12%, var(--px-role-soft-2), transparent 34%);
-    opacity: 0.9;
+      radial-gradient(circle at 14% 0%, var(--px-role-soft), transparent 38%),
+      radial-gradient(circle at 86% 12%, var(--px-role-soft-2), transparent 32%);
+    opacity: 0.95;
   }
 
   .px-role-shell[data-role="coach"] {
