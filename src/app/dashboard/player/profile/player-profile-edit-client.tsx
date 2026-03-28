@@ -24,6 +24,7 @@ type ProfileRow = {
   last_name: string | null;
   gender: string | null;
   birth_date: string | null;
+  department?: string | null;
   city: string | null;
   avatar_url: string | null;
   level: string | null;
@@ -117,7 +118,10 @@ export default function PlayerProfileEditPage() {
         last_name: (user.user_metadata.last_name as string | undefined) ?? null,
         gender: (user.user_metadata.gender as string | undefined) ?? null,
         birth_date: (user.user_metadata.birth_date as string | undefined) ?? null,
-        city: (user.user_metadata.city as string | undefined) ?? null,
+        department:
+          (user.user_metadata.department as string | undefined) ??
+          (user.user_metadata.city as string | undefined) ??
+          null,
         level: (user.user_metadata.level as string | undefined) ?? null,
         position: (user.user_metadata.position as string | undefined) ?? null,
         objectives: (user.user_metadata.objectives as string | undefined) ?? null,
@@ -477,7 +481,7 @@ export default function PlayerProfileEditPage() {
                     <div className="mt-3">
                       <p className="text-lg font-semibold text-white">{fullName}</p>
                       <div className="mt-1 flex flex-wrap gap-2 text-xs text-white/70">
-                        {values.city && <span>{values.city}</span>}
+                        {values.department && <span>{values.department}</span>}
                         {positionFamily && (
                           <span>{POSITION_FAMILY_LABELS[positionFamily]}</span>
                         )}

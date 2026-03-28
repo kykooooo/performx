@@ -4,8 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/app-shell";
 import ScrollReveal from "@/components/scroll-reveal";
+import { getPlayerDashboardData } from "@/lib/data/dashboards";
+import type {
+  CoachRecord,
+  PlayerSnapshotRecord,
+  SessionRecord,
+} from "@/lib/data/types";
 import {
-  ArrowRightIcon,
   BoltIcon,
   CalendarIcon,
   TrophyIcon,
@@ -14,49 +19,26 @@ import {
 } from "@/components/icons";
 import { formatLongDate } from "@/lib/date";
 import { LOAD_RECOMMENDATION_LABELS } from "@/lib/football";
-import { fetchPlayerProgression, fetchPlayerSkills, playerProgression, playerSkills, CHART_COLORS } from "@/lib/chart-data";
-import { mockBookings, mockCoaches, mockPlayer, mockSessions } from "@/lib/mock-data";
+import {
+  CHART_COLORS,
+  playerProgression,
+  playerSkills,
+} from "@/lib/chart-data";
 import { normalizeSessionFeedback } from "@/lib/session-feedback";
-import { supabase } from "@/lib/supabase";
 import { ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import type { PlayerProgressionPoint, PlayerRadarPoint, SessionFeedbackRecord } from "@/lib/types";
-
-type SessionRow = {
-  id: string;
-  coach_id: string;
-  title: string;
-  date: string;
-  time: string;
-  duration_minutes: number;
-  status: string;
-  feedback?: SessionFeedbackRecord | null;
-};
-
-type CoachRow = {
-  id: string;
-  name: string;
-  speciality: string;
-  rating: number | null;
-  price_per_session: number | null;
-};
-
-type PlayerProfileSnapshot = {
-  currentClub: string | null;
-  dominantFoot: string | null;
-  trainingFrequencyPerWeek: number | null;
-};
+import type { PlayerProgressionPoint, PlayerRadarPoint } from "@/lib/types";
 
 export default function PlayerDashboardPage() {
-  const [upcoming, setUpcoming] = useState<SessionRow[]>([]);
-  const [completed, setCompleted] = useState<SessionRow[]>([]);
-  const [coaches, setCoaches] = useState<CoachRow[]>([]);
+  const [upcoming, setUpcoming] = useState<SessionRecord[]>([]);
+  const [completed, setCompleted] = useState<SessionRecord[]>([]);
+  const [coaches, setCoaches] = useState<CoachRecord[]>([]);
   const [coachMap, setCoachMap] = useState<Record<string, string>>({});
   const [totalSpent, setTotalSpent] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
   const [skillsData, setSkillsData] = useState<PlayerRadarPoint[]>(playerSkills);
   const [progressionData, setProgressionData] = useState<PlayerProgressionPoint[]>(playerProgression);
-  const [playerSnapshot, setPlayerSnapshot] = useState<PlayerProfileSnapshot>({
+  const [playerSnapshot, setPlayerSnapshot] = useState<PlayerSnapshotRecord>({
     currentClub: null,
     dominantFoot: null,
     trainingFrequencyPerWeek: null,
@@ -67,121 +49,17 @@ export default function PlayerDashboardPage() {
 
     const fetchData = async () => {
       setLoading(true);
-      const { data: userData } = await supabase.auth.getUser();
-
-      if (!userData.user) {
-        if (!mounted) return;
-        const upcomingMock = mockSessions
-          .filter((session) => session.status === "upcoming")
-          .map((session) => ({
-            id: session.id,
-            coach_id: session.coachId,
-            title: session.title,
-            date: session.date,
-            time: session.time,
-            duration_minutes: session.durationMinutes,
-            status: session.status,
-            feedback: session.feedback ?? null,
-          }));
-        const completedMock = mockSessions
-          .filter((session) => session.status === "completed")
-          .map((session) => ({
-            id: session.id,
-            coach_id: session.coachId,
-            title: session.title,
-            date: session.date,
-            time: session.time,
-            duration_minutes: session.durationMinutes,
-            status: session.status,
-            feedback: session.feedback ?? null,
-          }))
-          .sort((a, b) => `${b.date}${b.time}`.localeCompare(`${a.date}${a.time}`));
-
-        const coachNames: Record<string, string> = {};
-        mockCoaches.forEach((coach) => {
-          coachNames[coach.id] = coach.name;
-        });
-
-        setUpcoming(upcomingMock);
-        setCompleted(completedMock);
-        setCoachMap(coachNames);
-        setCoaches(
-          mockCoaches.slice(0, 4).map((coach) => ({
-            id: coach.id,
-            name: coach.name,
-            speciality: coach.speciality,
-            rating: coach.rating,
-            price_per_session: coach.pricePerSession,
-          })),
-        );
-        setPlayerSnapshot({
-          currentClub: mockPlayer.currentClub ?? null,
-          dominantFoot: mockPlayer.dominantFoot ?? null,
-          trainingFrequencyPerWeek: mockPlayer.trainingFrequencyPerWeek ?? null,
-        });
-        setTotalSpent(mockBookings.reduce((sum, booking) => sum + booking.price, 0));
-        setIsDemo(true);
-        setLoading(false);
-        return;
-      }
-
-      const userId = userData.user.id;
-
-      const [sessionRes, bookingRes, coachRes, profileRes] = await Promise.all([
-        supabase
-          .from("sessions")
-          .select("id, coach_id, title, date, time, duration_minutes, status, feedback")
-          .eq("player_id", userId)
-          .order("date", { ascending: true }),
-        supabase
-          .from("bookings")
-          .select("price")
-          .eq("player_id", userId)
-          .eq("payment_status", "paid"),
-        supabase
-          .from("public_coaches")
-          .select("id, name, speciality, rating, price_per_session")
-          .order("rating", { ascending: false })
-          .limit(4),
-        supabase
-          .from("profiles")
-          .select("current_club, dominant_foot, training_frequency_per_week")
-          .eq("user_id", userId)
-          .single(),
-      ]);
-
+      const result = await getPlayerDashboardData();
       if (!mounted) return;
-
-      const sessionRows = sessionRes.data ?? [];
-      const upcomingSessions = sessionRows.filter((session) => session.status === "upcoming");
-      const completedSessions = sessionRows
-        .filter((session) => session.status === "completed")
-        .sort((a, b) => `${b.date}${b.time}`.localeCompare(`${a.date}${a.time}`));
-      const names: Record<string, string> = {};
-      (coachRes.data ?? []).forEach((coach) => {
-        names[coach.id] = coach.name;
-      });
-
-      setUpcoming(upcomingSessions);
-      setCompleted(completedSessions);
-      setCoachMap(names);
-      setCoaches(coachRes.data ?? []);
-      setPlayerSnapshot({
-        currentClub: profileRes.data?.current_club ?? null,
-        dominantFoot: profileRes.data?.dominant_foot ?? null,
-        trainingFrequencyPerWeek: profileRes.data?.training_frequency_per_week ?? null,
-      });
-      setTotalSpent(bookingRes.data?.reduce((sum, booking) => sum + (booking.price ?? 0), 0) ?? 0);
-
-      Promise.all([
-        fetchPlayerSkills(userId),
-        fetchPlayerProgression(userId),
-      ]).then(([skills, progression]) => {
-        if (!mounted) return;
-        setSkillsData(skills);
-        setProgressionData(progression);
-      });
-
+      setUpcoming(result.data.upcoming);
+      setCompleted(result.data.completed);
+      setCoachMap(result.data.coachLookup);
+      setCoaches(result.data.coaches);
+      setPlayerSnapshot(result.data.playerSnapshot);
+      setTotalSpent(result.data.totalSpent);
+      setSkillsData(result.data.skillsData);
+      setProgressionData(result.data.progressionData);
+      setIsDemo(result.mode === "demo");
       setLoading(false);
     };
 
@@ -400,7 +278,7 @@ export default function PlayerDashboardPage() {
                               <p className="text-sm font-medium text-white">{session.title}</p>
                               <p className="text-xs text-white/70">
                                 {formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}
-                                {coachMap[session.coach_id] && ` · ${coachMap[session.coach_id]}`}
+                                {coachMap[session.coachId] && ` · ${coachMap[session.coachId]}`}
                               </p>
                             </div>
                           </div>

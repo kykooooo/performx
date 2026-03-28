@@ -1,8 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 import { getPlayerAgeCategory, getPositionFamily, parseTextArray } from "@/lib/football";
+import { normalizeUserRole } from "@/lib/roles";
 import { supabase } from "@/lib/supabase";
-
-const normalizeRole = (role: string | null | undefined) => (role === "club" ? "parent" : role ?? "player");
 
 const parseTrainingFrequency = (value: unknown) => {
   if (typeof value === "number") return value;
@@ -12,7 +11,7 @@ const parseTrainingFrequency = (value: unknown) => {
 
 export async function syncProfile(user: User) {
   const meta = user.user_metadata ?? {};
-  const role = normalizeRole(meta.role as string | undefined);
+  const role = normalizeUserRole(meta.role as string | undefined) ?? "player";
   const firstName = (meta.first_name as string) || "";
   const lastName = (meta.last_name as string) || "";
   const fullName = [firstName, lastName].filter(Boolean).join(" ") || user.email || "Coach";
@@ -29,7 +28,7 @@ export async function syncProfile(user: User) {
       last_name: lastName || null,
       gender: (meta.gender as string) || null,
       birth_date: birthDate,
-      city: (meta.city as string) || null,
+      city: (meta.department as string) || (meta.city as string) || null,
       level: (meta.level as string) || null,
       position,
       position_family: positionFamily,

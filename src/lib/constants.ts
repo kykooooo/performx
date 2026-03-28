@@ -1,4 +1,12 @@
 // ── URL du site ──
+import {
+  PLAYER_LEVELS as FOOTBALL_PLAYER_LEVELS,
+  PLAYER_POSITIONS as FOOTBALL_PLAYER_POSITIONS,
+} from "./football";
+
+export const PLAYER_LEVELS = FOOTBALL_PLAYER_LEVELS;
+export const PLAYER_POSITIONS = FOOTBALL_PLAYER_POSITIONS;
+
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://performx.fr";
 
 // ── Spécialités coach ──
@@ -16,7 +24,7 @@ export const COACH_SPECIALITIES = [
 ] as const;
 
 // ── Postes joueur ──
-export const PLAYER_POSITIONS = [
+export const PLAYER_POSITIONS_LEGACY = [
   "Gardien",
   "Défenseur latéral",
   "Défenseur central",
@@ -44,7 +52,7 @@ export const COACH_DIPLOMAS = [
 ] as const;
 
 // ── Niveaux joueur ──
-export const PLAYER_LEVELS = [
+export const PLAYER_LEVELS_LEGACY = [
   "Débutant",
   "Intermédiaire",
   "Confirmé",

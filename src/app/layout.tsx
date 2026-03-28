@@ -1,25 +1,10 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { headers } from "next/headers";
-import { Manrope, Bebas_Neue } from "next/font/google";
 import Analytics from "@/components/analytics";
 import AuthListener from "@/components/auth-listener";
 import { SITE_URL } from "@/lib/constants";
 import "./globals.css";
-
-const manrope = Manrope({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  variable: "--font-manrope",
-});
-
-const bebasNeue = Bebas_Neue({
-  subsets: ["latin"],
-  weight: "400",
-  display: "swap",
-  variable: "--font-bebas",
-});
 
 const siteUrl = SITE_URL;
 
@@ -68,7 +53,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="fr" className={`${manrope.variable} ${bebasNeue.variable}`} suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://images.pexels.com" />
         <link rel="dns-prefetch" href="https://images.pexels.com" />

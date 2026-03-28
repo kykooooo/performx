@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react
 import AppShell from "@/components/app-shell";
 import ConfirmModal from "@/components/confirm-modal";
 import ScrollReveal from "@/components/scroll-reveal";
+import { getCoachDashboardData } from "@/lib/data/dashboards";
+import type { CoachDashboardCoachRecord, SessionRecord } from "@/lib/data/types";
 import {
   CalendarIcon,
   StarIcon,
@@ -16,58 +18,16 @@ import {
 import { addDays, formatDayLabel, formatLongDate, formatShortDate, startOfWeek, toISODate } from "@/lib/date";
 import { FOOTBALL_SKILL_AXES } from "@/lib/football";
 import { supabase } from "@/lib/supabase";
-import { mockCoaches, mockSessions } from "@/lib/mock-data";
 import { createEmptyFeedbackDraft, normalizeSessionFeedback } from "@/lib/session-feedback";
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { coachMonthlyActivity, coachDayDistribution, CHART_COLORS, fetchCoachMonthlyActivity, fetchCoachDayDistribution } from "@/lib/chart-data";
-import type { AvailabilitySlot, SessionFeedback, SessionFeedbackRecord } from "@/lib/types";
+import { coachMonthlyActivity, coachDayDistribution, CHART_COLORS } from "@/lib/chart-data";
+import type { AvailabilitySlot, SessionFeedback } from "@/lib/types";
 
 const normalizeTime = (value: string) => (value.length >= 5 ? value.slice(0, 5) : value);
 
-type CoachRow = {
-  id: string;
-  user_id: string;
-  name: string;
-  rating: number | null;
-  price_per_session: number | null;
-  availability: AvailabilitySlot[] | null;
-};
-
-type SessionRow = {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-  status: string;
-  feedback?: SessionFeedbackRecord | null;
-};
-
-function useMockFallback() {
-  return useMemo(() => {
-    const coach = mockCoaches[0];
-    const coachRow: CoachRow = {
-      id: coach.id,
-      user_id: "user_10",
-      name: coach.name,
-      rating: coach.rating,
-      price_per_session: coach.pricePerSession,
-      availability: coach.availability,
-    };
-    const sessionRows: SessionRow[] = mockSessions.map((s) => ({
-      id: s.id,
-      title: s.title,
-      date: s.date,
-      time: s.time,
-      status: s.status,
-      feedback: s.feedback ?? null,
-    }));
-    return { coachRow, sessionRows };
-  }, []);
-}
-
 export default function CoachDashboardPage() {
-  const [coach, setCoach] = useState<CoachRow | null>(null);
-  const [sessions, setSessions] = useState<SessionRow[]>([]);
+  const [coach, setCoach] = useState<CoachDashboardCoachRecord | null>(null);
+  const [sessions, setSessions] = useState<SessionRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
   const [slotNotice, setSlotNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -92,65 +52,23 @@ export default function CoachDashboardPage() {
   const [activityData, setActivityData] = useState(coachMonthlyActivity);
   const [dayData, setDayData] = useState(coachDayDistribution);
 
-  const mock = useMockFallback();
-
   useEffect(() => {
     let mounted = true;
 
     const fetchDashboard = async () => {
       setLoading(true);
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        if (mounted) {
-          setIsDemo(true);
-          setCoach(mock.coachRow);
-          setSessions(mock.sessionRows);
-          setLoading(false);
-        }
-        return;
-      }
-
-      const { data: coachData } = await supabase
-        .from("coaches")
-        .select("id, user_id, name, rating, price_per_session, availability")
-        .eq("user_id", userData.user.id)
-        .single();
-
-      if (!coachData) {
-        if (mounted) {
-          setIsDemo(true);
-          setCoach(mock.coachRow);
-          setSessions(mock.sessionRows);
-          setLoading(false);
-        }
-        return;
-      }
-
-      const { data: sessionData } = await supabase
-        .from("sessions")
-        .select("id, title, date, time, status, feedback")
-        .eq("coach_id", coachData.id)
-        .order("date", { ascending: true });
-
+      const result = await getCoachDashboardData();
       if (!mounted) return;
-      setCoach(coachData);
+      setIsDemo(result.mode === "demo");
+      setCoach(result.data.coach);
       setSessions(
-        (sessionData ?? []).map((row) => ({
-          ...row,
-          time: normalizeTime(row.time),
+        result.data.sessions.map((session) => ({
+          ...session,
+          time: normalizeTime(session.time),
         })),
       );
-
-      // Fetch chart data (real → mock fallback)
-      Promise.all([
-        fetchCoachMonthlyActivity(coachData.id),
-        fetchCoachDayDistribution(coachData.id),
-      ]).then(([actRes, dayRes]) => {
-        if (!mounted) return;
-        setActivityData(actRes);
-        setDayData(dayRes);
-      });
-
+      setActivityData(result.data.activityData);
+      setDayData(result.data.dayData);
       setLoading(false);
     };
 
@@ -158,7 +76,7 @@ export default function CoachDashboardPage() {
     return () => {
       mounted = false;
     };
-  }, [mock]);
+  }, []);
 
   const upcoming = useMemo(
     () => sessions.filter((session) => session.status === "upcoming"),
@@ -173,7 +91,7 @@ export default function CoachDashboardPage() {
     [completed],
   );
 
-  const revenue = (coach?.price_per_session ?? 0) * upcoming.length;
+  const revenue = (coach?.pricePerSession ?? 0) * upcoming.length;
 
   const availableSlots = useMemo(() => {
     if (!coach?.availability) return [] as AvailabilitySlot[];
@@ -233,7 +151,7 @@ export default function CoachDashboardPage() {
   }, [availableSlots]);
 
   const reservedMap = useMemo(() => {
-    const map = new Map<string, SessionRow>();
+    const map = new Map<string, SessionRecord>();
     sessions.forEach((session) => {
       map.set(`${session.date}-${normalizeTime(session.time)}`, session);
     });
@@ -375,7 +293,7 @@ export default function CoachDashboardPage() {
     }
   };
 
-  const openFeedbackEditor = (session: SessionRow) => {
+  const openFeedbackEditor = (session: SessionRecord) => {
     const normalized = normalizeSessionFeedback(session.feedback);
     setFeedbackDraft(normalized ?? createEmptyFeedbackDraft());
     setFeedbackOpen((current) => (current === session.id ? null : session.id));

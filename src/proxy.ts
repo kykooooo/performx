@@ -1,14 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
 
   const csp = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' https://*.sentry.io https://*.vercel-scripts.com https://plausible.io https://www.googletagmanager.com`,
-    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https://images.pexels.com https://images.unsplash.com https://*.supabase.co",
-    "font-src 'self'",
+    "font-src 'self' https://fonts.gstatic.com data:",
     "connect-src 'self' https://*.supabase.co https://*.sentry.io https://plausible.io https://www.google-analytics.com",
     "frame-ancestors 'none'",
   ].join("; ");

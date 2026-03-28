@@ -1,11 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/app-shell";
 import { FeedbackState, LoadingState } from "@/components/feedback-state";
 import { AlertIcon, ChatIcon, InboxIcon, ArrowRightIcon } from "@/components/icons";
+import {
+  getConversationMessages,
+  getMessagesInboxData,
+  sendConversationMessage,
+} from "@/lib/data/messages";
+import type {
+  ConversationRecord,
+  MessageRecord,
+} from "@/lib/data/types";
 import { mockConversations, mockMessages } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
 
@@ -31,23 +41,30 @@ type MessageRow = {
   created_at: string;
 };
 
-type ProfileRow = {
-  user_id: string;
-  first_name: string | null;
-  last_name: string | null;
-  role?: string | null;
-};
+const mapConversationRecordToState = (conversation: ConversationRecord): Conversation => ({
+  id: conversation.id,
+  created_at: conversation.createdAt,
+  otherUserId: conversation.otherUserId,
+  otherName: conversation.otherName,
+  role: conversation.role ?? undefined,
+  profileHref: conversation.profileHref,
+  avatarSeed: conversation.avatarSeed,
+  unread: conversation.unread,
+  online: conversation.online,
+  lastSeen: conversation.lastSeen ?? undefined,
+});
+
+const mapMessageRecordToState = (message: MessageRecord): MessageRow => ({
+  id: message.id,
+  sender_id: message.senderId,
+  body: message.body,
+  created_at: message.createdAt,
+});
 
 /* ── Helpers ── */
 
 const getAvatar = (seed: string) =>
   `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
-
-const getProfileHref = (role: string | null | undefined, userId: string | null, coachId?: string | null) => {
-  if (role === "coach" && coachId) return `/coach/${coachId}`;
-  if (role === "player" && userId) return `/players/${userId}`;
-  return "/dashboard";
-};
 
 const formatMessageTime = (value: string) => {
   const date = new Date(value);
@@ -124,151 +141,21 @@ export default function MessagesClient() {
 
   /* ── Load Supabase conversations ── */
 
-  const loadConversations = async (currentUserId: string, preferredCoachId?: string | null) => {
+  const loadConversations = async (preferredCoachId?: string | null) => {
     setLoading(true);
     setError(null);
-    setIsDemoMode(false);
+    const result = await getMessagesInboxData(preferredCoachId);
+    setUserId(result.data.userId);
+    setConversations(result.data.conversations.map(mapConversationRecordToState));
+    setActiveConversationId(result.data.activeConversationId);
+    setMessages(result.data.messages.map(mapMessageRecordToState));
+    setUnreadCounts(result.data.unreadCounts);
+    setIsDemoMode(result.mode === "demo");
 
-    const { data: convoLinks } = await supabase
-      .from("conversation_participants")
-      .select("conversation_id, conversations(id, created_at)")
-      .eq("user_id", currentUserId)
-      .order("created_at", { ascending: false });
-
-    const conversationIds = (convoLinks ?? [])
-      .map((link) => link.conversation_id)
-      .filter(Boolean) as string[];
-
-    const { data: participants } = conversationIds.length
-      ? await supabase
-          .from("conversation_participants")
-          .select("conversation_id, user_id")
-          .in("conversation_id", conversationIds)
-      : { data: [] };
-
-    const otherUserIds = Array.from(
-      new Set(
-        (participants ?? [])
-          .filter((row) => row.user_id !== currentUserId)
-          .map((row) => row.user_id),
-      ),
-    );
-
-    const { data: profiles } = otherUserIds.length
-      ? await supabase
-          .from("profiles")
-          .select("user_id, first_name, last_name, role")
-          .in("user_id", otherUserIds)
-      : { data: [] };
-
-    const { data: coaches } = otherUserIds.length
-      ? await supabase
-          .from("coaches")
-          .select("id, user_id")
-          .in("user_id", otherUserIds)
-      : { data: [] };
-
-    const profileMap = new Map<string, ProfileRow>();
-    (profiles ?? []).forEach((profile) => profileMap.set(profile.user_id, profile));
-    const coachMap = new Map<string, string>();
-    (coaches ?? []).forEach((coach) => coachMap.set(coach.user_id, coach.id));
-
-    const conversationList: Conversation[] = (convoLinks ?? []).map((link) => {
-      const conversationId = link.conversation_id as string;
-      const conversationMeta = Array.isArray(link.conversations)
-        ? link.conversations[0]
-        : link.conversations;
-      const createdAt =
-        conversationMeta && typeof conversationMeta === "object" && "created_at" in conversationMeta
-          ? ((conversationMeta as { created_at?: string }).created_at ?? "")
-          : "";
-      const participantsForConversation = (participants ?? []).filter(
-        (row) => row.conversation_id === conversationId,
-      );
-      const other = participantsForConversation.find((row) => row.user_id !== currentUserId);
-      const profile = other ? profileMap.get(other.user_id) : null;
-      const otherRole = profile?.role ?? null;
-      const otherName = profile
-        ? [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Utilisateur"
-        : "Conversation";
-      return {
-        id: conversationId,
-        created_at: createdAt,
-        otherUserId: other?.user_id ?? null,
-        otherName,
-        role: otherRole ?? undefined,
-        profileHref: getProfileHref(otherRole, other?.user_id ?? null, coachMap.get(other?.user_id ?? "")),
-        avatarSeed: otherName,
-        unread: 0,
-      };
-    });
-
-    setConversations(conversationList);
-    setUnreadCounts((prev) => {
-      const next: Record<string, number> = {};
-      conversationList.forEach((conversation) => {
-        next[conversation.id] = prev[conversation.id] ?? 0;
-      });
-      return next;
-    });
-
-    let activeId = conversationList[0]?.id ?? null;
-
-    if (preferredCoachId) {
-      const { data: coachData } = await supabase
-        .from("coaches")
-        .select("user_id")
-        .eq("id", preferredCoachId)
-        .single();
-
-      const coachUserId = coachData?.user_id ?? null;
-      if (coachUserId) {
-        const existing = conversationList.find((conversation) => conversation.otherUserId === coachUserId);
-        if (existing) {
-          activeId = existing.id;
-        } else {
-          const { data: newConversation } = await supabase
-            .from("conversations")
-            .insert({ created_by: currentUserId })
-            .select("id, created_at")
-            .single();
-
-          if (newConversation) {
-            await supabase.from("conversation_participants").insert([
-              { conversation_id: newConversation.id, user_id: currentUserId },
-              { conversation_id: newConversation.id, user_id: coachUserId },
-            ]);
-
-            activeId = newConversation.id;
-            const coachProfile = profileMap.get(coachUserId);
-            setConversations((prev) => [
-              {
-                id: newConversation.id,
-                created_at: newConversation.created_at,
-                otherUserId: coachUserId,
-                role: "coach",
-                profileHref: `/coach/${preferredCoachId}`,
-                otherName:
-                  coachProfile
-                    ? [coachProfile.first_name, coachProfile.last_name].filter(Boolean).join(" ") || "Coach"
-                    : "Coach",
-                avatarSeed: "Coach",
-                unread: 0,
-              },
-              ...prev,
-            ]);
-          }
-        }
-      }
-    }
-
-    setActiveConversationId(activeId ?? null);
-    if (preferredCoachId && activeId) {
+    if (preferredCoachId && result.data.activeConversationId) {
       setMobileChatOpen(true);
     }
-    if (!activeId) {
-      setMessages([]);
-    }
+
     setLoading(false);
   };
 
@@ -325,7 +212,7 @@ export default function MessagesClient() {
         return;
       }
       setUserId(data.user.id);
-      loadConversations(data.user.id, coachId).catch(() => {
+      loadConversations(coachId).catch(() => {
         loadDemoMode();
       });
     });
@@ -341,16 +228,13 @@ export default function MessagesClient() {
     }
 
     const fetchMessages = async () => {
-      const { data } = await supabase
-        .from("messages")
-        .select("id, sender_id, body, created_at")
-        .eq("conversation_id", activeConversationId)
-        .order("created_at", { ascending: true });
-
-      setMessages((data ?? []) as MessageRow[]);
+      const data = await getConversationMessages(activeConversationId);
+      setMessages(data.map(mapMessageRecordToState));
     };
 
-    fetchMessages();
+    fetchMessages().catch((fetchError) => {
+      setError(fetchError instanceof Error ? fetchError.message : "Impossible de charger les messages.");
+    });
   }, [activeConversationId, isDemoMode]);
 
   /* ── Realtime subscription ── */
@@ -372,7 +256,7 @@ export default function MessagesClient() {
               (conversation) => conversation.id === message.conversation_id,
             );
             if (!knownConversation && userId) {
-              loadConversations(userId).catch((err) => console.warn("[PerformX]", err));
+              loadConversations().catch((err) => console.warn("[PerformX]", err));
             }
 
             if (message.conversation_id === activeConversationId) {
@@ -476,17 +360,26 @@ export default function MessagesClient() {
   const handleSend = async () => {
     if (!userId || !activeConversationId || !newMessage.trim()) return;
 
-    if (isDemoMode) {
-      const demoMsg: MessageRow = {
-        id: `demo-${Date.now()}`,
-        sender_id: userId,
-        body: newMessage,
-        created_at: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, demoMsg]);
-      setNewMessage("");
+    const nextBody = newMessage;
+    const sentMessage = await sendConversationMessage({
+      conversationId: activeConversationId,
+      body: nextBody,
+      userId,
+      mode: isDemoMode ? "demo" : "live",
+    }).catch((sendError) => {
+      setError(sendError instanceof Error ? sendError.message : "Impossible d'envoyer le message.");
+      return null;
+    });
 
-      // Simulate typing indicator then auto-reply
+    if (!sentMessage) {
+      return;
+    }
+
+    const nextMessage = mapMessageRecordToState(sentMessage);
+    setMessages((prev) => [...prev, nextMessage]);
+    setNewMessage("");
+
+    if (isDemoMode) {
       setIsTyping(true);
       const delay = 1500 + Math.random() * 2000;
       setTimeout(() => {
@@ -507,22 +400,7 @@ export default function MessagesClient() {
         };
         setMessages((prev) => [...prev, replyMsg]);
       }, delay);
-      return;
     }
-
-    const { data, error: sendError } = await supabase
-      .from("messages")
-      .insert({ conversation_id: activeConversationId, sender_id: userId, body: newMessage })
-      .select("id, sender_id, body, created_at")
-      .single();
-
-    if (sendError || !data) {
-      setError(sendError?.message ?? "Impossible d'envoyer le message.");
-      return;
-    }
-
-    setMessages((prev) => [...prev, data]);
-    setNewMessage("");
   };
 
   /* ── Select conversation ── */
@@ -626,10 +504,14 @@ export default function MessagesClient() {
                 >
                   {/* Avatar */}
                   <div className="relative shrink-0">
-                    <img
+                    <Image
                       src={getAvatar(conv.avatarSeed ?? conv.otherName)}
                       alt=""
+                      width={48}
+                      height={48}
+                      sizes="48px"
                       className="h-12 w-12 rounded-full bg-[color:var(--px-surface)]"
+                      unoptimized
                     />
                     {conv.online && (
                       <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[color:var(--px-card)] bg-emerald-500" />
@@ -707,10 +589,14 @@ export default function MessagesClient() {
 
                 {/* Avatar */}
                 <div className="relative shrink-0">
-                  <img
+                  <Image
                     src={getAvatar(activeConversation.avatarSeed ?? activeConversation.otherName)}
                     alt=""
+                    width={40}
+                    height={40}
+                    sizes="40px"
                     className="h-10 w-10 rounded-full bg-[color:var(--px-surface)]"
+                    unoptimized
                   />
                   {activeConversation.online && (
                     <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[color:var(--px-card)] bg-emerald-500" />

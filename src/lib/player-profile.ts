@@ -5,7 +5,7 @@ export type PlayerProfileValues = {
   lastName: string;
   gender: string;
   birthDate: string;
-  city: string;
+  department: string;
   level: string;
   position: string;
   dominantFoot: string;
@@ -23,6 +23,7 @@ type PlayerProfileRecord = {
   last_name?: string | null;
   gender?: string | null;
   birth_date?: string | null;
+  department?: string | null;
   city?: string | null;
   level?: string | null;
   position?: string | null;
@@ -42,7 +43,7 @@ export function createEmptyPlayerProfileValues(): PlayerProfileValues {
     lastName: "",
     gender: "",
     birthDate: "",
-    city: "",
+    department: "",
     level: "",
     position: "",
     dominantFoot: "",
@@ -64,7 +65,7 @@ export function mapPlayerProfileRecordToValues(
     lastName: record?.last_name ?? "",
     gender: record?.gender ?? "",
     birthDate: record?.birth_date ?? "",
-    city: record?.city ?? "",
+    department: record?.department ?? record?.city ?? "",
     level: record?.level ?? "",
     position: record?.position ?? "",
     dominantFoot: record?.dominant_foot ?? "",
@@ -100,7 +101,8 @@ export function buildPlayerProfileMetadata(
     last_name: values.lastName.trim() || null,
     gender: values.gender || null,
     birth_date: values.birthDate || null,
-    city: values.city || null,
+    city: values.department || null,
+    department: values.department || null,
     level: values.level || null,
     position: values.position || null,
     position_family: getPositionFamily(values.position),

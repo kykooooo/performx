@@ -8,8 +8,13 @@ import { FeedbackState, LoadingState } from "@/components/feedback-state";
 import { AlertIcon, CalendarIcon, CheckCircleIcon, WhistleIcon } from "@/components/icons";
 import { Notice, type NoticeData } from "@/components/notice";
 import { normalizeTime } from "@/lib/booking";
+import {
+  createBookingReservation,
+  getBookingPageData,
+  getReservedCoachSessions,
+} from "@/lib/data/booking";
+import type { BookingRecord, CoachRecord } from "@/lib/data/types";
 import { formatLongDate } from "@/lib/date";
-import { parseTextArray } from "@/lib/football";
 import {
   buildPreparationMessage,
   buildSessionChecklist,
@@ -17,38 +22,11 @@ import {
   getCoachBestForLabel,
   getCoachStyleLabel,
 } from "@/lib/football-surface";
-import { mockBookings, mockCoaches } from "@/lib/mock-data";
-import { supabase } from "@/lib/supabase";
 import type { AvailabilitySlot } from "@/lib/types";
 
 const formatSlotLabel = (slot: AvailabilitySlot) => {
   const date = new Date(`${slot.date}T12:00`);
   return `${formatLongDate(date)} - ${slot.time}`;
-};
-
-type CoachRow = {
-  id: string;
-  name: string;
-  speciality: string;
-  location: string | null;
-  price_per_session: number | null;
-  availability: AvailabilitySlot[] | null;
-  experience_years?: number | null;
-  focus_areas?: string[] | string | null;
-  session_formats?: string[] | string | null;
-  pedagogy?: string | null;
-  certifications?: string[] | string | null;
-};
-
-type BookingRow = {
-  id: string;
-  payment_status: string;
-};
-
-type BookingRpcRow = {
-  session_id: string;
-  booking_id: string;
-  conversation_id: string;
 };
 
 export default function BookingClient() {
@@ -58,61 +36,36 @@ export default function BookingClient() {
   const initialDate = searchParams.get("date");
   const initialTime = searchParams.get("time");
 
-  const [coaches, setCoaches] = useState<CoachRow[]>([]);
+  const [coaches, setCoaches] = useState<CoachRecord[]>([]);
   const [selectedCoachId, setSelectedCoachId] = useState("");
   const [sessions, setSessions] = useState<{ date: string; time: string; status: string }[]>([]);
-  const [bookings, setBookings] = useState<BookingRow[]>([]);
+  const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
   const [notice, setNotice] = useState<NoticeData>(null);
   const [lastBookedCoachId, setLastBookedCoachId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(false);
+  const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
     let mounted = true;
 
     const fetchData = async () => {
       setLoading(true);
-
-      const { data: coachData, error: coachError } = await supabase
-        .from("public_coaches")
-        .select(
-          "id, name, speciality, location, price_per_session, availability, experience_years, focus_areas, session_formats, pedagogy, certifications",
-        )
-        .order("rating", { ascending: false });
+      const result = await getBookingPageData();
 
       if (!mounted) return;
 
-      const rows: CoachRow[] =
-        !coachError && coachData && coachData.length > 0
-          ? coachData
-          : mockCoaches.map((coach) => ({
-              id: coach.id,
-              name: coach.name,
-              speciality: coach.speciality,
-              location: coach.location,
-              price_per_session: coach.pricePerSession,
-              availability: coach.availability,
-              experience_years: coach.experienceYears ?? null,
-              focus_areas: coach.focusAreas ?? [],
-              session_formats: coach.sessionFormats ?? [],
-              pedagogy: coach.pedagogy ?? null,
-              certifications: coach.certifications ?? [],
-            }));
-
-      setCoaches(rows);
-      setSelectedCoachId(initialCoachId ?? rows[0]?.id ?? "");
+      setCoaches(result.data.coaches);
+      setBookings(result.data.bookings);
+      setUserId(result.data.userId);
+      setSelectedCoachId(initialCoachId ?? result.data.coaches[0]?.id ?? "");
+      setIsDemo(result.mode === "demo");
       setLoading(false);
     };
 
-    const fetchUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUserId(data.user?.id ?? null);
-    };
-
     fetchData();
-    fetchUser();
 
     return () => {
       mounted = false;
@@ -120,52 +73,11 @@ export default function BookingClient() {
   }, [initialCoachId]);
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      if (userId) {
-        const { data } = await supabase
-          .from("bookings")
-          .select("id, payment_status")
-          .eq("player_id", userId)
-          .order("created_at", { ascending: false });
-
-        if (data && data.length > 0) {
-          setBookings(data);
-          return;
-        }
-      }
-
-      setBookings(
-        mockBookings.slice(0, 3).map((bookingRow) => ({
-          id: bookingRow.id,
-          payment_status: bookingRow.paymentStatus,
-        })),
-      );
-    };
-
-    fetchBookings();
-  }, [userId]);
-
-  useEffect(() => {
     if (!selectedCoachId) return;
 
     const fetchSessions = async () => {
-      const { data, error } = await supabase
-        .from("public_sessions")
-        .select("coach_id, date, time, status")
-        .eq("coach_id", selectedCoachId);
-
-      if (error) {
-        setSessions([]);
-        return;
-      }
-
-      setSessions(
-        (data ?? []).map((row) => ({
-          date: row.date,
-          time: normalizeTime(row.time),
-          status: row.status,
-        })),
-      );
+      const result = await getReservedCoachSessions(selectedCoachId);
+      setSessions(result.data);
     };
 
     fetchSessions();
@@ -177,40 +89,40 @@ export default function BookingClient() {
   );
 
   const selectedCoachFocusAreas = useMemo(
-    () => parseTextArray(selectedCoach?.focus_areas ?? []).slice(0, 3),
-    [selectedCoach?.focus_areas],
+    () => selectedCoach?.focusAreas.slice(0, 3) ?? [],
+    [selectedCoach?.focusAreas],
   );
   const selectedCoachSessionFormats = useMemo(
-    () => parseTextArray(selectedCoach?.session_formats ?? []).slice(0, 3),
-    [selectedCoach?.session_formats],
+    () => selectedCoach?.sessionFormats.slice(0, 3) ?? [],
+    [selectedCoach?.sessionFormats],
   );
   const selectedCoachCertifications = useMemo(
-    () => parseTextArray(selectedCoach?.certifications ?? []).slice(0, 2),
+    () => selectedCoach?.certifications.slice(0, 2) ?? [],
     [selectedCoach?.certifications],
   );
   const coachStyleLabel = useMemo(
-    () => getCoachStyleLabel(selectedCoach?.speciality ?? "", selectedCoach?.pedagogy),
+    () => getCoachStyleLabel(selectedCoach?.speciality ?? "", selectedCoach?.pedagogy ?? null),
     [selectedCoach?.pedagogy, selectedCoach?.speciality],
   );
   const coachAudienceLabel = useMemo(
     () =>
       getCoachAudienceLabel(
-        parseTextArray(selectedCoach?.session_formats ?? []),
-        selectedCoach?.experience_years ?? null,
+        selectedCoach?.sessionFormats ?? [],
+        selectedCoach?.experienceYears ?? null,
       ),
-    [selectedCoach?.experience_years, selectedCoach?.session_formats],
+    [selectedCoach?.experienceYears, selectedCoach?.sessionFormats],
   );
   const coachBestForLabel = useMemo(
     () =>
       getCoachBestForLabel(
         selectedCoach?.speciality ?? "",
-        parseTextArray(selectedCoach?.focus_areas ?? []),
+        selectedCoach?.focusAreas ?? [],
       ),
-    [selectedCoach?.focus_areas, selectedCoach?.speciality],
+    [selectedCoach?.focusAreas, selectedCoach?.speciality],
   );
 
   const availableSlots = useMemo(() => {
-    const availability = Array.isArray(selectedCoach?.availability) ? selectedCoach.availability : [];
+    const availability = selectedCoach?.availability ?? [];
 
     return availability.filter((slot) => {
       const normalized = normalizeTime(slot.time);
@@ -239,10 +151,10 @@ export default function BookingClient() {
     () =>
       buildSessionChecklist(
         selectedCoach?.speciality ?? "",
-        parseTextArray(selectedCoach?.session_formats ?? []),
-        parseTextArray(selectedCoach?.focus_areas ?? []),
+        selectedCoach?.sessionFormats ?? [],
+        selectedCoach?.focusAreas ?? [],
       ),
-    [selectedCoach?.focus_areas, selectedCoach?.session_formats, selectedCoach?.speciality],
+    [selectedCoach?.focusAreas, selectedCoach?.sessionFormats, selectedCoach?.speciality],
   );
   const preparationMessage = useMemo(
     () =>
@@ -267,26 +179,17 @@ export default function BookingClient() {
 
     setBooking(true);
 
-    const { data: bookingPath, error: bookingPathError } = await supabase
-      .rpc("create_booking_with_conversation", {
-        p_coach_id: selectedCoach.id,
-        p_date: effectiveSelectedSlot.date,
-        p_time: normalizeTime(effectiveSelectedSlot.time),
-        p_duration_minutes: effectiveSelectedSlot.durationMinutes,
-      })
-      .single();
+    const bookingResult = await createBookingReservation({
+      coachId: selectedCoach.id,
+      slot: effectiveSelectedSlot,
+      userId,
+    });
 
-    if (bookingPathError || !bookingPath) {
-      const text =
-        bookingPathError?.message?.includes("SLOT_ALREADY_BOOKED")
-          ? "Ce creneau vient d'etre reserve. Choisis un autre horaire."
-          : bookingPathError?.message ?? "Impossible de reserver.";
-      setNotice({ type: "error", text });
+    if ("error" in bookingResult) {
+      setNotice({ type: "error", text: bookingResult.error });
       setBooking(false);
       return;
     }
-
-    const rpcData = bookingPath as BookingRpcRow;
 
     setSessions((current) => [
       {
@@ -296,7 +199,18 @@ export default function BookingClient() {
       },
       ...current,
     ]);
-    setBookings((current) => [{ id: rpcData.booking_id, payment_status: "paid" }, ...current]);
+    setBookings((current) => [
+      {
+        id: bookingResult.bookingId,
+        sessionId: bookingResult.sessionId,
+        playerId: userId,
+        coachId: selectedCoach.id,
+        createdAt: new Date().toISOString(),
+        price: selectedCoach.pricePerSession ?? 0,
+        paymentStatus: "paid",
+      },
+      ...current,
+    ]);
     setLastBookedCoachId(selectedCoach.id);
     setSelectedSlot(null);
     setNotice({ type: "success", text: "Seance reservee. Redirection vers la confirmation..." });
@@ -306,11 +220,11 @@ export default function BookingClient() {
       coachName: selectedCoach.name,
       date: effectiveSelectedSlot.date,
       time: normalizeTime(effectiveSelectedSlot.time),
-      bookingId: rpcData.booking_id,
+      bookingId: bookingResult.bookingId,
     });
 
-    if (rpcData.conversation_id) {
-      nextParams.set("conversationId", rpcData.conversation_id);
+    if (bookingResult.conversationId) {
+      nextParams.set("conversationId", bookingResult.conversationId);
     }
 
     router.push(`/booking/confirmation?${nextParams.toString()}`);
@@ -431,7 +345,7 @@ export default function BookingClient() {
                   >
                     <span>{formatSlotLabel(slot)}</span>
                     <span className="text-[color:var(--px-accent)]">
-                      {selectedCoach?.price_per_session ?? 0} EUR
+                      {selectedCoach?.pricePerSession ?? 0} EUR
                     </span>
                   </button>
                 );
@@ -470,8 +384,8 @@ export default function BookingClient() {
                 <div className="px-role-stat">
                   <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Experience</p>
                   <p className="mt-2 text-sm text-white">
-                    {selectedCoach.experience_years
-                      ? `${selectedCoach.experience_years} ans terrain`
+                    {selectedCoach.experienceYears
+                      ? `${selectedCoach.experienceYears} ans terrain`
                       : "Profil en cours d'enrichissement"}
                   </p>
                   <p className="mt-1 text-xs text-white/60">
@@ -481,7 +395,7 @@ export default function BookingClient() {
                 <div className="px-role-stat">
                   <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Lieu</p>
                   <p className="mt-2 text-sm text-white">
-                    {selectedCoach.location ?? "Lieu confirme apres validation"}
+                    {selectedCoach.location ?? selectedCoach.department ?? "Lieu confirme apres validation"}
                   </p>
                   <p className="mt-1 text-xs text-white/60">
                     {selectedCoachFocusAreas[0] ?? "Focus defini avec le coach"}
@@ -527,11 +441,11 @@ export default function BookingClient() {
                   <p className="text-white">Reservation confirmee</p>
                   <p className="text-xs text-white/70">
                     Paiement :{" "}
-                    {bookingRow.payment_status === "paid"
+                    {bookingRow.paymentStatus === "paid"
                       ? "Paye"
-                      : bookingRow.payment_status === "pending"
+                      : bookingRow.paymentStatus === "pending"
                         ? "En attente"
-                        : bookingRow.payment_status}
+                        : bookingRow.paymentStatus}
                   </p>
                 </div>
               ))}
@@ -567,7 +481,7 @@ export default function BookingClient() {
               <div className="px-divider" />
               <div className="flex items-center justify-between text-base">
                 <span>Total</span>
-                <span className="text-white">{selectedCoach?.price_per_session ?? 0} EUR</span>
+                <span className="text-white">{selectedCoach?.pricePerSession ?? 0} EUR</span>
               </div>
             </div>
 
@@ -630,7 +544,11 @@ export default function BookingClient() {
           <div className="px-card p-6">
             <h3 className="text-lg text-white">Connexion requise</h3>
             <p className="mt-2 text-sm text-white/70">
-              {userId ? "Tu es connecte." : "Connecte-toi pour finaliser la reservation."}
+              {userId
+                ? isDemo
+                  ? "Tu es en mode demo."
+                  : "Tu es connecte."
+                : "Connecte-toi pour finaliser la reservation."}
             </p>
             {!userId && (
               <Link href="/auth/login" className="px-button mt-4">

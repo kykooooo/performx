@@ -10,25 +10,6 @@ const buildSlot = (dayOffset: number, time: string, durationMinutes = 60) => ({
   durationMinutes,
 });
 
-const buildFeedback = (
-  ratings: {
-    technique: number;
-    tactique: number;
-    physique: number;
-    intensite: number;
-    mental: number;
-  },
-  summary: string,
-  nextFocus: string,
-  loadRecommendation: "normal" | "lighten" | "recover" = "normal",
-) => ({
-  version: 2 as const,
-  ratings,
-  summary,
-  next_focus: nextFocus,
-  load_recommendation: loadRecommendation,
-});
-
 export const mockPlayer: Player = {
   id: "player_1",
   name: "Alex Martin",

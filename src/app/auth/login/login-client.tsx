@@ -56,16 +56,6 @@ export default function LoginPage() {
     setLoading(false);
   };
 
-  const handleOAuth = async (provider: "google" | "facebook") => {
-    setLoading(true);
-    setNotice(null);
-    const { error } = await supabase.auth.signInWithOAuth({ provider });
-    if (error) {
-      setNotice({ type: "error", text: error.message });
-      setLoading(false);
-    }
-  };
-
   const applyDemoCredentials = (role: "coach" | "player" | "parent") => {
     setErrors({});
     if (role === "coach") {

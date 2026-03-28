@@ -23,7 +23,7 @@ export default function RegisterParentPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [city, setCity] = useState("");
+  const [department, setDepartment] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -52,7 +52,7 @@ export default function RegisterParentPage() {
 
   const validateStep2 = (): boolean => {
     const next: FieldErrors = {};
-    if (!city) next.city = "Le departement est requis.";
+    if (!department) next.department = "Le departement est requis.";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -72,7 +72,8 @@ export default function RegisterParentPage() {
           role: "parent",
           first_name: sanitizeInput(firstName),
           last_name: sanitizeInput(lastName),
-          city,
+          city: department,
+          department,
         },
       },
     });
@@ -214,19 +215,19 @@ export default function RegisterParentPage() {
               Le compte parent n&apos;embarque plus une fiche enfant statique. Une fois inscrit, tu lieras un vrai compte joueur depuis ton dashboard avec un code temporaire genere cote joueur.
             </div>
             <div>
-              <label htmlFor="reg-parent-city" className="mb-1 block text-xs text-white/70">Departement <span className="text-[color:var(--px-danger)]">*</span></label>
+              <label htmlFor="reg-parent-department" className="mb-1 block text-xs text-white/70">Departement <span className="text-[color:var(--px-danger)]">*</span></label>
               <select
-                id="reg-parent-city"
-                className={`px-select ${errors.city ? "border-[color:var(--px-danger)]" : ""}`}
-                value={city}
-                onChange={(e) => { setCity(e.target.value); clearField("city"); }}
+                id="reg-parent-department"
+                className={`px-select ${errors.department ? "border-[color:var(--px-danger)]" : ""}`}
+                value={department}
+                onChange={(e) => { setDepartment(e.target.value); clearField("department"); }}
               >
                 <option value="">Selectionner un departement</option>
                 {DEPARTMENTS.map((department) => (
                   <option key={department} value={department}>{department}</option>
                 ))}
               </select>
-              <FieldError error={errors.city} />
+              <FieldError error={errors.department} />
             </div>
             <Notice notice={notice} />
             <div className="flex gap-3">

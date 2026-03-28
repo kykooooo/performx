@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { getDashboardPathForRole, normalizeUserRole } from "@/lib/roles";
 import { supabase } from "@/lib/supabase";
 import { syncProfile } from "@/lib/profile-sync";
 
@@ -10,23 +11,12 @@ export default function AuthListener() {
   const pathname = usePathname();
 
   const redirectByRole = useCallback(async (userId: string, roleHint?: string | null) => {
-    let role = roleHint === "club" ? "parent" : roleHint ?? null;
+    let role = normalizeUserRole(roleHint);
     if (!role) {
       const { data } = await supabase.from("profiles").select("role").eq("user_id", userId).single();
-      role = data?.role === "club" ? "parent" : data?.role ?? null;
+      role = normalizeUserRole(data?.role ?? null);
     }
-    switch (role) {
-      case "coach":
-        router.replace("/dashboard/coach");
-        break;
-      case "parent":
-        router.replace("/dashboard/parent");
-        break;
-      case "player":
-      default:
-        router.replace("/dashboard/player");
-        break;
-    }
+    router.replace(getDashboardPathForRole(role));
   }, [router]);
 
   useEffect(() => {

@@ -19,6 +19,7 @@ export type Profile = {
   firstName: string;
   lastName: string;
   city: string;
+  department?: string;
   avatarUrl?: string;
   level?: string;
   position?: string;
@@ -115,6 +116,7 @@ export type Player = {
   id: string;
   name: string;
   city: string;
+  department?: string;
   level: string;
   position: string;
   positionFamily?: PositionFamily;
@@ -162,6 +164,7 @@ export type ParentChildSummary = {
   lastName: string;
   birthDate: string | null;
   city: string | null;
+  department?: string | null;
   level: string | null;
   position: string | null;
   positionFamily: PositionFamily | null;

@@ -8,7 +8,6 @@ import {
   SearchIcon,
   CalendarIcon,
   CheckCircleIcon,
-  QuoteIcon,
   ArrowRightIcon,
   ShieldIcon,
   TrophyIcon,

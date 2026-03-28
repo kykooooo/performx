@@ -18,92 +18,56 @@ import {
   MapPinIcon,
 } from "@/components/icons";
 import { buildCoachAvatarMap } from "@/lib/coach-avatars";
-import { parseTextArray } from "@/lib/football";
-import { supabase } from "@/lib/supabase";
-import { mockCoaches } from "@/lib/mock-data";
 import { SEINE_MARITIME_CITIES } from "@/lib/constants";
-import type { AvailabilitySlot } from "@/lib/types";
-
-type CoachRow = {
-  id: string;
-  name: string;
-  speciality: string;
-  bio: string | null;
-  location: string | null;
-  price_per_session: number | null;
-  rating: number | null;
-  reviews_count: number | null;
-  avatar_url: string | null;
-  availability?: AvailabilitySlot[] | null;
-  experience_years?: number | null;
-  focus_areas?: string[] | string | null;
-  session_formats?: string[] | string | null;
-  pedagogy?: string | null;
-  certifications?: string[] | string | null;
-};
+import { getCoachDirectory } from "@/lib/data/coaches";
+import type { CoachRecord } from "@/lib/data/types";
 
 const SPECIALITY_CHIPS = [
   "Tous",
   "Technique",
-  "Préparation physique",
+  "Preparation physique",
   "Gardienne",
   "Vision de jeu",
   "Frappe",
   "Dribbles",
   "Endurance",
-  "Jeu défensif",
-];
-
-function mapMockToRow(coach: (typeof mockCoaches)[number]): CoachRow {
-  return {
-    id: coach.id,
-    name: coach.name,
-    speciality: coach.speciality,
-    bio: coach.bio,
-    location: coach.location,
-    price_per_session: coach.pricePerSession,
-    rating: coach.rating,
-    reviews_count: coach.reviews,
-    avatar_url: null,
-    availability: coach.availability,
-    experience_years: coach.experienceYears ?? null,
-    focus_areas: coach.focusAreas ?? [],
-    session_formats: coach.sessionFormats ?? [],
-    pedagogy: coach.pedagogy ?? null,
-    certifications: coach.certifications ?? [],
-  };
-}
+  "Jeu defensif",
+] as const;
 
 export default function CoachPage() {
-  const [coaches, setCoaches] = useState<CoachRow[]>([]);
+  const [coaches, setCoaches] = useState<CoachRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [activeChip, setActiveChip] = useState("Tous");
+  const [activeChip, setActiveChip] = useState<(typeof SPECIALITY_CHIPS)[number]>("Tous");
   const [activeCity, setActiveCity] = useState("");
   const [sortBy, setSortBy] = useState<"rating" | "price-asc" | "price-desc" | "name">("rating");
+  const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
     let mounted = true;
+
     const fetchCoaches = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("public_coaches")
-        .select("id, name, speciality, bio, location, price_per_session, rating, reviews_count, avatar_url, availability, experience_years, focus_areas, session_formats, pedagogy, certifications")
-        .order("rating", { ascending: false });
+      setError(null);
 
-      if (!mounted) return;
-      if (error || !data || data.length === 0) {
-        setError(null);
-        setCoaches(mockCoaches.map(mapMockToRow));
-      } else {
-        setError(null);
-        setCoaches(data);
+      try {
+        const result = await getCoachDirectory();
+        if (!mounted) return;
+        setCoaches(result.data);
+        setIsDemo(result.mode === "demo");
+      } catch {
+        if (!mounted) return;
+        setError("Impossible de charger les coachs.");
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
-      setLoading(false);
     };
 
     fetchCoaches();
+
     return () => {
       mounted = false;
     };
@@ -111,18 +75,19 @@ export default function CoachPage() {
 
   const filteredCoaches = useMemo(() => {
     const normalized = query.trim().toLowerCase();
+
     const filtered = coaches.filter((coach) => {
+      const location = `${coach.location ?? ""} ${coach.department ?? ""}`.toLowerCase();
       const matchesQuery =
         !normalized ||
         coach.name.toLowerCase().includes(normalized) ||
         coach.speciality.toLowerCase().includes(normalized) ||
-        (coach.location ?? "").toLowerCase().includes(normalized);
+        location.includes(normalized);
       const matchesChip =
-        activeChip === "Tous" ||
-        coach.speciality.toLowerCase().includes(activeChip.toLowerCase());
+        activeChip === "Tous" || coach.speciality.toLowerCase().includes(activeChip.toLowerCase());
       const matchesCity =
-        !activeCity ||
-        (coach.location ?? "").toLowerCase() === activeCity.toLowerCase();
+        !activeCity || (coach.location ?? "").toLowerCase() === activeCity.toLowerCase();
+
       return matchesQuery && matchesChip && matchesCity;
     });
 
@@ -132,76 +97,74 @@ export default function CoachPage() {
         sorted.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
         break;
       case "price-asc":
-        sorted.sort((a, b) => (a.price_per_session ?? 0) - (b.price_per_session ?? 0));
+        sorted.sort((a, b) => (a.pricePerSession ?? 0) - (b.pricePerSession ?? 0));
         break;
       case "price-desc":
-        sorted.sort((a, b) => (b.price_per_session ?? 0) - (a.price_per_session ?? 0));
+        sorted.sort((a, b) => (b.pricePerSession ?? 0) - (a.pricePerSession ?? 0));
         break;
       case "name":
         sorted.sort((a, b) => a.name.localeCompare(b.name, "fr"));
         break;
     }
+
     return sorted;
-  }, [coaches, query, activeChip, activeCity, sortBy]);
+  }, [activeChip, activeCity, coaches, query, sortBy]);
 
   const avgRating = useMemo(() => {
-    const ratings = coaches.map((c) => c.rating ?? 0).filter((r) => r > 0);
+    const ratings = coaches.map((coach) => coach.rating ?? 0).filter((rating) => rating > 0);
     if (ratings.length === 0) return 0;
-    return ratings.reduce((a, b) => a + b, 0) / ratings.length;
+    return ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
   }, [coaches]);
 
   const coachAvatarMap = useMemo(() => buildCoachAvatarMap(filteredCoaches), [filteredCoaches]);
 
   const totalReviews = useMemo(
-    () => coaches.reduce((sum, c) => sum + (c.reviews_count ?? 0), 0),
+    () => coaches.reduce((sum, coach) => sum + coach.reviewsCount, 0),
     [coaches],
   );
 
   return (
     <AppShell active="/coach" hideTitle>
-      {/* ── Hero header ── */}
       <section className="relative py-8 lg:py-12">
         <div className="grid items-center gap-8 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="px-stack-3">
             <div className="flex items-center gap-3 px-fade-up">
               <span className="px-badge px-pulse">Annuaire</span>
-              <span className="px-pill">+120 coachs actifs</span>
+              <span className="px-pill">{isDemo ? "Mode demo" : `+${coaches.length} coachs actifs`}</span>
             </div>
 
             <h1
               className="px-fade-up text-4xl leading-[1.1] text-white sm:text-5xl lg:text-6xl"
               style={{ animationDelay: "80ms" }}
             >
-              Trouve le coach{" "}
-              <span className="px-gradient-text">parfait.</span>
+              Trouve le coach <span className="px-gradient-text">parfait.</span>
             </h1>
 
             <p
               className="px-fade-up max-w-lg text-base text-white/70"
               style={{ animationDelay: "160ms" }}
             >
-              Parcours notre réseau de coachs certifiés, filtre par spécialité
-              et réserve une séance en quelques clics.
+              Parcours notre reseau de coachs certifies, filtre par specialite et reserve une
+              seance en quelques clics.
             </p>
 
             <div
               className="px-fade-up flex items-center gap-4"
               style={{ animationDelay: "240ms" }}
             >
-              <Link href="/auth/register/coach" className="px-button text-sm px-6 py-3">
+              <Link href="/auth/register/coach" className="px-button px-6 py-3 text-sm">
                 <BoltIcon className="h-4 w-4" />
                 Devenir coach
               </Link>
-              <Link href="#coaches" className="px-button-ghost text-sm px-6 py-3">
+              <Link href="#coaches" className="px-button-ghost px-6 py-3 text-sm">
                 Explorer
                 <ArrowRightIcon className="h-4 w-4" />
               </Link>
             </div>
           </div>
 
-          {/* Stats sidebar */}
           <div
-            className="px-fade-up hidden lg:flex flex-col gap-4"
+            className="px-fade-up hidden flex-col gap-4 lg:flex"
             style={{ animationDelay: "200ms" }}
           >
             <div className="grid grid-cols-2 gap-3">
@@ -221,37 +184,37 @@ export default function CoachPage() {
               </div>
             </div>
             <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-4">
-              <p className="text-xs text-white/70 leading-relaxed">
-                <span className="font-semibold text-white/70">{totalReviews} avis</span> laissés
-                par la communauté. Chaque coach est évalué après chaque séance.
+              <p className="text-xs leading-relaxed text-white/70">
+                <span className="font-semibold text-white/70">{totalReviews} avis</span> laisses
+                par la communaute. Chaque coach est evalue apres chaque seance.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Filtres ── */}
       <ScrollReveal>
         <section id="coaches" className="px-stack-3">
-          <div className="px-card p-4 px-stack-2">
+          <div className="px-card px-stack-2 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-white">Filtres rapides</p>
-                <p className="text-xs text-white/70">Affine ta recherche pour trouver le coach idéal.</p>
+                <p className="text-xs text-white/70">
+                  Affine ta recherche pour trouver le coach ideal.
+                </p>
               </div>
               <div className="relative w-full sm:w-[320px]">
                 <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/70" />
                 <input
                   className="px-input pl-9"
                   placeholder="Rechercher un coach..."
-                  aria-label="Rechercher un coach par nom, spécialité ou localisation"
+                  aria-label="Rechercher un coach par nom, specialite ou localisation"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(event) => setQuery(event.target.value)}
                 />
               </div>
             </div>
 
-            {/* Speciality chips */}
             <div className="flex flex-wrap gap-2">
               {SPECIALITY_CHIPS.map((chip) => (
                 <button
@@ -266,35 +229,35 @@ export default function CoachPage() {
               ))}
             </div>
 
-            {/* City filter + Sort */}
             <div className="flex flex-wrap items-center gap-3">
               <MapPinIcon className="h-4 w-4 text-white/70" />
               <select
                 className="px-select max-w-[280px]"
                 value={activeCity}
-                onChange={(e) => setActiveCity(e.target.value)}
+                onChange={(event) => setActiveCity(event.target.value)}
                 aria-label="Filtrer par ville"
               >
                 <option value="">Toutes les villes</option>
-                {SEINE_MARITIME_CITIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                {SEINE_MARITIME_CITIES.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
                 ))}
               </select>
               <select
                 className="px-select max-w-[220px]"
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                onChange={(event) => setSortBy(event.target.value as typeof sortBy)}
                 aria-label="Trier les coachs"
               >
                 <option value="rating">Meilleure note</option>
                 <option value="price-asc">Prix croissant</option>
-                <option value="price-desc">Prix décroissant</option>
+                <option value="price-desc">Prix decroissant</option>
                 <option value="name">Nom A-Z</option>
               </select>
             </div>
           </div>
 
-          {/* Résultat count */}
           {!loading && filteredCoaches.length > 0 && (
             <div className="flex items-center gap-2">
               <FilterIcon className="h-4 w-4 text-white/70" />
@@ -307,7 +270,6 @@ export default function CoachPage() {
         </section>
       </ScrollReveal>
 
-      {/* ── Loading ── */}
       {loading && (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, index) => (
@@ -316,25 +278,23 @@ export default function CoachPage() {
         </div>
       )}
 
-      {/* ── Error ── */}
       {error && (
         <FeedbackState
           tone="error"
           icon={<AlertIcon className="h-7 w-7 text-[color:var(--px-danger)]" />}
           title="Impossible de charger les coachs"
           description={error}
-          actionLabel="Réessayer"
+          actionLabel="Reessayer"
           onAction={() => window.location.reload()}
         />
       )}
 
-      {/* ── Empty ── */}
       {!loading && filteredCoaches.length === 0 && !error && (
         <FeedbackState
           icon={<SearchIcon className="h-7 w-7 text-white/70" />}
-          title="Aucun coach trouvé"
-          description="Aucun coach ne correspond à tes filtres actuels."
-          actionLabel="Réinitialiser les filtres"
+          title="Aucun coach trouve"
+          description="Aucun coach ne correspond a tes filtres actuels."
+          actionLabel="Reinitialiser les filtres"
           onAction={() => {
             setQuery("");
             setActiveChip("Tous");
@@ -343,7 +303,6 @@ export default function CoachPage() {
         />
       )}
 
-      {/* ── Coach grid ── */}
       {!loading && filteredCoaches.length > 0 && (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {filteredCoaches.map((coach, index) => (
@@ -351,42 +310,44 @@ export default function CoachPage() {
               <CoachCard
                 reserveHref={`/booking?coach=${coach.id}`}
                 profileHref={`/coach/${coach.id}`}
-                avatarUrl={coachAvatarMap.get(coach.id) ?? coach.avatar_url}
+                avatarUrl={coachAvatarMap.get(coach.id) ?? coach.avatarUrl}
                 name={coach.name}
                 speciality={coach.speciality}
                 description={coach.bio ?? ""}
-                location={coach.location ?? ""}
-                price={`${coach.price_per_session ?? 0}€`}
+                location={coach.location ?? coach.department ?? ""}
+                price={`${coach.pricePerSession ?? 0} EUR`}
                 rating={coach.rating ?? 0}
-                reviews={coach.reviews_count ?? 0}
-                availability={coach.availability ?? []}
-                experienceYears={coach.experience_years ?? null}
-                focusAreas={parseTextArray(coach.focus_areas ?? [])}
-                sessionFormats={parseTextArray(coach.session_formats ?? [])}
-                pedagogy={coach.pedagogy ?? null}
-                certifications={parseTextArray(coach.certifications ?? [])}
+                reviews={coach.reviewsCount}
+                availability={coach.availability}
+                experienceYears={coach.experienceYears}
+                focusAreas={coach.focusAreas}
+                sessionFormats={coach.sessionFormats}
+                pedagogy={coach.pedagogy}
+                certifications={coach.certifications}
               />
             </ScrollReveal>
           ))}
         </div>
       )}
 
-      {/* ── CTA bottom ── */}
       <ScrollReveal>
         <section className="py-12">
           <div className="relative overflow-hidden rounded-3xl border border-white/10 p-8 text-center sm:p-12">
             <div className="absolute inset-0 bg-gradient-to-br from-[color:var(--px-accent)]/15 via-transparent to-[color:var(--px-accent-2)]/8" />
             <div className="relative">
               <h2 className="text-3xl text-white sm:text-4xl">
-                Tu es coach ?{" "}
-                <span className="px-gradient-text">Rejoins-nous.</span>
+                Tu es coach ? <span className="px-gradient-text">Rejoins-nous.</span>
               </h2>
               <p className="mx-auto mt-3 max-w-md text-sm text-white/70">
-                Crée ton profil, définis tes disponibilités et commence à recevoir des réservations dès aujourd&apos;hui.
+                Cree ton profil, definis tes disponibilites et commence a recevoir des reservations
+                des aujourd&apos;hui.
               </p>
-              <Link href="/auth/register/coach" className="px-button mt-6 inline-flex text-sm px-6 py-3">
+              <Link
+                href="/auth/register/coach"
+                className="px-button mt-6 inline-flex px-6 py-3 text-sm"
+              >
                 <BoltIcon className="h-4 w-4" />
-                Créer mon profil coach
+                Creer mon profil coach
               </Link>
             </div>
           </div>

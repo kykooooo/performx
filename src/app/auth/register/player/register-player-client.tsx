@@ -36,7 +36,7 @@ export default function RegisterPlayerPage() {
   const [email, setEmail] = useState("");
   const [gender, setGender] = useState("");
   const [birthDate, setBirthDate] = useState("");
-  const [city, setCity] = useState("");
+  const [department, setDepartment] = useState("");
   const [level, setLevel] = useState("");
   const [position, setPosition] = useState("");
   const [dominantFoot, setDominantFoot] = useState("");
@@ -89,7 +89,7 @@ export default function RegisterPlayerPage() {
     const next: FieldErrors = {};
     if (!gender) next.gender = "Le genre est requis.";
     if (!birthDate) next.birthDate = "La date de naissance est requise.";
-    if (!city) next.city = "Le departement est requis.";
+    if (!department) next.department = "Le departement est requis.";
     if (!level) next.level = "Le niveau est requis.";
     if (!position) next.position = "Le poste est requis.";
     setErrors(next);
@@ -119,7 +119,7 @@ export default function RegisterPlayerPage() {
         lastName: sanitizeInput(lastName),
         gender,
         birthDate,
-        city,
+        department,
         level,
         position,
         dominantFoot,
@@ -263,13 +263,13 @@ export default function RegisterPlayerPage() {
             </div>
             <div>
               <label className="mb-1 block text-xs text-white/70">Departement <span className="text-[color:var(--px-danger)]">*</span></label>
-              <select className={`px-select ${errors.city ? "border-[color:var(--px-danger)]" : ""}`} value={city} onChange={(e) => { setCity(e.target.value); clearField("city"); }}>
+              <select className={`px-select ${errors.department ? "border-[color:var(--px-danger)]" : ""}`} value={department} onChange={(e) => { setDepartment(e.target.value); clearField("department"); }}>
                 <option value="">Selectionner un departement</option>
                 {DEPARTMENTS.map((department) => (
                   <option key={department} value={department}>{department}</option>
                 ))}
               </select>
-              <FieldError error={errors.city} />
+              <FieldError error={errors.department} />
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>

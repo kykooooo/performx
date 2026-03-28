@@ -102,8 +102,8 @@ export default function PlayerProfileFormSections({
             <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Departement</label>
             <select
               className="px-select mt-2"
-              value={values.city}
-              onChange={(event) => onChange("city", event.target.value)}
+              value={values.department}
+              onChange={(event) => onChange("department", event.target.value)}
             >
               <option value="">Selectionner</option>
               {DEPARTMENTS.map((department) => (

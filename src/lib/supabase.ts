@@ -3,15 +3,16 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 const isTestEnv = process.env.NODE_ENV === "test";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? (isTestEnv ? "http://localhost:54321" : undefined);
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? (isTestEnv ? "test-anon-key" : undefined);
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
 let _client: SupabaseClient | null = null;
 
 function getClient(): SupabaseClient | null {
   if (_client) return _client;
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!isSupabaseConfigured) {
     return null;
   }
-  _client = createClient(supabaseUrl, supabaseAnonKey);
+  _client = createClient(supabaseUrl!, supabaseAnonKey!);
   return _client;
 }
 
@@ -25,7 +26,10 @@ const noopChain: ProxyHandler<object> = {
         if (resolve) resolve(EMPTY_RESULT);
       };
     }
-    return (..._args: unknown[]) => new Proxy({}, noopChain);
+    return (...args: unknown[]) => {
+      void args;
+      return new Proxy({}, noopChain);
+    };
   },
 };
 
