@@ -9,21 +9,35 @@ import { AlertIcon, CalendarIcon, CheckCircleIcon, WhistleIcon } from "@/compone
 import { Notice, type NoticeData } from "@/components/notice";
 import { normalizeTime } from "@/lib/booking";
 import { formatLongDate } from "@/lib/date";
-import { mockCoaches, mockBookings } from "@/lib/mock-data";
+import { parseTextArray } from "@/lib/football";
+import {
+  buildPreparationMessage,
+  buildSessionChecklist,
+  getCoachAudienceLabel,
+  getCoachBestForLabel,
+  getCoachStyleLabel,
+} from "@/lib/football-surface";
+import { mockBookings, mockCoaches } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
 import type { AvailabilitySlot } from "@/lib/types";
 
 const formatSlotLabel = (slot: AvailabilitySlot) => {
   const date = new Date(`${slot.date}T12:00`);
-  return `${formatLongDate(date)} · ${slot.time}`;
+  return `${formatLongDate(date)} - ${slot.time}`;
 };
 
 type CoachRow = {
   id: string;
   name: string;
   speciality: string;
+  location: string | null;
   price_per_session: number | null;
   availability: AvailabilitySlot[] | null;
+  experience_years?: number | null;
+  focus_areas?: string[] | string | null;
+  session_formats?: string[] | string | null;
+  pedagogy?: string | null;
+  certifications?: string[] | string | null;
 };
 
 type BookingRow = {
@@ -60,9 +74,12 @@ export default function BookingClient() {
 
     const fetchData = async () => {
       setLoading(true);
+
       const { data: coachData, error: coachError } = await supabase
         .from("public_coaches")
-        .select("id, name, speciality, price_per_session, availability")
+        .select(
+          "id, name, speciality, location, price_per_session, availability, experience_years, focus_areas, session_formats, pedagogy, certifications",
+        )
         .order("rating", { ascending: false });
 
       if (!mounted) return;
@@ -70,17 +87,22 @@ export default function BookingClient() {
       const rows: CoachRow[] =
         !coachError && coachData && coachData.length > 0
           ? coachData
-          : mockCoaches.map((c) => ({
-              id: c.id,
-              name: c.name,
-              speciality: c.speciality,
-              price_per_session: c.pricePerSession,
-              availability: c.availability,
+          : mockCoaches.map((coach) => ({
+              id: coach.id,
+              name: coach.name,
+              speciality: coach.speciality,
+              location: coach.location,
+              price_per_session: coach.pricePerSession,
+              availability: coach.availability,
+              experience_years: coach.experienceYears ?? null,
+              focus_areas: coach.focusAreas ?? [],
+              session_formats: coach.sessionFormats ?? [],
+              pedagogy: coach.pedagogy ?? null,
+              certifications: coach.certifications ?? [],
             }));
 
       setCoaches(rows);
-      const fallbackCoachId = initialCoachId ?? rows[0]?.id ?? "";
-      setSelectedCoachId(fallbackCoachId);
+      setSelectedCoachId(initialCoachId ?? rows[0]?.id ?? "");
       setLoading(false);
     };
 
@@ -111,11 +133,11 @@ export default function BookingClient() {
           return;
         }
       }
-      // Fallback mock bookings for demo
+
       setBookings(
-        mockBookings.slice(0, 3).map((b) => ({
-          id: b.id,
-          payment_status: b.paymentStatus,
+        mockBookings.slice(0, 3).map((bookingRow) => ({
+          id: bookingRow.id,
+          payment_status: bookingRow.paymentStatus,
         })),
       );
     };
@@ -125,6 +147,7 @@ export default function BookingClient() {
 
   useEffect(() => {
     if (!selectedCoachId) return;
+
     const fetchSessions = async () => {
       const { data, error } = await supabase
         .from("public_sessions")
@@ -149,12 +172,46 @@ export default function BookingClient() {
   }, [selectedCoachId]);
 
   const selectedCoach = useMemo(
-    () => coaches.find((coach) => coach.id === selectedCoachId),
+    () => coaches.find((coach) => coach.id === selectedCoachId) ?? null,
     [coaches, selectedCoachId],
   );
 
+  const selectedCoachFocusAreas = useMemo(
+    () => parseTextArray(selectedCoach?.focus_areas ?? []).slice(0, 3),
+    [selectedCoach?.focus_areas],
+  );
+  const selectedCoachSessionFormats = useMemo(
+    () => parseTextArray(selectedCoach?.session_formats ?? []).slice(0, 3),
+    [selectedCoach?.session_formats],
+  );
+  const selectedCoachCertifications = useMemo(
+    () => parseTextArray(selectedCoach?.certifications ?? []).slice(0, 2),
+    [selectedCoach?.certifications],
+  );
+  const coachStyleLabel = useMemo(
+    () => getCoachStyleLabel(selectedCoach?.speciality ?? "", selectedCoach?.pedagogy),
+    [selectedCoach?.pedagogy, selectedCoach?.speciality],
+  );
+  const coachAudienceLabel = useMemo(
+    () =>
+      getCoachAudienceLabel(
+        parseTextArray(selectedCoach?.session_formats ?? []),
+        selectedCoach?.experience_years ?? null,
+      ),
+    [selectedCoach?.experience_years, selectedCoach?.session_formats],
+  );
+  const coachBestForLabel = useMemo(
+    () =>
+      getCoachBestForLabel(
+        selectedCoach?.speciality ?? "",
+        parseTextArray(selectedCoach?.focus_areas ?? []),
+      ),
+    [selectedCoach?.focus_areas, selectedCoach?.speciality],
+  );
+
   const availableSlots = useMemo(() => {
-    const availability = Array.isArray(selectedCoach?.availability) ? selectedCoach?.availability : [];
+    const availability = Array.isArray(selectedCoach?.availability) ? selectedCoach.availability : [];
+
     return availability.filter((slot) => {
       const normalized = normalizeTime(slot.time);
       return !sessions.some(
@@ -168,6 +225,7 @@ export default function BookingClient() {
 
   const preselectedSlot = useMemo(() => {
     if (!initialDate || !initialTime) return null;
+
     return (
       availableSlots.find(
         (slot) => slot.date === initialDate && normalizeTime(slot.time) === normalizeTime(initialTime),
@@ -176,20 +234,39 @@ export default function BookingClient() {
   }, [availableSlots, initialDate, initialTime]);
 
   const effectiveSelectedSlot = selectedSlot ?? preselectedSlot;
+  const selectedSlotLabel = effectiveSelectedSlot ? formatSlotLabel(effectiveSelectedSlot) : null;
+  const sessionChecklist = useMemo(
+    () =>
+      buildSessionChecklist(
+        selectedCoach?.speciality ?? "",
+        parseTextArray(selectedCoach?.session_formats ?? []),
+        parseTextArray(selectedCoach?.focus_areas ?? []),
+      ),
+    [selectedCoach?.focus_areas, selectedCoach?.session_formats, selectedCoach?.speciality],
+  );
+  const preparationMessage = useMemo(
+    () =>
+      selectedCoach && selectedSlotLabel
+        ? buildPreparationMessage(selectedCoach.name, selectedSlotLabel, selectedCoachFocusAreas)
+        : "",
+    [selectedCoach, selectedCoachFocusAreas, selectedSlotLabel],
+  );
   const bookingStep = useMemo(() => {
     if (!selectedCoachId) return 1;
     if (!effectiveSelectedSlot) return 2;
     return 3;
-  }, [selectedCoachId, effectiveSelectedSlot]);
+  }, [effectiveSelectedSlot, selectedCoachId]);
 
   const handleBook = async () => {
     if (!selectedCoach || !effectiveSelectedSlot) return;
+
     if (!userId) {
-      setNotice({ type: "error", text: "Connecte-toi pour réserver une séance." });
+      setNotice({ type: "error", text: "Connecte-toi pour reserver une seance." });
       return;
     }
 
     setBooking(true);
+
     const { data: bookingPath, error: bookingPathError } = await supabase
       .rpc("create_booking_with_conversation", {
         p_coach_id: selectedCoach.id,
@@ -202,8 +279,8 @@ export default function BookingClient() {
     if (bookingPathError || !bookingPath) {
       const text =
         bookingPathError?.message?.includes("SLOT_ALREADY_BOOKED")
-          ? "Ce créneau vient d'être réservé. Choisis un autre horaire."
-          : bookingPathError?.message ?? "Impossible de réserver.";
+          ? "Ce creneau vient d'etre reserve. Choisis un autre horaire."
+          : bookingPathError?.message ?? "Impossible de reserver.";
       setNotice({ type: "error", text });
       setBooking(false);
       return;
@@ -211,18 +288,18 @@ export default function BookingClient() {
 
     const rpcData = bookingPath as BookingRpcRow;
 
-    setSessions((prev) => [
+    setSessions((current) => [
       {
         date: effectiveSelectedSlot.date,
         time: normalizeTime(effectiveSelectedSlot.time),
         status: "upcoming",
       },
-      ...prev,
+      ...current,
     ]);
-    setBookings((prev) => [{ id: rpcData.booking_id, payment_status: "paid" }, ...prev]);
+    setBookings((current) => [{ id: rpcData.booking_id, payment_status: "paid" }, ...current]);
     setLastBookedCoachId(selectedCoach.id);
     setSelectedSlot(null);
-    setNotice({ type: "success", text: "Séance réservée. Redirection vers la confirmation..." });
+    setNotice({ type: "success", text: "Seance reservee. Redirection vers la confirmation..." });
 
     const nextParams = new URLSearchParams({
       coach: selectedCoach.id,
@@ -231,9 +308,11 @@ export default function BookingClient() {
       time: normalizeTime(effectiveSelectedSlot.time),
       bookingId: rpcData.booking_id,
     });
+
     if (rpcData.conversation_id) {
       nextParams.set("conversationId", rpcData.conversation_id);
     }
+
     router.push(`/booking/confirmation?${nextParams.toString()}`);
   };
 
@@ -245,18 +324,18 @@ export default function BookingClient() {
   return (
     <AppShell
       active="/sessions"
-      title="Réservation"
-      description="Choisis un coach, un créneau disponible et confirme ta séance."
+      title="Reservation"
+      description="Choisis un coach, un creneau disponible et confirme ta seance."
     >
       <section className="px-card px-stack-2 p-4 sm:p-6">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg text-white">Parcours de réservation</h2>
-          <span className="px-pill">Étape {bookingStep} / 3</span>
+          <h2 className="text-lg text-white">Parcours de reservation</h2>
+          <span className="px-pill">Etape {bookingStep} / 3</span>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
           {[
             { id: 1, label: "Coach", icon: <WhistleIcon className="h-4 w-4" /> },
-            { id: 2, label: "Créneau", icon: <CalendarIcon className="h-4 w-4" /> },
+            { id: 2, label: "Creneau", icon: <CalendarIcon className="h-4 w-4" /> },
             { id: 3, label: "Validation", icon: <CheckCircleIcon className="h-4 w-4" /> },
           ].map((step) => (
             <div
@@ -279,14 +358,20 @@ export default function BookingClient() {
           <div className="px-card-strong p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h3 className="text-xl text-white">Sélection du coach</h3>
-                <p className="mt-1 text-xs text-white/70">Réservation automatique si disponible.</p>
+                <h3 className="text-xl text-white">Selection du coach</h3>
+                <p className="mt-1 text-xs text-white/70">Reservation automatique si le creneau est libre.</p>
               </div>
-              <Link href="/coach" className="px-button-ghost">
-                Voir les coachs
+              <Link
+                href={selectedCoach ? `/coach/${selectedCoach.id}` : "/coach"}
+                className="px-button-ghost"
+              >
+                {selectedCoach ? "Voir le profil coach" : "Voir les coachs"}
               </Link>
             </div>
-            <label htmlFor="booking-coach-select" className="sr-only">Sélectionner un coach</label>
+
+            <label htmlFor="booking-coach-select" className="sr-only">
+              Selectionner un coach
+            </label>
             <select
               id="booking-coach-select"
               className="px-select mt-4"
@@ -297,36 +382,41 @@ export default function BookingClient() {
               {coaches.length === 0 && <option value="">Aucun coach disponible</option>}
               {coaches.map((coach) => (
                 <option key={coach.id} value={coach.id}>
-                  {coach.name} · {coach.speciality}
+                  {coach.name} - {coach.speciality}
                 </option>
               ))}
             </select>
+
             <div className="mt-4 space-y-2">
               {loading && (
                 <LoadingState
-                  title="Chargement des disponibilités"
-                  description="Nous récupérons les créneaux de ce coach."
+                  title="Chargement des disponibilites"
+                  description="Nous recuperons les creneaux de ce coach."
                 />
               )}
+
               {!loading && coaches.length === 0 && (
                 <FeedbackState
                   icon={<AlertIcon className="h-7 w-7 text-[color:var(--px-warning)]" />}
                   title="Aucun coach disponible"
-                  description="Ajoute des coachs dans la base pour activer la réservation."
+                  description="Ajoute des coachs dans la base pour activer la reservation."
                   actionLabel="Voir les coachs"
                   actionHref="/coach"
                 />
               )}
+
               {availableSlots.length === 0 && !loading && coaches.length > 0 && (
                 <FeedbackState
                   icon={<CalendarIcon className="h-7 w-7 text-white/35" />}
-                  title="Aucun créneau disponible"
-                  description="Ce coach n'a plus de créneau libre pour le moment."
+                  title="Aucun creneau disponible"
+                  description="Ce coach n'a plus de creneau libre pour le moment."
                 />
               )}
+
               {availableSlots.map((slot) => {
                 const isSelected =
                   effectiveSelectedSlot?.date === slot.date && effectiveSelectedSlot?.time === slot.time;
+
                 return (
                   <button
                     key={`${slot.date}-${slot.time}`}
@@ -340,59 +430,170 @@ export default function BookingClient() {
                     onClick={() => setSelectedSlot(slot)}
                   >
                     <span>{formatSlotLabel(slot)}</span>
-                    <span className="text-[color:var(--px-accent)]">{selectedCoach?.price_per_session ?? 0}€</span>
+                    <span className="text-[color:var(--px-accent)]">
+                      {selectedCoach?.price_per_session ?? 0} EUR
+                    </span>
                   </button>
                 );
               })}
             </div>
+
             <div className="mt-4">
               <Notice notice={notice} />
             </div>
           </div>
+
+          {selectedCoach && (
+            <div className="px-card p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="px-role-kicker text-[color:var(--px-accent)]">Pourquoi ce coach</p>
+                  <h3 className="mt-2 text-lg text-white">{selectedCoach.name}</h3>
+                  <p className="mt-1 text-sm text-white/70">{selectedCoach.speciality}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-context-chip" data-tone="role">
+                    {coachStyleLabel}
+                  </span>
+                  <span className="px-context-chip">{coachBestForLabel}</span>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                <div className="px-role-stat">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Format</p>
+                  <p className="mt-2 text-sm text-white">
+                    {selectedCoachSessionFormats[0] ?? "Seance individuelle"}
+                  </p>
+                  <p className="mt-1 text-xs text-white/60">{coachAudienceLabel}</p>
+                </div>
+                <div className="px-role-stat">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Experience</p>
+                  <p className="mt-2 text-sm text-white">
+                    {selectedCoach.experience_years
+                      ? `${selectedCoach.experience_years} ans terrain`
+                      : "Profil en cours d'enrichissement"}
+                  </p>
+                  <p className="mt-1 text-xs text-white/60">
+                    {selectedCoachCertifications[0] ?? "Diplomes visibles sur le profil"}
+                  </p>
+                </div>
+                <div className="px-role-stat">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Lieu</p>
+                  <p className="mt-2 text-sm text-white">
+                    {selectedCoach.location ?? "Lieu confirme apres validation"}
+                  </p>
+                  <p className="mt-1 text-xs text-white/60">
+                    {selectedCoachFocusAreas[0] ?? "Focus defini avec le coach"}
+                  </p>
+                </div>
+              </div>
+
+              {(selectedCoachFocusAreas.length > 0 || selectedCoachSessionFormats.length > 0) && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {selectedCoachFocusAreas.map((focusArea) => (
+                    <span key={focusArea} className="px-context-chip">
+                      {focusArea}
+                    </span>
+                  ))}
+                  {selectedCoachSessionFormats.map((format) => (
+                    <span key={format} className="px-context-chip">
+                      {format}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="px-card p-6">
-            <h3 className="text-lg text-white">Dernières réservations</h3>
-            <p className="mt-1 text-xs text-white/70">{bookings.length} réservations confirmées.</p>
+            <h3 className="text-lg text-white">Dernieres reservations</h3>
+            <p className="mt-1 text-xs text-white/70">{bookings.length} reservations confirmees.</p>
+
             <div className="mt-4 space-y-3">
               {bookings.length === 0 && (
                 <FeedbackState
                   icon={<CalendarIcon className="h-7 w-7 text-white/35" />}
-                  title="Aucune réservation"
-                  description="Tes réservations confirmées apparaîtront ici."
+                  title="Aucune reservation"
+                  description="Tes reservations confirmees apparaitront ici."
                 />
               )}
-              {bookings.slice(0, 3).map((booking) => (
-                <div key={booking.id} className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm transition duration-200 hover:border-[color:var(--px-accent)]/30">
-                  <p className="text-white">Réservation confirmée</p>
-                  <p className="text-xs text-white/70">Paiement : {booking.payment_status === "paid" ? "Payé" : booking.payment_status === "pending" ? "En attente" : booking.payment_status}</p>
+
+              {bookings.slice(0, 3).map((bookingRow) => (
+                <div
+                  key={bookingRow.id}
+                  className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm transition duration-200 hover:border-[color:var(--px-accent)]/30"
+                >
+                  <p className="text-white">Reservation confirmee</p>
+                  <p className="text-xs text-white/70">
+                    Paiement :{" "}
+                    {bookingRow.payment_status === "paid"
+                      ? "Paye"
+                      : bookingRow.payment_status === "pending"
+                        ? "En attente"
+                        : bookingRow.payment_status}
+                  </p>
                 </div>
               ))}
             </div>
           </div>
         </div>
+
         <div className="px-stack-3">
           <div className="px-card-strong p-6">
-            <h3 className="text-xl text-white">Récapitulatif</h3>
+            <h3 className="text-xl text-white">Recapitulatif</h3>
+
             <div className="mt-4 space-y-3 text-sm text-white/70">
               <div className="flex items-center justify-between">
                 <span>Coach</span>
                 <span className="text-white">{selectedCoach?.name ?? "-"}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span>Créneau</span>
-                <span className="text-white">
-                  {effectiveSelectedSlot ? formatSlotLabel(effectiveSelectedSlot) : "Sélectionne un créneau"}
+                <span>Creneau</span>
+                <span className="text-right text-white">
+                  {effectiveSelectedSlot ? formatSlotLabel(effectiveSelectedSlot) : "Selectionne un creneau"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span>Durée</span>
+                <span>Duree</span>
                 <span className="text-white">{effectiveSelectedSlot?.durationMinutes ?? "-"} min</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Lieu</span>
+                <span className="text-right text-white">
+                  {selectedCoach?.location ?? "Confirme apres validation"}
+                </span>
               </div>
               <div className="px-divider" />
               <div className="flex items-center justify-between text-base">
                 <span>Total</span>
-                <span className="text-white">{selectedCoach?.price_per_session ?? 0}€</span>
+                <span className="text-white">{selectedCoach?.price_per_session ?? 0} EUR</span>
               </div>
             </div>
+
+            <div className="mt-5 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Avant la seance</p>
+                <div className="mt-3 grid gap-2">
+                  {sessionChecklist.map((item) => (
+                    <div key={item} className="flex items-center gap-2 text-sm text-white/75">
+                      <span className="h-2 w-2 rounded-full bg-[color:var(--px-accent)]" />
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="px-divider" />
+
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Message preparatoire</p>
+                <p className="mt-2 text-sm leading-relaxed text-white/75">
+                  {preparationMessage || "Selectionne un creneau pour previsualiser le message de preparation."}
+                </p>
+              </div>
+            </div>
+
             <button
               className="px-button mt-5 w-full"
               type="button"
@@ -400,24 +601,36 @@ export default function BookingClient() {
               disabled={!effectiveSelectedSlot || !selectedCoach || booking}
             >
               {booking ? (
-                <><span className="px-spinner mr-2" /> Réservation en cours...</>
+                <>
+                  <span className="px-spinner mr-2" /> Reservation en cours...
+                </>
               ) : (
-                "Confirmer la réservation"
+                "Confirmer la reservation"
               )}
             </button>
+
             {lastBookedCoachId && (
-              <Link href={`/messages?coach=${lastBookedCoachId}`} className="px-button-ghost mt-3 w-full text-center">
+              <Link
+                href={`/messages?coach=${lastBookedCoachId}${preparationMessage ? `&prefill=${encodeURIComponent(preparationMessage)}` : ""}`}
+                className="px-button-ghost mt-3 w-full text-center"
+              >
                 Ouvrir la conversation
               </Link>
             )}
-            <p className="mt-3 text-xs text-white/70">
-              Paiement direct : le coach est payé immédiatement après confirmation.
-            </p>
+
+            <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4 text-xs text-white/65">
+              <p>Paiement direct : le coach est paye immediatement apres confirmation.</p>
+              <p className="mt-2">
+                Reprogrammation et details logistiques valides dans la conversation une fois la reservation
+                confirmee.
+              </p>
+            </div>
           </div>
+
           <div className="px-card p-6">
             <h3 className="text-lg text-white">Connexion requise</h3>
             <p className="mt-2 text-sm text-white/70">
-              {userId ? "Tu es connecté." : "Connecte-toi pour finaliser la réservation."}
+              {userId ? "Tu es connecte." : "Connecte-toi pour finaliser la reservation."}
             </p>
             {!userId && (
               <Link href="/auth/login" className="px-button mt-4">

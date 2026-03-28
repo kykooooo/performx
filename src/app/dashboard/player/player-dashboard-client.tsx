@@ -13,6 +13,7 @@ import {
   WhistleIcon,
 } from "@/components/icons";
 import { formatLongDate } from "@/lib/date";
+import { LOAD_RECOMMENDATION_LABELS } from "@/lib/football";
 import { fetchPlayerProgression, fetchPlayerSkills, playerProgression, playerSkills, CHART_COLORS } from "@/lib/chart-data";
 import { mockBookings, mockCoaches, mockPlayer, mockSessions } from "@/lib/mock-data";
 import { normalizeSessionFeedback } from "@/lib/session-feedback";
@@ -194,6 +195,7 @@ export default function PlayerDashboardPage() {
     () => normalizeSessionFeedback(completed[0]?.feedback),
     [completed],
   );
+  const nextSession = upcoming[0] ?? null;
 
   const statCards = [
     {
@@ -218,6 +220,7 @@ export default function PlayerDashboardPage() {
 
   return (
     <AppShell active="/dashboard" hideTitle>
+      <div className="px-role-shell" data-role="player">
       <section className="py-8 lg:py-12">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="space-y-4">
@@ -251,6 +254,45 @@ export default function PlayerDashboardPage() {
           </div>
         </div>
       </section>
+
+      {!loading && (
+        <ScrollReveal>
+          <section className="px-role-band mb-6 p-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="px-role-kicker text-[color:var(--px-accent)]">Performance</p>
+                <h2 className="mt-2 text-xl text-white">Lecture terrain de ta progression</h2>
+                <p className="mt-2 max-w-2xl text-sm text-white/70">
+                  Ici, on suit le cycle, la charge et le prochain focus coach plutot qu&apos;un dashboard
+                  trop generique.
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="px-role-stat min-w-[180px]">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Prochain focus</p>
+                  <p className="mt-2 text-sm text-white">
+                    {latestFeedback?.next_focus || "Seance completee pour debloquer le suivi"}
+                  </p>
+                </div>
+                <div className="px-role-stat min-w-[180px]">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Charge</p>
+                  <p className="mt-2 text-sm text-white">
+                    {latestFeedback?.load_recommendation
+                      ? LOAD_RECOMMENDATION_LABELS[latestFeedback.load_recommendation]
+                      : "Charge a calibrer"}
+                  </p>
+                </div>
+                <div className="px-role-stat min-w-[180px]">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Prochaine seance</p>
+                  <p className="mt-2 text-sm text-white">
+                    {nextSession ? formatLongDate(new Date(`${nextSession.date}T12:00`)) : "A programmer"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </ScrollReveal>
+      )}
 
       {loading ? (
         <div className="grid gap-6 md:grid-cols-3">
@@ -453,6 +495,7 @@ export default function PlayerDashboardPage() {
           </div>
         </>
       )}
+      </div>
     </AppShell>
   );
 }

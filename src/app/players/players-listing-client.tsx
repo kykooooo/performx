@@ -19,6 +19,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import { mockPlayers } from "@/lib/mock-data";
 import { SEINE_MARITIME_CITIES } from "@/lib/constants";
+import type { PositionFamily } from "@/lib/types";
 
 type PlayerRow = {
   user_id: string;
@@ -27,7 +28,11 @@ type PlayerRow = {
   city: string | null;
   level: string | null;
   position: string | null;
+  position_family?: string | null;
   objectives: string | null;
+  dominant_foot?: string | null;
+  current_club?: string | null;
+  age_category?: string | null;
   avatar_url: string | null;
   rating: number | null;
   reviews_count: number | null;
@@ -44,7 +49,11 @@ function mapMockToRow(player: (typeof mockPlayers)[number]): PlayerRow {
     city: player.city,
     level: player.level,
     position: player.position,
+    position_family: player.positionFamily ?? null,
     objectives: player.objectives ?? null,
+    dominant_foot: player.dominantFoot ?? null,
+    current_club: player.currentClub ?? null,
+    age_category: player.ageCategory ?? null,
     avatar_url: null,
     rating: player.rating,
     reviews_count: player.reviews,
@@ -66,7 +75,7 @@ export default function PlayersPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from("public_players")
-        .select("user_id, first_name, last_name, city, level, position, objectives, avatar_url, rating, reviews_count")
+        .select("user_id, first_name, last_name, city, level, position, position_family, objectives, dominant_foot, current_club, age_category, avatar_url, rating, reviews_count")
         .order("rating", { ascending: false });
 
       if (!mounted) return;
@@ -335,6 +344,11 @@ export default function PlayersPage() {
                   objectives={player.objectives ?? ""}
                   rating={player.rating ?? 0}
                   reviews={player.reviews_count ?? 0}
+                  ageCategory={player.age_category ?? null}
+                  dominantFoot={player.dominant_foot ?? null}
+                  currentClub={player.current_club ?? null}
+                  positionFamily={(player.position_family as PositionFamily | null) ?? null}
+                  positionObjectives={[]}
                 />
               </ScrollReveal>
             );

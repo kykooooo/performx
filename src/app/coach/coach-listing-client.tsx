@@ -18,9 +18,11 @@ import {
   MapPinIcon,
 } from "@/components/icons";
 import { buildCoachAvatarMap } from "@/lib/coach-avatars";
+import { parseTextArray } from "@/lib/football";
 import { supabase } from "@/lib/supabase";
 import { mockCoaches } from "@/lib/mock-data";
 import { SEINE_MARITIME_CITIES } from "@/lib/constants";
+import type { AvailabilitySlot } from "@/lib/types";
 
 type CoachRow = {
   id: string;
@@ -32,6 +34,12 @@ type CoachRow = {
   rating: number | null;
   reviews_count: number | null;
   avatar_url: string | null;
+  availability?: AvailabilitySlot[] | null;
+  experience_years?: number | null;
+  focus_areas?: string[] | string | null;
+  session_formats?: string[] | string | null;
+  pedagogy?: string | null;
+  certifications?: string[] | string | null;
 };
 
 const SPECIALITY_CHIPS = [
@@ -57,6 +65,12 @@ function mapMockToRow(coach: (typeof mockCoaches)[number]): CoachRow {
     rating: coach.rating,
     reviews_count: coach.reviews,
     avatar_url: null,
+    availability: coach.availability,
+    experience_years: coach.experienceYears ?? null,
+    focus_areas: coach.focusAreas ?? [],
+    session_formats: coach.sessionFormats ?? [],
+    pedagogy: coach.pedagogy ?? null,
+    certifications: coach.certifications ?? [],
   };
 }
 
@@ -75,7 +89,7 @@ export default function CoachPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from("public_coaches")
-        .select("id, name, speciality, bio, location, price_per_session, rating, reviews_count, avatar_url")
+        .select("id, name, speciality, bio, location, price_per_session, rating, reviews_count, avatar_url, availability, experience_years, focus_areas, session_formats, pedagogy, certifications")
         .order("rating", { ascending: false });
 
       if (!mounted) return;
@@ -345,6 +359,12 @@ export default function CoachPage() {
                 price={`${coach.price_per_session ?? 0}€`}
                 rating={coach.rating ?? 0}
                 reviews={coach.reviews_count ?? 0}
+                availability={coach.availability ?? []}
+                experienceYears={coach.experience_years ?? null}
+                focusAreas={parseTextArray(coach.focus_areas ?? [])}
+                sessionFormats={parseTextArray(coach.session_formats ?? [])}
+                pedagogy={coach.pedagogy ?? null}
+                certifications={parseTextArray(coach.certifications ?? [])}
               />
             </ScrollReveal>
           ))}

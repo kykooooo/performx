@@ -168,6 +168,10 @@ export default function CoachDashboardPage() {
     () => sessions.filter((session) => session.status === "completed"),
     [sessions],
   );
+  const pendingFeedbackCount = useMemo(
+    () => completed.filter((session) => !normalizeSessionFeedback(session.feedback)).length,
+    [completed],
+  );
 
   const revenue = (coach?.price_per_session ?? 0) * upcoming.length;
 
@@ -406,6 +410,7 @@ export default function CoachDashboardPage() {
 
   return (
     <AppShell active="/dashboard" hideTitle>
+      <div className="px-role-shell" data-role="coach">
       {/* ── Hero header ── */}
       <section className="py-8 lg:py-12">
         <div className="flex flex-wrap items-start justify-between gap-6">
@@ -436,6 +441,35 @@ export default function CoachDashboardPage() {
           </div>
         </div>
       </section>
+
+      <ScrollReveal>
+        <section className="px-role-band mb-6 p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="px-role-kicker text-[color:var(--px-accent)]">Pilotage</p>
+              <h2 className="mt-2 text-xl text-white">Vue business + terrain</h2>
+              <p className="mt-2 max-w-2xl text-sm text-white/70">
+                Tu pilotes ton planning, ta capacite vendable et les feedbacks a envoyer apres chaque
+                seance.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="px-role-stat min-w-[180px]">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Pipeline</p>
+                <p className="mt-2 text-sm text-white">{upcoming.length} seances planifiees</p>
+              </div>
+              <div className="px-role-stat min-w-[180px]">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Disponibilites</p>
+                <p className="mt-2 text-sm text-white">{availableSlots.length} creneaux ouverts</p>
+              </div>
+              <div className="px-role-stat min-w-[180px]">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Retours a envoyer</p>
+                <p className="mt-2 text-sm text-white">{pendingFeedbackCount} feedbacks en attente</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </ScrollReveal>
 
       {/* ── Stat cards ── */}
       <ScrollReveal>
@@ -944,6 +978,7 @@ export default function CoachDashboardPage() {
         onConfirm={() => confirmAction?.onConfirm()}
         onCancel={() => setConfirmAction(null)}
       />
+      </div>
     </AppShell>
   );
 }

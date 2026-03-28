@@ -89,6 +89,7 @@ export default function ParentDashboardPage() {
     () => sessions.filter((session) => session.status === "upcoming").slice(0, 4),
     [sessions],
   );
+  const nextUpcomingSession = upcomingSessions[0] ?? null;
 
   useEffect(() => {
     let mounted = true;
@@ -303,6 +304,7 @@ export default function ParentDashboardPage() {
 
   return (
     <AppShell active="/dashboard" hideTitle>
+      <div className="px-role-shell" data-role="parent">
       <section className="py-8 lg:py-12">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="space-y-4">
@@ -336,6 +338,45 @@ export default function ParentDashboardPage() {
           </div>
         </div>
       </section>
+
+      {!loading && children.length > 0 && activeChild && (
+        <ScrollReveal>
+          <section className="px-role-band mb-6 p-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="px-role-kicker text-[color:var(--px-success)]">Suivi parent</p>
+                <h2 className="mt-2 text-xl text-white">
+                  Vue claire pour {activeChild.firstName} {activeChild.lastName}
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm text-white/70">
+                  Tu vois la charge du moment, le prochain axe de travail et le prochain rendez-vous sans
+                  devoir dechiffrer des metriques abstraites.
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="px-role-stat min-w-[180px]">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Charge</p>
+                  <p className="mt-2 text-sm text-white">
+                    {LOAD_RECOMMENDATION_LABELS[overview.lastLoadRecommendation]}
+                  </p>
+                </div>
+                <div className="px-role-stat min-w-[180px]">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Prochain focus</p>
+                  <p className="mt-2 text-sm text-white">{overview.nextFocus}</p>
+                </div>
+                <div className="px-role-stat min-w-[180px]">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Prochaine seance</p>
+                  <p className="mt-2 text-sm text-white">
+                    {nextUpcomingSession
+                      ? formatLongDate(new Date(`${nextUpcomingSession.date}T12:00`))
+                      : "A programmer"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </ScrollReveal>
+      )}
 
       {error && (
         <div className="px-card p-6">
@@ -630,6 +671,7 @@ export default function ParentDashboardPage() {
           </div>
         </>
       )}
+      </div>
     </AppShell>
   );
 }

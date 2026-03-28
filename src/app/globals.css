@@ -224,6 +224,111 @@ a {
     pointer-events: none;
     background: radial-gradient(circle at 50% -20%, rgba(255, 106, 0, 0.2), transparent 45%);
   }
+
+  .px-role-shell {
+    position: relative;
+    isolation: isolate;
+    --px-role-accent: var(--px-accent);
+    --px-role-soft: rgba(255, 106, 0, 0.18);
+    --px-role-soft-2: rgba(255, 138, 0, 0.1);
+  }
+
+  .px-role-shell > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .px-role-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    height: 280px;
+    width: 100%;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 12% 0%, var(--px-role-soft), transparent 40%),
+      radial-gradient(circle at 88% 12%, var(--px-role-soft-2), transparent 34%);
+    opacity: 0.9;
+  }
+
+  .px-role-shell[data-role="coach"] {
+    --px-role-accent: #59d890;
+    --px-role-soft: rgba(89, 216, 144, 0.22);
+    --px-role-soft-2: rgba(89, 216, 144, 0.12);
+  }
+
+  .px-role-shell[data-role="player"] {
+    --px-role-accent: #5aa9ff;
+    --px-role-soft: rgba(90, 169, 255, 0.2);
+    --px-role-soft-2: rgba(90, 169, 255, 0.11);
+  }
+
+  .px-role-shell[data-role="parent"] {
+    --px-role-accent: #7ee6c0;
+    --px-role-soft: rgba(126, 230, 192, 0.18);
+    --px-role-soft-2: rgba(126, 230, 192, 0.09);
+  }
+
+  .px-role-band {
+    @apply rounded-[28px] border p-5 shadow-[var(--px-shadow-soft)];
+    border-color: color-mix(in srgb, var(--px-role-accent) 30%, var(--px-border));
+    background:
+      linear-gradient(145deg, color-mix(in srgb, var(--px-role-accent) 18%, transparent), rgba(255, 255, 255, 0.03)),
+      rgba(18, 19, 23, 0.88);
+  }
+
+  .px-role-kicker {
+    @apply inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em];
+    border-color: color-mix(in srgb, var(--px-role-accent) 32%, transparent);
+    background: color-mix(in srgb, var(--px-role-accent) 14%, transparent);
+    color: var(--px-role-accent);
+  }
+
+  .px-role-stat {
+    @apply rounded-2xl border p-4;
+    border-color: color-mix(in srgb, var(--px-role-accent) 24%, var(--px-border));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--px-role-accent) 10%, transparent), rgba(255, 255, 255, 0.02));
+  }
+
+  .px-football-grid {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 26px 26px;
+  }
+
+  .px-football-zone {
+    @apply rounded-2xl border p-4;
+    border-color: rgba(255, 255, 255, 0.08);
+    background:
+      radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--px-role-accent) 16%, transparent), transparent 42%),
+      rgba(255, 255, 255, 0.03);
+  }
+
+  .px-context-chip {
+    @apply inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium;
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .px-context-chip[data-tone="role"] {
+    border-color: color-mix(in srgb, var(--px-role-accent) 30%, transparent);
+    background: color-mix(in srgb, var(--px-role-accent) 14%, transparent);
+    color: var(--px-role-accent);
+  }
+
+  .px-metric-bar {
+    @apply overflow-hidden rounded-full;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .px-metric-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--px-role-accent), color-mix(in srgb, var(--px-role-accent) 58%, white));
+  }
 }
 
 @layer utilities {
@@ -690,6 +795,32 @@ a {
 
 [data-theme="light"] .px-feedback::before {
   background: radial-gradient(circle at 50% -20%, rgba(255, 106, 0, 0.08), transparent 45%);
+}
+
+[data-theme="light"] .px-role-band {
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--px-role-accent) 10%, white), rgba(255, 255, 255, 0.9)),
+    rgba(255, 255, 255, 0.96);
+}
+
+[data-theme="light"] .px-role-stat,
+[data-theme="light"] .px-football-zone,
+[data-theme="light"] .px-context-chip {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: var(--px-border);
+  color: var(--px-muted);
+}
+
+[data-theme="light"] .px-context-chip[data-tone="role"] {
+  border-color: color-mix(in srgb, var(--px-role-accent) 25%, white);
+  background: color-mix(in srgb, var(--px-role-accent) 10%, white);
+  color: color-mix(in srgb, var(--px-role-accent) 75%, black);
+}
+
+[data-theme="light"] .px-football-grid {
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
 }
 
 /* ── Divider ── */

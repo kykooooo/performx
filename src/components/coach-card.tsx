@@ -2,6 +2,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { MapPinIcon, StarIcon, BoltIcon } from "./icons";
 import { getCoachAvatarUrl } from "@/lib/coach-avatars";
+import {
+  getCoachAudienceLabel,
+  getCoachBestForLabel,
+  getCoachStyleLabel,
+  getNextAvailabilityLabel,
+} from "@/lib/football-surface";
+import type { AvailabilitySlot } from "@/lib/types";
 
 type CoachCardProps = {
   reserveHref: string;
@@ -17,6 +24,9 @@ type CoachCardProps = {
   experienceYears?: number | null;
   focusAreas?: string[];
   sessionFormats?: string[];
+  availability?: AvailabilitySlot[] | null;
+  pedagogy?: string | null;
+  certifications?: string[] | null;
 };
 
 export default function CoachCard({
@@ -33,6 +43,9 @@ export default function CoachCard({
   experienceYears,
   focusAreas = [],
   sessionFormats = [],
+  availability,
+  pedagogy,
+  certifications,
 }: CoachCardProps) {
   const initials = name
     .split(" ")
@@ -41,6 +54,11 @@ export default function CoachCard({
     .join("")
     .toUpperCase();
   const resolvedAvatar = getCoachAvatarUrl(avatarUrl, `${name}-${speciality}`);
+  const styleLabel = getCoachStyleLabel(speciality, pedagogy);
+  const audienceLabel = getCoachAudienceLabel(sessionFormats, experienceYears);
+  const bestForLabel = getCoachBestForLabel(speciality, focusAreas);
+  const nextAvailability = getNextAvailabilityLabel(availability);
+  const credentialLabel = certifications?.[0] ?? null;
 
   return (
     <div className="px-card group flex h-full flex-col gap-4 p-4 transition-transform duration-300 hover:translate-y-[-3px]">
@@ -71,9 +89,9 @@ export default function CoachCard({
         </span>
 
         {/* Availability indicator */}
-        <div className="absolute bottom-3 left-4 flex items-center gap-1.5" aria-label="Coach actuellement disponible">
+        <div className="absolute bottom-3 left-4 flex items-center gap-1.5" aria-label={`Prochaine disponibilite ${nextAvailability}`}>
           <span className="inline-flex h-2 w-2 rounded-full bg-[color:var(--px-success)]" />
-          <span className="text-[10px] font-medium text-[color:var(--px-success)]">Disponible</span>
+          <span className="text-[10px] font-medium text-[color:var(--px-success)]">{nextAvailability}</span>
         </div>
 
         {/* Price tag */}
@@ -84,6 +102,17 @@ export default function CoachCard({
 
       {/* Description */}
       <p className="line-clamp-2 text-sm leading-relaxed text-white/70">{description}</p>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-white/50">Style</p>
+          <p className="mt-1 text-sm text-white">{styleLabel}</p>
+        </div>
+        <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-white/50">Best for</p>
+          <p className="mt-1 text-sm text-white">{bestForLabel}</p>
+        </div>
+      </div>
 
       {(focusAreas.length > 0 || experienceYears || sessionFormats.length > 0) && (
         <div className="flex flex-wrap gap-2">
@@ -102,13 +131,20 @@ export default function CoachCard({
               {sessionFormats[0]}
             </span>
           ) : null}
+          <span className="rounded-full border border-[color:var(--px-accent)]/20 bg-[color:var(--px-accent)]/10 px-2.5 py-1 text-[10px] text-[color:var(--px-accent)]">
+            {audienceLabel}
+          </span>
         </div>
       )}
 
-      {/* Location */}
-      <div className="flex items-center gap-2 text-xs text-white/70">
-        <MapPinIcon className="h-4 w-4 shrink-0" />
-        {location}
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div className="flex items-center gap-2 text-xs text-white/70">
+          <MapPinIcon className="h-4 w-4 shrink-0" />
+          {location}
+        </div>
+        <div className="text-xs text-white/70 sm:text-right">
+          {credentialLabel ? `Repere diplome: ${credentialLabel}` : "Formats et cycle sur demande"}
+        </div>
       </div>
 
       {/* Rating bar */}

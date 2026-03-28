@@ -17,6 +17,7 @@ type Conversation = {
   otherUserId: string | null;
   otherName: string;
   role?: string;
+  profileHref?: string;
   avatarSeed?: string;
   unread: number;
   online?: boolean;
@@ -34,12 +35,19 @@ type ProfileRow = {
   user_id: string;
   first_name: string | null;
   last_name: string | null;
+  role?: string | null;
 };
 
 /* ── Helpers ── */
 
 const getAvatar = (seed: string) =>
   `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
+
+const getProfileHref = (role: string | null | undefined, userId: string | null, coachId?: string | null) => {
+  if (role === "coach" && coachId) return `/coach/${coachId}`;
+  if (role === "player" && userId) return `/players/${userId}`;
+  return "/dashboard";
+};
 
 const formatMessageTime = (value: string) => {
   const date = new Date(value);
@@ -92,12 +100,14 @@ const formatListTime = (value: string) => {
 export default function MessagesClient() {
   const searchParams = useSearchParams();
   const coachId = searchParams.get("coach");
+  const prefill = searchParams.get("prefill");
 
   const [userId, setUserId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<MessageRow[]>([]);
-  const [newMessage, setNewMessage] = useState("");
+  const [newMessage, setNewMessage] = useState(() => prefill ?? "");
+  const [composerNotice, setComposerNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
@@ -147,12 +157,21 @@ export default function MessagesClient() {
     const { data: profiles } = otherUserIds.length
       ? await supabase
           .from("profiles")
-          .select("user_id, first_name, last_name")
+          .select("user_id, first_name, last_name, role")
+          .in("user_id", otherUserIds)
+      : { data: [] };
+
+    const { data: coaches } = otherUserIds.length
+      ? await supabase
+          .from("coaches")
+          .select("id, user_id")
           .in("user_id", otherUserIds)
       : { data: [] };
 
     const profileMap = new Map<string, ProfileRow>();
     (profiles ?? []).forEach((profile) => profileMap.set(profile.user_id, profile));
+    const coachMap = new Map<string, string>();
+    (coaches ?? []).forEach((coach) => coachMap.set(coach.user_id, coach.id));
 
     const conversationList: Conversation[] = (convoLinks ?? []).map((link) => {
       const conversationId = link.conversation_id as string;
@@ -168,6 +187,7 @@ export default function MessagesClient() {
       );
       const other = participantsForConversation.find((row) => row.user_id !== currentUserId);
       const profile = other ? profileMap.get(other.user_id) : null;
+      const otherRole = profile?.role ?? null;
       const otherName = profile
         ? [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Utilisateur"
         : "Conversation";
@@ -176,6 +196,8 @@ export default function MessagesClient() {
         created_at: createdAt,
         otherUserId: other?.user_id ?? null,
         otherName,
+        role: otherRole ?? undefined,
+        profileHref: getProfileHref(otherRole, other?.user_id ?? null, coachMap.get(other?.user_id ?? "")),
         avatarSeed: otherName,
         unread: 0,
       };
@@ -224,6 +246,8 @@ export default function MessagesClient() {
                 id: newConversation.id,
                 created_at: newConversation.created_at,
                 otherUserId: coachUserId,
+                role: "coach",
+                profileHref: `/coach/${preferredCoachId}`,
                 otherName:
                   coachProfile
                     ? [coachProfile.first_name, coachProfile.last_name].filter(Boolean).join(" ") || "Coach"
@@ -260,6 +284,12 @@ export default function MessagesClient() {
       otherUserId: c.otherUserId,
       otherName: c.otherName,
       role: c.role,
+      profileHref:
+        c.role === "coach"
+          ? "/coach"
+          : c.role === "player" && c.otherUserId
+            ? `/players/${c.otherUserId}`
+            : "/dashboard",
       avatarSeed: c.avatarSeed,
       unread: c.unread,
       online: c.online,
@@ -382,10 +412,40 @@ export default function MessagesClient() {
     [conversations, activeConversationId],
   );
 
+  useEffect(() => {
+    if (!composerNotice) return;
+    const timeout = setTimeout(() => setComposerNotice(null), 2200);
+    return () => clearTimeout(timeout);
+  }, [composerNotice]);
+
   const totalUnread = useMemo(
     () => Object.values(unreadCounts).reduce((sum, n) => sum + n, 0),
     [unreadCounts],
   );
+
+  const quickTemplates = useMemo(() => {
+    const templates = [
+      "Bonjour, je confirme ma presence 10 min avant la seance.",
+      "Peux-tu me confirmer le lieu exact et ce que je dois apporter ?",
+      "Je veux axer la seance sur mon premier controle et ma prise d'information.",
+      "Si besoin, on peut garder 5 min a la fin pour fixer le prochain focus.",
+    ];
+
+    if (prefill) {
+      return [prefill, ...templates].slice(0, 5);
+    }
+
+    if (activeConversation?.role === "coach") {
+      return templates;
+    }
+
+    return [
+      "Bonjour, je te fais un point rapide avant la seance.",
+      "Peux-tu me partager la consigne principale du prochain cycle ?",
+      "Je confirme que tout est bon de mon cote.",
+      "Dis-moi si tu veux que je t'envoie un rappel ou une note de suivi.",
+    ];
+  }, [activeConversation?.role, prefill]);
 
   // Last message per conversation (for sidebar preview)
   const lastMessageMap = useMemo(() => {
@@ -682,7 +742,7 @@ export default function MessagesClient() {
 
                 {/* Profile link */}
                 <Link
-                  href="/coach"
+                  href={activeConversation.profileHref ?? "/dashboard"}
                   className="hidden shrink-0 items-center gap-1 rounded-full border border-[color:var(--px-border)] px-3 py-1.5 text-xs text-[color:var(--px-text-secondary)] transition hover:border-[color:var(--px-accent)]/40 hover:text-[color:var(--px-accent)] sm:flex"
                 >
                   Voir le profil
@@ -691,6 +751,27 @@ export default function MessagesClient() {
               </div>
 
               {/* ── Messages body ── */}
+              <div className="border-b border-[color:var(--px-border)] px-4 py-3">
+                <div className="flex flex-wrap gap-2">
+                  {quickTemplates.map((template) => (
+                    <button
+                      key={template}
+                      type="button"
+                      onClick={() => {
+                        setNewMessage(template);
+                        inputRef.current?.focus();
+                      }}
+                      className="px-context-chip text-left"
+                    >
+                      {template}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-3 text-xs text-[color:var(--px-text-secondary)]">
+                  Raccourcis utiles avant seance: rappel, consigne, logistique et focus de cycle.
+                </p>
+              </div>
+
               <div className="flex-1 overflow-y-auto px-4 py-4">
                 {messages.length === 0 && !loading && (
                   <div className="flex h-full items-center justify-center">
@@ -749,7 +830,21 @@ export default function MessagesClient() {
 
               {/* ── Input bar ── */}
               <div className="border-t border-[color:var(--px-border)] p-3 sm:p-4">
+                {composerNotice && (
+                  <div className="mb-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-[color:var(--px-text-secondary)]">
+                    {composerNotice}
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setComposerNotice("Pieces jointes et partage de consignes arrivent bientot dans la messagerie.")
+                    }
+                    className="hidden rounded-2xl border border-[color:var(--px-border)] px-3 py-2 text-xs text-[color:var(--px-text-secondary)] transition hover:border-[color:var(--px-accent)]/40 hover:text-[color:var(--px-accent)] sm:inline-flex"
+                  >
+                    + Piece jointe
+                  </button>
                   <div className="flex flex-1 items-center gap-2 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-2.5 transition-colors focus-within:border-[color:var(--px-accent)]/40">
                     <input
                       ref={inputRef}
