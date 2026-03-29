@@ -174,8 +174,7 @@ export default function HomePage() {
               className="px-fade-up max-w-xl text-lg text-white/70"
               style={{ animationDelay: "160ms" }}
             >
-              La plateforme de coaching football qui connecte joueurs motivés, coachs
-              diplômés et parents investis. Réserve ta séance en quelques clics.
+              Trouve le bon coach. Réserve simplement. Progresse vraiment.
             </p>
 
             <div
