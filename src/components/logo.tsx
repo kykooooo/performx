@@ -1,14 +1,18 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-2 text-white">
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-lg font-semibold text-[color:var(--px-accent)]">
-        X
-      </span>
-      <p className="text-lg font-semibold leading-none">
-        Perform<span className="text-[color:var(--px-accent)]">X</span>
-      </p>
+    <Link href="/" aria-label="Retour a l'accueil PerformX" className="shrink-0">
+      <Image
+        src="/brand/performx-logo.jpeg"
+        alt="Logo PerformX"
+        width={768}
+        height={768}
+        priority
+        sizes="(max-width: 768px) 56px, 64px"
+        className="h-14 w-14 object-contain md:h-16 md:w-16"
+      />
     </Link>
   );
 }
