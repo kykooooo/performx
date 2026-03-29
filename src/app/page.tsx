@@ -166,8 +166,8 @@ export default function HomePage() {
               className="px-fade-up text-5xl leading-[1.1] text-white sm:text-6xl lg:text-7xl"
               style={{ animationDelay: "80ms" }}
             >
-              L&apos;excellence du coaching football,{" "}
-              <span className="px-gradient-text">enfin accessible.</span>
+              Le bon coach.{" "}
+              <span className="px-gradient-text">Au bon moment.</span>
             </h1>
 
             <p
