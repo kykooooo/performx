@@ -9,8 +9,8 @@ export default function Footer() {
           <div className="space-y-4">
             <Logo />
             <p className="max-w-xs text-sm text-white/70">
-              Version démo de la plateforme qui connecte joueurs, coachs et parents pour des
-              séances individuelles et un suivi personnalisé.
+              La plateforme qui connecte joueurs, coachs et parents pour des
+              seances individuelles et un suivi personnalise.
             </p>
           </div>
 
@@ -82,7 +82,7 @@ export default function Footer() {
         {/* ── Bottom bar ── */}
         <div className="mt-6 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 md:flex-row">
           <p className="text-xs text-white/50">
-            © 2025 PerformX — Tous droits réservés
+            © 2026 PerformX — Tous droits reserves
           </p>
 
           <nav className="flex flex-wrap items-center gap-4 text-xs text-white/40">

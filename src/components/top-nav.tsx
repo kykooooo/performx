@@ -80,7 +80,7 @@ export default function TopNav({ active }: { active?: string }) {
               La plateforme qui connecte les talents
             </span>
             <span className="hidden rounded-full border border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/12 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--px-accent)] md:inline-flex">
-              Version demo
+              Beta
             </span>
           </div>
 
