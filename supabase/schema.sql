@@ -704,6 +704,11 @@ alter table coaches
   add column if not exists pedagogy text default '',
   add column if not exists department text;
 
+-- Drop views that depend on diplomas/certifications columns before type conversion
+drop view if exists public_coaches;
+drop view if exists public_reviews;
+drop view if exists public_player_reviews;
+
 do $$
 begin
   if exists (
@@ -860,6 +865,7 @@ $$ language plpgsql;
 
 create or replace view public_coaches as
   select id,
+         user_id,
          name,
          speciality,
          bio,

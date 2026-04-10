@@ -451,26 +451,9 @@ ON CONFLICT (id) DO UPDATE SET
   comment = excluded.comment,
   date = excluded.date;
 
--- ═══════════════════════════════════════════
--- Player reviews (coaches evaluating players)
--- ═══════════════════════════════════════════
-
-INSERT INTO player_reviews (id, player_id, coach_id, rating, comment, date)
-VALUES
-  ('60000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001',
-   4, 'Tom progresse bien, bon investissement a chaque seance.', '2026-01-15'),
-  ('60000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000005',
-   5, 'Ines a un vrai potentiel en finition, tres a l ecoute.', '2026-02-01'),
-  ('60000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003',
-   4, 'Lucas se montre courageux dans les duels aeriens.', '2026-01-20'),
-  ('60000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003',
-   5, 'Yanis a des reflexes naturels, beau potentiel.', '2026-02-10'),
-  ('60000000-0000-0000-0000-000000000005', '20000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000004',
-   5, 'Mila lit tres bien le jeu et ses appels sont precis.', '2026-02-20')
-ON CONFLICT (id) DO UPDATE SET
-  rating = excluded.rating,
-  comment = excluded.comment,
-  date = excluded.date;
+-- Player reviews (coaches evaluating players) are skipped in seed
+-- because player_id references auth.users which requires real Auth accounts.
+-- The app's demo mode handles this via mock data instead.
 
 -- Optional: set these env vars in Vercel for one-click demo login on /auth/login
 -- NEXT_PUBLIC_DEMO_COACH_EMAIL=coach.demo@performx.app
