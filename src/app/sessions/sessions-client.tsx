@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/app-shell";
+import ConfirmModal from "@/components/confirm-modal";
 import { FeedbackState, LoadingState } from "@/components/feedback-state";
+import { Notice, type NoticeData } from "@/components/notice";
 import SessionCalendar from "@/components/session-calendar";
 import SessionCalendarMonth from "@/components/session-calendar-month";
-import { CalendarIcon, InboxIcon } from "@/components/icons";
+import { CalendarIcon, CloseIcon, InboxIcon } from "@/components/icons";
 import {
   addDays,
   addMonths,
@@ -15,7 +17,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "@/lib/date";
-import { getSessionsPageData } from "@/lib/data/sessions";
+import { cancelSession, getSessionsPageData } from "@/lib/data/sessions";
 import type { SessionRecord } from "@/lib/data/types";
 
 export default function SessionsPage() {
@@ -26,6 +28,27 @@ export default function SessionsPage() {
   const [viewMode, setViewMode] = useState<"week" | "month">("week");
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<SessionRecord | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [notice, setNotice] = useState<NoticeData>(null);
+
+  const handleCancel = useCallback(async () => {
+    if (!cancelTarget) return;
+    setCancelling(true);
+    const result = await cancelSession(cancelTarget.id);
+    setCancelling(false);
+    setCancelTarget(null);
+
+    if (result.error) {
+      setNotice({ type: "error", text: result.error });
+    } else {
+      setNotice({ type: "success", text: "Seance annulee avec succes." });
+      // Update local state
+      setSessions((prev) =>
+        prev.map((s) => (s.id === cancelTarget.id ? { ...s, status: "cancelled" as const } : s)),
+      );
+    }
+  }, [cancelTarget]);
 
   useEffect(() => {
     let mounted = true;
@@ -101,10 +124,22 @@ export default function SessionsPage() {
                   key={session.id}
                   className="rounded-xl border border-white/10 bg-white/5 p-3 transition duration-200 hover:border-[color:var(--px-accent)]/30"
                 >
-                  <p className="text-sm font-semibold text-white">{session.title}</p>
-                  <p className="text-xs text-white/70">
-                    {coachLookup[session.coachId] ?? session.coachName ?? "Coach"}
-                  </p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-white">{session.title}</p>
+                      <p className="text-xs text-white/70">
+                        {coachLookup[session.coachId] ?? session.coachName ?? "Coach"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      title="Annuler cette seance"
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/50 transition hover:border-[color:var(--px-danger)]/40 hover:text-[color:var(--px-danger)]"
+                      onClick={() => setCancelTarget(session)}
+                    >
+                      <CloseIcon className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                   <div className="mt-2 flex items-center justify-between text-xs text-white/70">
                     <span>{formatLongDate(new Date(`${session.date}T12:00`))}</span>
                     <span>{session.time}</span>
@@ -209,6 +244,22 @@ export default function SessionsPage() {
           )}
         </div>
       </div>
+
+      <Notice notice={notice} />
+
+      <ConfirmModal
+        open={!!cancelTarget}
+        title="Annuler cette seance ?"
+        description={
+          cancelTarget
+            ? `Tu es sur le point d'annuler la seance "${cancelTarget.title}" du ${formatLongDate(new Date(`${cancelTarget.date}T12:00`))} a ${cancelTarget.time}. L'annulation est possible jusqu'a 24h avant la seance.`
+            : ""
+        }
+        confirmLabel={cancelling ? "Annulation..." : "Confirmer l'annulation"}
+        tone="danger"
+        onConfirm={handleCancel}
+        onCancel={() => setCancelTarget(null)}
+      />
     </AppShell>
   );
 }

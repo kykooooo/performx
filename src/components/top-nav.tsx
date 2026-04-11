@@ -1,12 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Logo from "./logo";
 import ThemeToggle from "./theme-toggle";
-import { supabase } from "@/lib/supabase";
+import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import {
   CalendarIcon,
   ChatIcon,
@@ -25,44 +25,75 @@ type NavItem = {
   icon: ReactNode;
 };
 
-const UNREAD_COUNT = MOCK_TOTAL_UNREAD;
-
-const NAV_ITEMS: NavItem[] = [
-  { label: "Accueil", href: "/", icon: <HomeIcon className="h-4 w-4" /> },
-  { label: "Coach", href: "/coach", icon: <WhistleIcon className="h-4 w-4" /> },
-  { label: "Joueurs", href: "/players", icon: <UserIcon className="h-4 w-4" /> },
-  { label: "Mes séances", href: "/sessions", icon: <CalendarIcon className="h-4 w-4" /> },
-  {
-    label: "Messages",
-    href: "/messages",
-    icon: (
-      <span className="relative">
-        <ChatIcon className="h-4 w-4" />
-        {UNREAD_COUNT > 0 && (
-          <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[color:var(--px-danger)] px-1 text-[9px] font-bold leading-none text-white">
-            {UNREAD_COUNT}
-          </span>
-        )}
-      </span>
-    ),
-  },
-  { label: "Dashboard", href: "/dashboard", icon: <GridIcon className="h-4 w-4" /> },
-];
+function UnreadBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[color:var(--px-danger)] px-1 text-[9px] font-bold leading-none text-white">
+      {count}
+    </span>
+  );
+}
 
 export default function TopNav({ active }: { active?: string }) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnread = useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      setUnreadCount(MOCK_TOTAL_UNREAD);
+      return;
+    }
+    const { data } = await supabase.rpc("get_total_unread_count");
+    if (typeof data === "number") setUnreadCount(data);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      setLoggedIn(!!data.user);
+      const isLoggedIn = !!data.user;
+      setLoggedIn(isLoggedIn);
+      if (isLoggedIn) fetchUnread();
+      else setUnreadCount(0);
     });
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      setLoggedIn(!!session?.user);
+      const isLoggedIn = !!session?.user;
+      setLoggedIn(isLoggedIn);
+      if (isLoggedIn) fetchUnread();
+      else setUnreadCount(0);
     });
     return () => { data.subscription.unsubscribe(); };
-  }, []);
+  }, [fetchUnread]);
+
+  // Refresh unread count when new messages arrive via Realtime
+  useEffect(() => {
+    if (!loggedIn || !isSupabaseConfigured) return;
+    const channel = supabase
+      .channel("nav-unread")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
+        fetchUnread();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [loggedIn, fetchUnread]);
+
+  const navItems: NavItem[] = useMemo(() => [
+    { label: "Accueil", href: "/", icon: <HomeIcon className="h-4 w-4" /> },
+    { label: "Coach", href: "/coach", icon: <WhistleIcon className="h-4 w-4" /> },
+    { label: "Joueurs", href: "/players", icon: <UserIcon className="h-4 w-4" /> },
+    { label: "Mes séances", href: "/sessions", icon: <CalendarIcon className="h-4 w-4" /> },
+    {
+      label: "Messages",
+      href: "/messages",
+      icon: (
+        <span className="relative">
+          <ChatIcon className="h-4 w-4" />
+          <UnreadBadge count={unreadCount} />
+        </span>
+      ),
+    },
+    { label: "Dashboard", href: "/dashboard", icon: <GridIcon className="h-4 w-4" /> },
+  ], [unreadCount]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -86,7 +117,7 @@ export default function TopNav({ active }: { active?: string }) {
 
           {/* Desktop nav */}
           <nav aria-label="Navigation principale" className="hidden items-center gap-1 text-sm lg:flex">
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const isActive = active === item.href;
               return (
                 <Link
@@ -171,7 +202,7 @@ export default function TopNav({ active }: { active?: string }) {
         </div>
 
         <nav aria-label="Navigation mobile" className="flex-1 space-y-1 p-4">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const isActive = active === item.href;
             return (
               <Link

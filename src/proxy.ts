@@ -1,6 +1,51 @@
+import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-export function proxy(request: NextRequest) {
+const PROTECTED_PREFIXES = ["/dashboard", "/booking", "/sessions", "/messages"];
+
+async function checkAuth(request: NextRequest): Promise<NextResponse | null> {
+  const { pathname } = request.nextUrl;
+  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+  if (!isProtected) return null;
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseAnonKey) return null; // demo mode — skip
+
+  let response = NextResponse.next({ request });
+
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        response = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options),
+        );
+      },
+    },
+  });
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    const loginUrl = new URL("/auth/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return null; // authenticated — continue to security headers
+}
+
+export async function proxy(request: NextRequest) {
+  // --- Auth gate for protected routes ---
+  const authRedirect = await checkAuth(request);
+  if (authRedirect) return authRedirect;
+
+  // --- CSP + security headers ---
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
 
   const csp = [
@@ -20,7 +65,6 @@ export function proxy(request: NextRequest) {
     request: { headers: requestHeaders },
   });
 
-  // Security headers
   response.headers.set("Content-Security-Policy", csp);
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -31,9 +75,8 @@ export function proxy(request: NextRequest) {
     "max-age=63072000; includeSubDomains; preload",
   );
 
-  // Cache-Control: public pages are cacheable, private pages are not
   const { pathname } = request.nextUrl;
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/booking") || pathname.startsWith("/sessions") || pathname.startsWith("/messages")) {
+  if (PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))) {
     response.headers.set("Cache-Control", "private, no-store");
   } else if (pathname.startsWith("/auth")) {
     response.headers.set("Cache-Control", "private, no-cache");

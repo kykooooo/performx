@@ -8,7 +8,7 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     globals: true,
-    exclude: [...configDefaults.exclude, ".claude/**", "**/.claude/**", "**/.next/**"],
+    exclude: [...configDefaults.exclude, ".claude/**", "**/.claude/**", "**/.next/**", "e2e/**"],
   },
   resolve: {
     alias: {

@@ -86,10 +86,10 @@ export default function Footer() {
           </p>
 
           <nav className="flex flex-wrap items-center gap-4 text-xs text-white/40">
-            <Link href="#" className="hover:text-white/70 transition-colors">Mentions légales</Link>
-            <Link href="#" className="hover:text-white/70 transition-colors">CGU</Link>
-            <Link href="#" className="hover:text-white/70 transition-colors">Confidentialité</Link>
-            <Link href="#" className="hover:text-white/70 transition-colors">Contact</Link>
+            <Link href="/legal/mentions" className="hover:text-white/70 transition-colors">Mentions légales</Link>
+            <Link href="/legal/cgu" className="hover:text-white/70 transition-colors">CGU</Link>
+            <Link href="/legal/confidentialite" className="hover:text-white/70 transition-colors">Confidentialité</Link>
+            <Link href="/contact" className="hover:text-white/70 transition-colors">Contact</Link>
           </nav>
 
           <div className="flex items-center gap-3">

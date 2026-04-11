@@ -7,6 +7,8 @@ import type { DataResult, PlayerRecord } from "./types";
 export const PUBLIC_PLAYER_SELECT =
   "user_id, first_name, last_name, city, level, position, position_family, objectives, dominant_foot, current_club, age_category, avatar_url, rating, reviews_count";
 
+export const PLAYER_PAGE_SIZE = 12;
+
 function getMockPlayerDirectory() {
   return mockPlayers.map(mapMockPlayerToPlayerRecord);
 }
@@ -24,6 +26,37 @@ export async function getPlayerDirectory() {
     },
     loadDemo: getMockPlayerDirectory,
     isEmpty: (rows) => rows.length === 0,
+  });
+}
+
+export async function getPlayerDirectoryPaginated(page: number, pageSize = PLAYER_PAGE_SIZE) {
+  const from = page * pageSize;
+  const to = from + pageSize - 1;
+
+  return withPublicFallback({
+    loadLive: async () => {
+      const { data, error, count } = await supabase
+        .from("public_players")
+        .select(PUBLIC_PLAYER_SELECT, { count: "exact" })
+        .order("rating", { ascending: false })
+        .range(from, to);
+
+      if (error) throw error;
+      return {
+        items: (data ?? []).map(mapPlayerLikeToPlayerRecord),
+        total: count ?? 0,
+        hasMore: (count ?? 0) > to + 1,
+      };
+    },
+    loadDemo: () => {
+      const all = getMockPlayerDirectory();
+      return {
+        items: all.slice(from, to + 1),
+        total: all.length,
+        hasMore: all.length > to + 1,
+      };
+    },
+    isEmpty: (result) => result.items.length === 0 && page === 0,
   });
 }
 

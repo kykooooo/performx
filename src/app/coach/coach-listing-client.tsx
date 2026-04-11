@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/app-shell";
 import CoachCard from "@/components/coach-card";
@@ -19,7 +19,7 @@ import {
 } from "@/components/icons";
 import { buildCoachAvatarMap } from "@/lib/coach-avatars";
 import { SEINE_MARITIME_CITIES } from "@/lib/constants";
-import { getCoachDirectory } from "@/lib/data/coaches";
+import { getCoachDirectoryPaginated } from "@/lib/data/coaches";
 import type { CoachRecord } from "@/lib/data/types";
 
 const SPECIALITY_CHIPS = [
@@ -37,6 +37,10 @@ const SPECIALITY_CHIPS = [
 export default function CoachPage() {
   const [coaches, setCoaches] = useState<CoachRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [activeChip, setActiveChip] = useState<(typeof SPECIALITY_CHIPS)[number]>("Tous");
@@ -44,34 +48,29 @@ export default function CoachPage() {
   const [sortBy, setSortBy] = useState<"rating" | "price-asc" | "price-desc" | "name">("rating");
   const [isDemo, setIsDemo] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
+  const fetchPage = useCallback(async (pageNum: number, append: boolean) => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
+    setError(null);
 
-    const fetchCoaches = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const result = await getCoachDirectory();
-        if (!mounted) return;
-        setCoaches(result.data);
-        setIsDemo(result.mode === "demo");
-      } catch {
-        if (!mounted) return;
-        setError("Impossible de charger les coachs.");
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchCoaches();
-
-    return () => {
-      mounted = false;
-    };
+    try {
+      const result = await getCoachDirectoryPaginated(pageNum);
+      setCoaches((prev) => append ? [...prev, ...result.data.items] : result.data.items);
+      setHasMore(result.data.hasMore);
+      setTotal(result.data.total);
+      setIsDemo(result.mode === "demo");
+      setPage(pageNum);
+    } catch {
+      setError("Impossible de charger les coachs.");
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchPage(0, false);
+  }, [fetchPage]);
 
   const filteredCoaches = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -304,30 +303,45 @@ export default function CoachPage() {
       )}
 
       {!loading && filteredCoaches.length > 0 && (
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {filteredCoaches.map((coach, index) => (
-            <ScrollReveal key={coach.id} delay={index * 60}>
-              <CoachCard
-                reserveHref={`/booking?coach=${coach.id}`}
-                profileHref={`/coach/${coach.id}`}
-                avatarUrl={coachAvatarMap.get(coach.id) ?? coach.avatarUrl}
-                name={coach.name}
-                speciality={coach.speciality}
-                description={coach.bio ?? ""}
-                location={coach.location ?? coach.department ?? ""}
-                price={`${coach.pricePerSession ?? 0} EUR`}
-                rating={coach.rating ?? 0}
-                reviews={coach.reviewsCount}
-                availability={coach.availability}
-                experienceYears={coach.experienceYears}
-                focusAreas={coach.focusAreas}
-                sessionFormats={coach.sessionFormats}
-                pedagogy={coach.pedagogy}
-                certifications={coach.certifications}
-              />
-            </ScrollReveal>
-          ))}
-        </div>
+        <>
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {filteredCoaches.map((coach, index) => (
+              <ScrollReveal key={coach.id} delay={index * 60}>
+                <CoachCard
+                  reserveHref={`/booking?coach=${coach.id}`}
+                  profileHref={`/coach/${coach.id}`}
+                  avatarUrl={coachAvatarMap.get(coach.id) ?? coach.avatarUrl}
+                  name={coach.name}
+                  speciality={coach.speciality}
+                  description={coach.bio ?? ""}
+                  location={coach.location ?? coach.department ?? ""}
+                  price={`${coach.pricePerSession ?? 0} EUR`}
+                  rating={coach.rating ?? 0}
+                  reviews={coach.reviewsCount}
+                  availability={coach.availability}
+                  experienceYears={coach.experienceYears}
+                  focusAreas={coach.focusAreas}
+                  sessionFormats={coach.sessionFormats}
+                  pedagogy={coach.pedagogy}
+                  certifications={coach.certifications}
+                />
+              </ScrollReveal>
+            ))}
+          </div>
+
+          {hasMore && (
+            <div className="flex justify-center pt-6">
+              <button
+                type="button"
+                className="px-button-ghost px-8 py-3 text-sm"
+                disabled={loadingMore}
+                onClick={() => fetchPage(page + 1, true)}
+              >
+                {loadingMore ? <><span className="px-spinner mr-2" /> Chargement...</> : `Voir plus de coachs (${total - coaches.length} restants)`}
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       <ScrollReveal>

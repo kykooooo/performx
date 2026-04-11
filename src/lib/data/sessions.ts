@@ -1,5 +1,5 @@
 import { mockCoaches, mockSessions } from "@/lib/mock-data";
-import { supabase } from "@/lib/supabase";
+import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { demoResult, liveResult } from "./core";
 import { mapMockSessionToSessionRecord, mapSessionLikeToSessionRecord } from "./mappers";
 import type { DataResult, SessionRecord } from "./types";
@@ -78,4 +78,26 @@ export async function getSessionsPageData(): Promise<DataResult<SessionsPageData
       "error",
     );
   }
+}
+
+export async function cancelSession(sessionId: string): Promise<{ error?: string }> {
+  if (!isSupabaseConfigured) {
+    // Demo mode: simulate cancellation
+    return {};
+  }
+
+  const { error } = await supabase.rpc("cancel_session", { p_session_id: sessionId });
+
+  if (error) {
+    const code = error.message;
+    if (code.includes("TOO_LATE_TO_CANCEL")) {
+      return { error: "Annulation impossible moins de 24h avant la seance." };
+    }
+    if (code.includes("SESSION_NOT_CANCELLABLE")) {
+      return { error: "Cette seance ne peut pas etre annulee." };
+    }
+    return { error: error.message };
+  }
+
+  return {};
 }

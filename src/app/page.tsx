@@ -14,10 +14,12 @@ import {
   StarIcon,
   UsersIcon,
 } from "@/components/icons";
+import dynamic from "next/dynamic";
 import { SITE_URL } from "@/lib/constants";
-import PublicStats from "@/components/public-stats";
-import FeaturedCoaches from "@/components/featured-coaches";
 import ScrollReveal from "@/components/scroll-reveal";
+
+const PublicStats = dynamic(() => import("@/components/public-stats"));
+const FeaturedCoaches = dynamic(() => import("@/components/featured-coaches"));
 
 const STEPS = [
   {

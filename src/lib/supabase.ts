@@ -1,6 +1,8 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
 const isTestEnv = process.env.NODE_ENV === "test";
+const isBrowser = typeof window !== "undefined";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? (isTestEnv ? "http://localhost:54321" : undefined);
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? (isTestEnv ? "test-anon-key" : undefined);
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
@@ -12,7 +14,11 @@ function getClient(): SupabaseClient | null {
   if (!isSupabaseConfigured) {
     return null;
   }
-  _client = createClient(supabaseUrl!, supabaseAnonKey!);
+  // Browser: cookie-based auth so middleware can verify sessions
+  // Server/test: standard client (localStorage)
+  _client = isBrowser && !isTestEnv
+    ? createBrowserClient(supabaseUrl!, supabaseAnonKey!)
+    : createClient(supabaseUrl!, supabaseAnonKey!);
   return _client;
 }
 

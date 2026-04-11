@@ -102,6 +102,6 @@ describe("sanitizeInput", () => {
   it("laisse passer le texte normal", () => {
     expect(sanitizeInput("Jean Dupont")).toBe("Jean Dupont");
     expect(sanitizeInput("Coach à Rouen, 12 ans d'exp.")).toBe("Coach à Rouen, 12 ans d'exp.");
-    expect(sanitizeInput("3 < 5 et 10 > 7")).toBe("3  7");
+    expect(sanitizeInput("3 < 5 et 10 > 7")).toBe("3 < 5 et 10 > 7");
   });
 });

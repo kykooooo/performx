@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/app-shell";
 import { FeedbackState } from "@/components/feedback-state";
@@ -17,7 +17,7 @@ import {
   AlertIcon,
 } from "@/components/icons";
 import { SEINE_MARITIME_CITIES } from "@/lib/constants";
-import { getPlayerDirectory } from "@/lib/data/players";
+import { getPlayerDirectoryPaginated } from "@/lib/data/players";
 import type { PlayerRecord } from "@/lib/data/types";
 
 const LEVEL_CHIPS = ["Tous", "Debutant", "Intermediaire", "Confirme", "Elite"] as const;
@@ -30,6 +30,10 @@ const normalizeLevelKey = (value: string | null | undefined) =>
 export default function PlayersPage() {
   const [players, setPlayers] = useState<PlayerRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [activeLevel, setActiveLevel] = useState<(typeof LEVEL_CHIPS)[number]>("Tous");
@@ -37,34 +41,29 @@ export default function PlayersPage() {
   const [cityFilter, setCityFilter] = useState("");
   const [isDemo, setIsDemo] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
+  const fetchPage = useCallback(async (pageNum: number, append: boolean) => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
+    setError(null);
 
-    const fetchPlayers = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const result = await getPlayerDirectory();
-        if (!mounted) return;
-        setPlayers(result.data);
-        setIsDemo(result.mode === "demo");
-      } catch {
-        if (!mounted) return;
-        setError("Impossible de charger les joueurs.");
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchPlayers();
-
-    return () => {
-      mounted = false;
-    };
+    try {
+      const result = await getPlayerDirectoryPaginated(pageNum);
+      setPlayers((prev) => append ? [...prev, ...result.data.items] : result.data.items);
+      setHasMore(result.data.hasMore);
+      setTotal(result.data.total);
+      setIsDemo(result.mode === "demo");
+      setPage(pageNum);
+    } catch {
+      setError("Impossible de charger les joueurs.");
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchPage(0, false);
+  }, [fetchPage]);
 
   const positions = useMemo(
     () => Array.from(new Set(players.map((player) => player.position).filter(Boolean))) as string[],
@@ -303,28 +302,43 @@ export default function PlayersPage() {
       )}
 
       {!loading && filteredPlayers.length > 0 && (
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {filteredPlayers.map((player, index) => (
-            <ScrollReveal key={player.id} delay={index * 60}>
-              <PlayerCard
-                profileHref={`/players/${player.id}`}
-                avatarUrl={player.avatarUrl}
-                name={player.name}
-                level={player.level ?? "Niveau a definir"}
-                position={player.position ?? "Joueur"}
-                city={player.city ?? "Localisation non definie"}
-                objectives={player.objectives ?? undefined}
-                rating={player.rating ?? 0}
-                reviews={player.reviewsCount}
-                ageCategory={player.ageCategory ?? null}
-                dominantFoot={player.dominantFoot ?? null}
-                currentClub={player.currentClub ?? null}
-                positionFamily={player.positionFamily ?? null}
-                positionObjectives={player.positionObjectives}
-              />
-            </ScrollReveal>
-          ))}
-        </div>
+        <>
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {filteredPlayers.map((player, index) => (
+              <ScrollReveal key={player.id} delay={index * 60}>
+                <PlayerCard
+                  profileHref={`/players/${player.id}`}
+                  avatarUrl={player.avatarUrl}
+                  name={player.name}
+                  level={player.level ?? "Niveau a definir"}
+                  position={player.position ?? "Joueur"}
+                  city={player.city ?? "Localisation non definie"}
+                  objectives={player.objectives ?? undefined}
+                  rating={player.rating ?? 0}
+                  reviews={player.reviewsCount}
+                  ageCategory={player.ageCategory ?? null}
+                  dominantFoot={player.dominantFoot ?? null}
+                  currentClub={player.currentClub ?? null}
+                  positionFamily={player.positionFamily ?? null}
+                  positionObjectives={player.positionObjectives}
+                />
+              </ScrollReveal>
+            ))}
+          </div>
+
+          {hasMore && (
+            <div className="flex justify-center pt-6">
+              <button
+                type="button"
+                className="px-button-ghost px-8 py-3 text-sm"
+                disabled={loadingMore}
+                onClick={() => fetchPage(page + 1, true)}
+              >
+                {loadingMore ? <><span className="px-spinner mr-2" /> Chargement...</> : `Voir plus de joueurs (${total - players.length} restants)`}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </AppShell>
   );

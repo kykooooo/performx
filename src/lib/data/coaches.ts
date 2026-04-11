@@ -8,6 +8,8 @@ import type { CoachRecord, DataResult } from "./types";
 export const PUBLIC_COACH_SELECT =
   "id, user_id, name, speciality, bio, location, department, price_per_session, rating, reviews_count, availability, avatar_url, diplomas, experience_years, certifications, focus_areas, session_formats, pedagogy";
 
+export const COACH_PAGE_SIZE = 12;
+
 function getMockCoachDirectory(limit?: number) {
   const rows = mockCoaches.map(mapMockCoachToCoachRecord);
   return typeof limit === "number" ? rows.slice(0, limit) : rows;
@@ -29,6 +31,37 @@ export async function getCoachDirectory(limit?: number) {
     },
     loadDemo: () => getMockCoachDirectory(limit),
     isEmpty: (rows) => rows.length === 0,
+  });
+}
+
+export async function getCoachDirectoryPaginated(page: number, pageSize = COACH_PAGE_SIZE) {
+  const from = page * pageSize;
+  const to = from + pageSize - 1;
+
+  return withPublicFallback({
+    loadLive: async () => {
+      const { data, error, count } = await supabase
+        .from("public_coaches")
+        .select(PUBLIC_COACH_SELECT, { count: "exact" })
+        .order("rating", { ascending: false })
+        .range(from, to);
+
+      if (error) throw error;
+      return {
+        items: (data ?? []).map(mapCoachLikeToCoachRecord),
+        total: count ?? 0,
+        hasMore: (count ?? 0) > to + 1,
+      };
+    },
+    loadDemo: () => {
+      const all = getMockCoachDirectory();
+      return {
+        items: all.slice(from, to + 1),
+        total: all.length,
+        hasMore: all.length > to + 1,
+      };
+    },
+    isEmpty: (result) => result.items.length === 0 && page === 0,
   });
 }
 

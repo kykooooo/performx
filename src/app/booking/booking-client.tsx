@@ -7,6 +7,7 @@ import AppShell from "@/components/app-shell";
 import { FeedbackState, LoadingState } from "@/components/feedback-state";
 import { AlertIcon, CalendarIcon, CheckCircleIcon, WhistleIcon } from "@/components/icons";
 import { Notice, type NoticeData } from "@/components/notice";
+import SlotCalendar from "@/components/slot-calendar";
 import { normalizeTime } from "@/lib/booking";
 import {
   createBookingReservation,
@@ -14,7 +15,7 @@ import {
   getReservedCoachSessions,
 } from "@/lib/data/booking";
 import type { BookingRecord, CoachRecord } from "@/lib/data/types";
-import { formatLongDate } from "@/lib/date";
+import { addDays, formatLongDate, startOfWeek, toISODate } from "@/lib/date";
 import {
   buildPreparationMessage,
   buildSessionChecklist,
@@ -47,6 +48,7 @@ export default function BookingClient() {
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(false);
   const [isDemo, setIsDemo] = useState(false);
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
 
   useEffect(() => {
     let mounted = true;
@@ -134,6 +136,14 @@ export default function BookingClient() {
       );
     });
   }, [selectedCoach, sessions]);
+
+  const weekSlots = useMemo(() => {
+    const weekStartKey = toISODate(weekStart);
+    const weekEndKey = toISODate(addDays(weekStart, 6));
+    return availableSlots.filter(
+      (slot) => slot.date >= weekStartKey && slot.date <= weekEndKey,
+    );
+  }, [availableSlots, weekStart]);
 
   const preselectedSlot = useMemo(() => {
     if (!initialDate || !initialTime) return null;
@@ -301,7 +311,7 @@ export default function BookingClient() {
               ))}
             </select>
 
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-3">
               {loading && (
                 <LoadingState
                   title="Chargement des disponibilites"
@@ -327,29 +337,33 @@ export default function BookingClient() {
                 />
               )}
 
-              {availableSlots.map((slot) => {
-                const isSelected =
-                  effectiveSelectedSlot?.date === slot.date && effectiveSelectedSlot?.time === slot.time;
-
-                return (
-                  <button
-                    key={`${slot.date}-${slot.time}`}
-                    type="button"
-                    aria-pressed={isSelected}
-                    className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-sm transition duration-200 ${
-                      isSelected
-                        ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-white"
-                        : "border-white/10 bg-white/5 text-white/80 hover:border-[color:var(--px-accent)] hover:bg-white/10"
-                    }`}
-                    onClick={() => setSelectedSlot(slot)}
-                  >
-                    <span>{formatSlotLabel(slot)}</span>
-                    <span className="text-[color:var(--px-accent)]">
-                      {selectedCoach?.pricePerSession ?? 0} EUR
-                    </span>
-                  </button>
-                );
-              })}
+              {!loading && availableSlots.length > 0 && (
+                <>
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      className="px-button-ghost"
+                      type="button"
+                      onClick={() => setWeekStart((previous) => addDays(previous, -7))}
+                    >
+                      {"<"}
+                    </button>
+                    <span className="px-pill text-xs">Semaine du {formatLongDate(weekStart)}</span>
+                    <button
+                      className="px-button-ghost"
+                      type="button"
+                      onClick={() => setWeekStart((previous) => addDays(previous, 7))}
+                    >
+                      {">"}
+                    </button>
+                  </div>
+                  <SlotCalendar
+                    slots={weekSlots}
+                    selectedSlot={effectiveSelectedSlot}
+                    onSelectSlot={setSelectedSlot}
+                    weekStart={weekStart}
+                  />
+                </>
+              )}
             </div>
 
             <div className="mt-4">

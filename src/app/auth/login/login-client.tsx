@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import AuthShell from "@/components/auth-shell";
 import { FieldError, Notice, type NoticeData } from "@/components/notice";
 import { syncProfile } from "@/lib/profile-sync";
@@ -14,6 +15,10 @@ import { validateEmail, validatePassword, type FieldErrors } from "@/lib/validat
 const DEMO_ENABLED = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
+
   const demoCoachEmail = DEMO_ENABLED ? (process.env.NEXT_PUBLIC_DEMO_COACH_EMAIL ?? "") : "";
   const demoCoachPassword = DEMO_ENABLED ? (process.env.NEXT_PUBLIC_DEMO_COACH_PASSWORD ?? "") : "";
   const demoPlayerEmail = DEMO_ENABLED ? (process.env.NEXT_PUBLIC_DEMO_PLAYER_EMAIL ?? "") : "";
@@ -52,6 +57,10 @@ export default function LoginPage() {
         syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
       }
       setNotice({ type: "success", text: "Connexion réussie." });
+      // Redirect to the page the user was trying to access, or let AuthListener handle default
+      if (redirectTo && redirectTo.startsWith("/")) {
+        router.replace(redirectTo);
+      }
     }
     setLoading(false);
   };
