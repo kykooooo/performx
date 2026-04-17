@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/auth/login?error=config`);
   }
 
-  let response = NextResponse.redirect(`${origin}${next}`);
+  const response = NextResponse.redirect(`${origin}${next}`);
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {

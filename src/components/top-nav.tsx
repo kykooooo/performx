@@ -7,6 +7,8 @@ import Link from "next/link";
 import Logo from "./logo";
 import ThemeToggle from "./theme-toggle";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { normalizeUserRole } from "@/lib/roles";
+import type { UserRole } from "@/lib/types";
 import {
   CalendarIcon,
   ChatIcon,
@@ -38,6 +40,7 @@ export default function TopNav({ active }: { active?: string }) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchUnread = useCallback(async () => {
@@ -49,21 +52,40 @@ export default function TopNav({ active }: { active?: string }) {
     if (typeof data === "number") setUnreadCount(data);
   }, []);
 
+  const fetchUserRole = useCallback(async (userId: string) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("user_id", userId)
+      .maybeSingle();
+    setUserRole(normalizeUserRole(profile?.role ?? null));
+  }, []);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       const isLoggedIn = !!data.user;
       setLoggedIn(isLoggedIn);
-      if (isLoggedIn) fetchUnread();
-      else setUnreadCount(0);
+      if (isLoggedIn && data.user) {
+        fetchUnread();
+        fetchUserRole(data.user.id);
+      } else {
+        setUnreadCount(0);
+        setUserRole(null);
+      }
     });
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       const isLoggedIn = !!session?.user;
       setLoggedIn(isLoggedIn);
-      if (isLoggedIn) fetchUnread();
-      else setUnreadCount(0);
+      if (isLoggedIn && session?.user) {
+        fetchUnread();
+        fetchUserRole(session.user.id);
+      } else {
+        setUnreadCount(0);
+        setUserRole(null);
+      }
     });
     return () => { data.subscription.unsubscribe(); };
-  }, [fetchUnread]);
+  }, [fetchUnread, fetchUserRole]);
 
   // Refresh unread count when new messages arrive via Realtime
   useEffect(() => {
@@ -77,23 +99,77 @@ export default function TopNav({ active }: { active?: string }) {
     return () => { supabase.removeChannel(channel); };
   }, [loggedIn, fetchUnread]);
 
-  const navItems: NavItem[] = useMemo(() => [
-    { label: "Accueil", href: "/", icon: <HomeIcon className="h-4 w-4" /> },
-    { label: "Coach", href: "/coach", icon: <WhistleIcon className="h-4 w-4" /> },
-    { label: "Joueurs", href: "/players", icon: <UserIcon className="h-4 w-4" /> },
-    { label: "Mes séances", href: "/sessions", icon: <CalendarIcon className="h-4 w-4" /> },
-    {
-      label: "Messages",
-      href: "/messages",
-      icon: (
-        <span className="relative">
-          <ChatIcon className="h-4 w-4" />
-          <UnreadBadge count={unreadCount} />
-        </span>
-      ),
-    },
-    { label: "Dashboard", href: "/dashboard", icon: <GridIcon className="h-4 w-4" /> },
-  ], [unreadCount]);
+  const navItems: NavItem[] = useMemo(() => {
+    const base: NavItem[] = [
+      { label: "Accueil", href: "/", icon: <HomeIcon className="h-4 w-4" /> },
+    ];
+
+    // Visiteurs non-connectés : accès aux annuaires publics
+    if (!loggedIn) {
+      return [
+        ...base,
+        { label: "Coachs", href: "/coach", icon: <WhistleIcon className="h-4 w-4" /> },
+        { label: "Joueurs", href: "/players", icon: <UserIcon className="h-4 w-4" /> },
+      ];
+    }
+
+    // Coach : voit l'annuaire joueurs, ses séances, messages, son dashboard
+    if (userRole === "coach") {
+      return [
+        ...base,
+        { label: "Joueurs", href: "/players", icon: <UserIcon className="h-4 w-4" /> },
+        { label: "Mes séances", href: "/sessions", icon: <CalendarIcon className="h-4 w-4" /> },
+        {
+          label: "Messages",
+          href: "/messages",
+          icon: (
+            <span className="relative">
+              <ChatIcon className="h-4 w-4" />
+              <UnreadBadge count={unreadCount} />
+            </span>
+          ),
+        },
+        { label: "Dashboard", href: "/dashboard/coach", icon: <GridIcon className="h-4 w-4" /> },
+      ];
+    }
+
+    // Parent : voit les coachs (pour réserver), messages, son dashboard
+    if (userRole === "parent") {
+      return [
+        ...base,
+        { label: "Coachs", href: "/coach", icon: <WhistleIcon className="h-4 w-4" /> },
+        {
+          label: "Messages",
+          href: "/messages",
+          icon: (
+            <span className="relative">
+              <ChatIcon className="h-4 w-4" />
+              <UnreadBadge count={unreadCount} />
+            </span>
+          ),
+        },
+        { label: "Dashboard", href: "/dashboard/parent", icon: <GridIcon className="h-4 w-4" /> },
+      ];
+    }
+
+    // Player (défaut) : voit les coachs, ses séances, messages, son dashboard
+    return [
+      ...base,
+      { label: "Coachs", href: "/coach", icon: <WhistleIcon className="h-4 w-4" /> },
+      { label: "Mes séances", href: "/sessions", icon: <CalendarIcon className="h-4 w-4" /> },
+      {
+        label: "Messages",
+        href: "/messages",
+        icon: (
+          <span className="relative">
+            <ChatIcon className="h-4 w-4" />
+            <UnreadBadge count={unreadCount} />
+          </span>
+        ),
+      },
+      { label: "Dashboard", href: "/dashboard/player", icon: <GridIcon className="h-4 w-4" /> },
+    ];
+  }, [loggedIn, unreadCount, userRole]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
