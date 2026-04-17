@@ -152,7 +152,10 @@ export default function RegisterCoachPage() {
       return;
     }
 
-    router.push(`/auth/verify?email=${encodeURIComponent(email)}`);
+    setNotice({
+      type: "success",
+      text: `Compte coach créé ! Un email de confirmation a été envoyé à ${email}. Clique sur le lien pour activer ton compte. Tes diplômes seront vérifiés sous 48h.`,
+    });
     setLoading(false);
   };
 

@@ -159,7 +159,10 @@ export default function RegisterPlayerPage() {
       return;
     }
 
-    router.push(`/auth/verify?email=${encodeURIComponent(email)}`);
+    setNotice({
+      type: "success",
+      text: `Compte créé ! Un email de confirmation a été envoyé à ${email}. Clique sur le lien dans l'email pour activer ton compte.`,
+    });
     setLoading(false);
   };
 

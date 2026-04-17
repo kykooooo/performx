@@ -92,7 +92,10 @@ export default function RegisterParentPage() {
       return;
     }
 
-    router.push(`/auth/verify?email=${encodeURIComponent(email)}`);
+    setNotice({
+      type: "success",
+      text: `Compte parent créé ! Un email de confirmation a été envoyé à ${email}. Clique sur le lien pour activer ton compte.`,
+    });
     setLoading(false);
   };
 
