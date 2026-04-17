@@ -236,8 +236,8 @@ export async function getCoachDashboardData(): Promise<DataResult<CoachDashboard
       return liveResult({
         coach: null,
         sessions: [],
-        activityData: coachMonthlyActivity,
-        dayData: coachDayDistribution,
+        activityData: [],
+        dayData: [],
       });
     }
 

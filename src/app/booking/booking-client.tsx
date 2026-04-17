@@ -36,13 +36,18 @@ export default function BookingClient() {
   const initialCoachId = searchParams.get("coach");
   const initialDate = searchParams.get("date");
   const initialTime = searchParams.get("time");
+  const canceled = searchParams.get("canceled") === "1";
 
   const [coaches, setCoaches] = useState<CoachRecord[]>([]);
   const [selectedCoachId, setSelectedCoachId] = useState("");
   const [sessions, setSessions] = useState<{ date: string; time: string; status: string }[]>([]);
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
-  const [notice, setNotice] = useState<NoticeData>(null);
+  const [notice, setNotice] = useState<NoticeData>(
+    canceled
+      ? { type: "error", text: "Paiement annulé. Ton créneau n'a pas été réservé." }
+      : null,
+  );
   const [lastBookedCoachId, setLastBookedCoachId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -189,55 +194,89 @@ export default function BookingClient() {
 
     setBooking(true);
 
-    const bookingResult = await createBookingReservation({
-      coachId: selectedCoach.id,
-      slot: effectiveSelectedSlot,
-      userId,
-    });
+    // Mode démo (pas de Supabase) → flow local sans paiement
+    if (isDemo) {
+      const bookingResult = await createBookingReservation({
+        coachId: selectedCoach.id,
+        slot: effectiveSelectedSlot,
+        userId,
+      });
 
-    if ("error" in bookingResult) {
-      setNotice({ type: "error", text: bookingResult.error });
-      setBooking(false);
+      if ("error" in bookingResult) {
+        setNotice({ type: "error", text: bookingResult.error });
+        setBooking(false);
+        return;
+      }
+
+      setSessions((current) => [
+        {
+          date: effectiveSelectedSlot.date,
+          time: normalizeTime(effectiveSelectedSlot.time),
+          status: "upcoming",
+        },
+        ...current,
+      ]);
+      setBookings((current) => [
+        {
+          id: bookingResult.bookingId,
+          sessionId: bookingResult.sessionId,
+          playerId: userId,
+          coachId: selectedCoach.id,
+          createdAt: new Date().toISOString(),
+          price: selectedCoach.pricePerSession ?? 0,
+          paymentStatus: "paid",
+        },
+        ...current,
+      ]);
+      setLastBookedCoachId(selectedCoach.id);
+      setSelectedSlot(null);
+
+      const nextParams = new URLSearchParams({
+        coach: selectedCoach.id,
+        coachName: selectedCoach.name,
+        date: effectiveSelectedSlot.date,
+        time: normalizeTime(effectiveSelectedSlot.time),
+        bookingId: bookingResult.bookingId,
+      });
+      if (bookingResult.conversationId) {
+        nextParams.set("conversationId", bookingResult.conversationId);
+      }
+      router.push(`/booking/confirmation?${nextParams.toString()}`);
       return;
     }
 
-    setSessions((current) => [
-      {
-        date: effectiveSelectedSlot.date,
-        time: normalizeTime(effectiveSelectedSlot.time),
-        status: "upcoming",
-      },
-      ...current,
-    ]);
-    setBookings((current) => [
-      {
-        id: bookingResult.bookingId,
-        sessionId: bookingResult.sessionId,
-        playerId: userId,
-        coachId: selectedCoach.id,
-        createdAt: new Date().toISOString(),
-        price: selectedCoach.pricePerSession ?? 0,
-        paymentStatus: "paid",
-      },
-      ...current,
-    ]);
-    setLastBookedCoachId(selectedCoach.id);
-    setSelectedSlot(null);
-    setNotice({ type: "success", text: "Seance reservee. Redirection vers la confirmation..." });
+    // Mode live → redirection vers Stripe Checkout
+    try {
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          coachId: selectedCoach.id,
+          date: effectiveSelectedSlot.date,
+          time: normalizeTime(effectiveSelectedSlot.time),
+          durationMinutes: effectiveSelectedSlot.durationMinutes,
+        }),
+      });
 
-    const nextParams = new URLSearchParams({
-      coach: selectedCoach.id,
-      coachName: selectedCoach.name,
-      date: effectiveSelectedSlot.date,
-      time: normalizeTime(effectiveSelectedSlot.time),
-      bookingId: bookingResult.bookingId,
-    });
+      const data = await response.json();
 
-    if (bookingResult.conversationId) {
-      nextParams.set("conversationId", bookingResult.conversationId);
+      if (!response.ok || !data.url) {
+        setNotice({
+          type: "error",
+          text: data.error ?? "Impossible de créer la session de paiement.",
+        });
+        setBooking(false);
+        return;
+      }
+
+      window.location.href = data.url;
+    } catch {
+      setNotice({
+        type: "error",
+        text: "Erreur réseau. Réessaie dans un instant.",
+      });
+      setBooking(false);
     }
-
-    router.push(`/booking/confirmation?${nextParams.toString()}`);
   };
 
   const handleCoachChange = (coachId: string) => {
@@ -530,10 +569,12 @@ export default function BookingClient() {
             >
               {booking ? (
                 <>
-                  <span className="px-spinner mr-2" /> Reservation en cours...
+                  <span className="px-spinner mr-2" /> Redirection vers le paiement...
                 </>
+              ) : isDemo ? (
+                "Confirmer la reservation (démo)"
               ) : (
-                "Confirmer la reservation"
+                "Payer et confirmer"
               )}
             </button>
 
@@ -547,10 +588,10 @@ export default function BookingClient() {
             )}
 
             <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4 text-xs text-white/65">
-              <p>Paiement direct : le coach est paye immediatement apres confirmation.</p>
+              <p>Paiement sécurisé par Stripe. Ton créneau est réservé dès que le paiement est confirmé.</p>
               <p className="mt-2">
-                Reprogrammation et details logistiques valides dans la conversation une fois la reservation
-                confirmee.
+                Reprogrammation et détails logistiques validés dans la conversation une fois la réservation
+                confirmée.
               </p>
             </div>
           </div>

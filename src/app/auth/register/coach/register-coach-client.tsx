@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import AuthShell from "@/components/auth-shell";
 import { FieldError, Notice, type NoticeData } from "@/components/notice";
 import { syncProfile } from "@/lib/profile-sync";
@@ -18,6 +19,7 @@ import {
 } from "@/lib/validation";
 
 export default function RegisterCoachPage() {
+  const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -140,16 +142,17 @@ export default function RegisterCoachPage() {
 
     if (error) {
       setNotice({ type: "error", text: error.message });
-    } else {
-      if (data.user && data.session) {
-        syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
-      }
-      setNotice({
-        type: "success",
-        text: "Compte coach créé ! Tes diplômes seront vérifiés sous 48h. Vérifie ton e-mail pour valider l'inscription.",
-      });
+      setLoading(false);
+      return;
     }
 
+    if (data.user && data.session) {
+      syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
+      router.push("/dashboard");
+      return;
+    }
+
+    router.push(`/auth/verify?email=${encodeURIComponent(email)}`);
     setLoading(false);
   };
 

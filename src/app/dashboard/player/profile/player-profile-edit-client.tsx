@@ -9,7 +9,6 @@ import PlayerProfileFormSections from "@/components/player-profile-form-sections
 import ScrollReveal from "@/components/scroll-reveal";
 import { ArrowRightIcon, BoltIcon, ShieldIcon, UserIcon } from "@/components/icons";
 import { POSITION_FAMILY_LABELS, getPositionFamily, getPositionObjectives } from "@/lib/football";
-import { mockPlayer } from "@/lib/mock-data";
 import {
   buildPlayerProfileMetadata,
   buildPlayerProfileUpdate,
@@ -44,25 +43,6 @@ type LinkCodeRow = {
   expires_at: string;
 };
 
-const buildDemoValues = () =>
-  mapPlayerProfileRecordToValues({
-    first_name: "Alex",
-    last_name: "Martin",
-    gender: "Homme",
-    birth_date: "2007-03-15",
-    city: mockPlayer.city,
-    level: mockPlayer.level,
-    position: mockPlayer.position,
-    dominant_foot: mockPlayer.dominantFoot,
-    training_frequency_per_week: mockPlayer.trainingFrequencyPerWeek,
-    current_club: mockPlayer.currentClub,
-    age_category: mockPlayer.ageCategory,
-    position_objectives: mockPlayer.positionObjectives,
-    objectives: mockPlayer.objectives,
-    injury_history: mockPlayer.injuryHistory,
-    load_constraints: mockPlayer.loadConstraints,
-  });
-
 export default function PlayerProfileEditPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [values, setValues] = useState<PlayerProfileValues>(createEmptyPlayerProfileValues());
@@ -96,7 +76,7 @@ export default function PlayerProfileEditPage() {
 
       if (!user) {
         if (!mounted) return;
-        setValues(buildDemoValues());
+        setValues(createEmptyPlayerProfileValues());
         setAvatarUrl(null);
         setIsDemo(true);
         setLoading(false);
@@ -109,7 +89,7 @@ export default function PlayerProfileEditPage() {
           "first_name, last_name, gender, birth_date, city, avatar_url, level, position, objectives, dominant_foot, training_frequency_per_week, current_club, age_category, position_objectives, injury_history, load_constraints",
         )
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (!mounted) return;
 

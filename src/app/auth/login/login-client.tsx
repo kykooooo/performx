@@ -124,10 +124,18 @@ export default function LoginPage() {
           </div>
           <FieldError error={errors.password} />
         </div>
-        <label className="flex items-center gap-2 text-xs text-white/70">
-          <input type="checkbox" className="h-4 w-4" />
-          Se souvenir de moi
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 text-xs text-white/70">
+            <input type="checkbox" className="h-4 w-4" />
+            Se souvenir de moi
+          </label>
+          <Link
+            href="/auth/forgot-password"
+            className="text-xs text-[color:var(--px-accent)] hover:underline"
+          >
+            Mot de passe oublié ?
+          </Link>
+        </div>
         <Notice notice={notice} />
         <button className="px-button w-full" type="submit" disabled={loading}>
           {loading ? <><span className="px-spinner mr-2" /> Connexion...</> : "Se connecter"}

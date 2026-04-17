@@ -1,6 +1,8 @@
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { DataResult, FallbackReason } from "./types";
 
+const DEMO_MODE_ENABLED = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+
 export function liveResult<T>(data: T): DataResult<T> {
   return { mode: "live", data };
 }
@@ -25,7 +27,10 @@ export async function withPublicFallback<T>(options: {
   try {
     const data = await options.loadLive();
     if (options.isEmpty?.(data)) {
-      return demoResult(options.loadDemo(), "empty-live");
+      if (DEMO_MODE_ENABLED) {
+        return demoResult(options.loadDemo(), "empty-live");
+      }
+      return liveResult(data);
     }
     return liveResult(data);
   } catch {

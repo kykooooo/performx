@@ -12,14 +12,6 @@ type PublicStatsData = {
   playerRating: number;
 };
 
-const DEMO_FALLBACK: PublicStatsData = {
-  coaches: 128,
-  players: 642,
-  sessions: 2410,
-  coachRating: 4.8,
-  playerRating: 4.6,
-};
-
 const average = (values: number[]) => {
   if (values.length === 0) return 0;
   const total = values.reduce((sum, value) => sum + value, 0);
@@ -122,8 +114,8 @@ export default function PublicStats() {
       const sessionsCount = sessionsRes.count;
 
       if (!mounted) return;
-      const coachRatings = (coachesData ?? []).map((row) => row.rating ?? 0);
-      const playerRatings = (playersData ?? []).map((row) => row.rating ?? 0);
+      const coachRatings = (coachesData ?? []).map((row) => row.rating ?? 0).filter((r) => r > 0);
+      const playerRatings = (playersData ?? []).map((row) => row.rating ?? 0).filter((r) => r > 0);
 
       setStats({
         coaches: (coachesData ?? []).length,
@@ -140,38 +132,64 @@ export default function PublicStats() {
     };
   }, []);
 
-  const resolvedStats = {
-    coaches: stats?.coaches && stats.coaches > 0 ? stats.coaches : DEMO_FALLBACK.coaches,
-    players: stats?.players && stats.players > 0 ? stats.players : DEMO_FALLBACK.players,
-    sessions: stats?.sessions && stats.sessions > 0 ? stats.sessions : DEMO_FALLBACK.sessions,
-    coachRating: stats?.coachRating && stats.coachRating > 0 ? stats.coachRating : DEMO_FALLBACK.coachRating,
-    playerRating: stats?.playerRating && stats.playerRating > 0 ? stats.playerRating : DEMO_FALLBACK.playerRating,
-  };
+  if (!stats) {
+    return (
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="px-skeleton h-20 rounded-2xl" />
+        ))}
+      </div>
+    );
+  }
 
-  const items = [
+  const hasAnyData =
+    stats.coaches > 0 || stats.players > 0 || stats.sessions > 0;
+
+  if (!hasAnyData) {
+    return (
+      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[color:var(--px-accent)]/10 via-white/5 to-transparent p-8 text-center">
+        <p className="text-sm text-white/70">
+          <span className="px-gradient-text font-semibold">Rejoins la première vague PerformX.</span>
+          <br />
+          La communauté se construit maintenant — coachs et joueurs arrivent chaque semaine.
+        </p>
+      </div>
+    );
+  }
+
+  const items: Array<{
+    icon: React.ReactNode;
+    label: string;
+    value: number;
+    suffix?: string;
+    decimals?: number;
+  }> = [
     {
       icon: <WhistleIcon className="h-5 w-5" />,
       label: "Coachs actifs",
-      value: resolvedStats.coaches,
+      value: stats.coaches,
     },
     {
       icon: <UsersIcon className="h-5 w-5" />,
       label: "Joueurs inscrits",
-      value: resolvedStats.players,
+      value: stats.players,
     },
     {
       icon: <CalendarIcon className="h-5 w-5" />,
       label: "Séances réservées",
-      value: resolvedStats.sessions,
-    },
-    {
-      icon: <StarIcon className="h-5 w-5" />,
-      label: "Note moyenne",
-      value: resolvedStats.coachRating,
-      suffix: "/ 5",
-      decimals: 1,
+      value: stats.sessions,
     },
   ];
+
+  if (stats.coachRating > 0) {
+    items.push({
+      icon: <StarIcon className="h-5 w-5" />,
+      label: "Note moyenne",
+      value: stats.coachRating,
+      suffix: "/ 5",
+      decimals: 1,
+    });
+  }
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

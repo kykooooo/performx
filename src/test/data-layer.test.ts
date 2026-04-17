@@ -13,7 +13,9 @@ describe("shared data layer", () => {
     vi.resetModules();
   });
 
-  it("retombe sur le demo pour l'annuaire coach si le live est vide", async () => {
+  it("retombe sur le demo pour l'annuaire coach si le live est vide et demo mode activé", async () => {
+    vi.stubEnv("NEXT_PUBLIC_DEMO_MODE", "true");
+
     const query = {
       data: [],
       error: null,
@@ -45,6 +47,45 @@ describe("shared data layer", () => {
     expect(result.mode).toBe("demo");
     expect(result.fallbackReason).toBe("empty-live");
     expect(result.data).toHaveLength(4);
+
+    vi.unstubAllEnvs();
+  });
+
+  it("renvoie un annuaire coach vide en prod quand la DB est vide (pas de mocks leak)", async () => {
+    vi.stubEnv("NEXT_PUBLIC_DEMO_MODE", "false");
+
+    const query = {
+      data: [],
+      error: null,
+      select() {
+        return this;
+      },
+      order() {
+        return this;
+      },
+      limit() {
+        return this;
+      },
+    };
+
+    vi.doMock("@/lib/supabase", () => ({
+      isSupabaseConfigured: true,
+      supabase: {
+        auth: {
+          getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+        },
+        from: vi.fn(() => query),
+        rpc: vi.fn(),
+      },
+    }));
+
+    const { getCoachDirectory } = await import("@/lib/data/coaches");
+    const result = await getCoachDirectory(4);
+
+    expect(result.mode).toBe("live");
+    expect(result.data).toHaveLength(0);
+
+    vi.unstubAllEnvs();
   });
 
   it("renvoie le dashboard joueur en demo si aucun utilisateur n'est connecte", async () => {

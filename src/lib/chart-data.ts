@@ -79,36 +79,36 @@ export function buildParentMetricBars(overview: ParentOverview) {
 export async function fetchCoachMonthlyActivity(coachId: string) {
   try {
     const { data } = await supabase.rpc("get_coach_monthly_activity", { p_coach_id: coachId });
-    return data && data.length > 0 ? data : coachMonthlyActivity;
+    return Array.isArray(data) ? data : [];
   } catch {
-    return coachMonthlyActivity;
+    return [];
   }
 }
 
 export async function fetchCoachDayDistribution(coachId: string) {
   try {
     const { data } = await supabase.rpc("get_coach_day_distribution", { p_coach_id: coachId });
-    return data && data.length > 0 ? data : coachDayDistribution;
+    return Array.isArray(data) ? data : [];
   } catch {
-    return coachDayDistribution;
+    return [];
   }
 }
 
 export async function fetchPlayerProgression(playerId: string): Promise<PlayerProgressionPoint[]> {
   try {
     const { data } = await supabase.rpc("get_player_progression", { p_player_id: playerId });
-    return data && data.length > 0 ? data : playerProgression;
+    return Array.isArray(data) ? data : [];
   } catch {
-    return playerProgression;
+    return [];
   }
 }
 
 export async function fetchPlayerSkills(playerId: string): Promise<PlayerRadarPoint[]> {
   try {
     const { data } = await supabase.rpc("get_player_skills", { p_player_id: playerId });
-    return data && data.length > 0 ? data : playerSkills;
+    return Array.isArray(data) ? data : [];
   } catch {
-    return playerSkills;
+    return [];
   }
 }
 

@@ -20,7 +20,7 @@ import { FOOTBALL_SKILL_AXES } from "@/lib/football";
 import { supabase } from "@/lib/supabase";
 import { createEmptyFeedbackDraft, normalizeSessionFeedback } from "@/lib/session-feedback";
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { coachMonthlyActivity, coachDayDistribution, CHART_COLORS } from "@/lib/chart-data";
+import { CHART_COLORS } from "@/lib/chart-data";
 import type { AvailabilitySlot, SessionFeedback } from "@/lib/types";
 
 const normalizeTime = (value: string) => (value.length >= 5 ? value.slice(0, 5) : value);
@@ -49,8 +49,8 @@ export default function CoachDashboardPage() {
     tone: "danger" | "warning";
     onConfirm: () => void;
   } | null>(null);
-  const [activityData, setActivityData] = useState(coachMonthlyActivity);
-  const [dayData, setDayData] = useState(coachDayDistribution);
+  const [activityData, setActivityData] = useState<{ month: string; seances: number; revenus: number }[]>([]);
+  const [dayData, setDayData] = useState<{ day: string; count: number }[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -420,19 +420,27 @@ export default function CoachDashboardPage() {
               <h3 className="text-base font-semibold text-[color:var(--px-text)]">Activité</h3>
               <p className="text-xs text-[color:var(--px-text-secondary)]">6 derniers mois</p>
             </div>
-            <ResponsiveContainer width="100%" height={240}>
-              <LineChart data={activityData}>
-                <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="3 3" />
-                <XAxis dataKey="month" tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} width={30} />
-                <Tooltip
-                  contentStyle={{ background: "#1a1a1f", border: "1px solid rgba(255,106,0,0.2)", borderRadius: 12, padding: "8px 12px", color: "#fff" }}
-                  itemStyle={{ color: CHART_COLORS.accent }}
-                  labelStyle={{ color: "rgba(255,255,255,0.6)", fontSize: 12 }}
-                />
-                <Line type="monotone" dataKey="seances" stroke={CHART_COLORS.accent} strokeWidth={2} dot={{ fill: CHART_COLORS.accent, r: 4 }} activeDot={{ r: 6 }} name="Séances" />
-              </LineChart>
-            </ResponsiveContainer>
+            {activityData.length === 0 ? (
+              <div className="flex h-[240px] flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
+                <CalendarIcon className="h-8 w-8 text-white/20" />
+                <p className="mt-2 text-sm text-white/70">Pas encore d&apos;activité</p>
+                <p className="mt-1 text-xs text-white/50">Les courbes se remplissent au fil de tes séances.</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={240}>
+                <LineChart data={activityData}>
+                  <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="3 3" />
+                  <XAxis dataKey="month" tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} width={30} />
+                  <Tooltip
+                    contentStyle={{ background: "#1a1a1f", border: "1px solid rgba(255,106,0,0.2)", borderRadius: 12, padding: "8px 12px", color: "#fff" }}
+                    itemStyle={{ color: CHART_COLORS.accent }}
+                    labelStyle={{ color: "rgba(255,255,255,0.6)", fontSize: 12 }}
+                  />
+                  <Line type="monotone" dataKey="seances" stroke={CHART_COLORS.accent} strokeWidth={2} dot={{ fill: CHART_COLORS.accent, r: 4 }} activeDot={{ r: 6 }} name="Séances" />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </div>
 
           {/* BarChart — Répartition par jour */}
@@ -441,20 +449,28 @@ export default function CoachDashboardPage() {
               <h3 className="text-base font-semibold text-[color:var(--px-text)]">Séances par jour</h3>
               <p className="text-xs text-[color:var(--px-text-secondary)]">Répartition hebdomadaire</p>
             </div>
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={dayData}>
-                <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="3 3" />
-                <XAxis dataKey="day" tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} width={30} />
-                <Tooltip
-                  contentStyle={{ background: "#1a1a1f", border: "1px solid rgba(255,106,0,0.2)", borderRadius: 12, padding: "8px 12px", color: "#fff" }}
-                  itemStyle={{ color: CHART_COLORS.accent }}
-                  labelStyle={{ color: "rgba(255,255,255,0.6)", fontSize: 12 }}
-                  cursor={{ fill: "rgba(255,106,0,0.05)" }}
-                />
-                <Bar dataKey="count" fill={CHART_COLORS.accent} radius={[6, 6, 0, 0]} name="Séances" />
-              </BarChart>
-            </ResponsiveContainer>
+            {dayData.length === 0 ? (
+              <div className="flex h-[240px] flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
+                <BoltIcon className="h-8 w-8 text-white/20" />
+                <p className="mt-2 text-sm text-white/70">Aucune séance enregistrée</p>
+                <p className="mt-1 text-xs text-white/50">La répartition se calcule dès tes premières réservations.</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={dayData}>
+                  <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="3 3" />
+                  <XAxis dataKey="day" tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} axisLine={false} tickLine={false} width={30} />
+                  <Tooltip
+                    contentStyle={{ background: "#1a1a1f", border: "1px solid rgba(255,106,0,0.2)", borderRadius: 12, padding: "8px 12px", color: "#fff" }}
+                    itemStyle={{ color: CHART_COLORS.accent }}
+                    labelStyle={{ color: "rgba(255,255,255,0.6)", fontSize: 12 }}
+                    cursor={{ fill: "rgba(255,106,0,0.05)" }}
+                  />
+                  <Bar dataKey="count" fill={CHART_COLORS.accent} radius={[6, 6, 0, 0]} name="Séances" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
       </ScrollReveal>

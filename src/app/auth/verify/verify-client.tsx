@@ -1,27 +1,31 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircleIcon } from "@/components/icons";
+import { supabase } from "@/lib/supabase";
 
 const CODE_LENGTH = 6;
 const RESEND_COOLDOWN = 30; // seconds
 
 export default function VerifyClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const emailFromUrl = searchParams.get("email") ?? "";
+
+  const [email, setEmail] = useState(emailFromUrl);
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(""));
   const [verifying, setVerifying] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resendTimer, setResendTimer] = useState(0);
+  const [resending, setResending] = useState(false);
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Auto-focus first input on mount
   useEffect(() => {
     inputsRef.current[0]?.focus();
   }, []);
 
-  // Resend cooldown countdown
   useEffect(() => {
     if (resendTimer <= 0) return;
     const interval = setInterval(() => setResendTimer((t) => t - 1), 1000);
@@ -35,7 +39,7 @@ export default function VerifyClient() {
   };
 
   const handleChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return; // digits only
+    if (!/^\d*$/.test(value)) return;
     const next = [...digits];
     next[index] = value.slice(-1);
     setDigits(next);
@@ -72,26 +76,60 @@ export default function VerifyClient() {
       setError("Saisis les 6 chiffres du code.");
       return;
     }
+    if (!email) {
+      setError("Adresse e-mail manquante. Reprends depuis l'inscription.");
+      return;
+    }
 
     setVerifying(true);
     setError(null);
 
-    // Simulate verification delay for demo
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const { error: otpError } = await supabase.auth.verifyOtp({
+      email,
+      token: code,
+      type: "email",
+    });
 
     setVerifying(false);
-    setSuccess(true);
 
-    // Redirect after success
+    if (otpError) {
+      setError(
+        otpError.message.toLowerCase().includes("expired")
+          ? "Le code a expiré. Demande un nouveau code."
+          : "Code incorrect. Vérifie tes chiffres ou demande un nouveau code.",
+      );
+      return;
+    }
+
+    setSuccess(true);
     setTimeout(() => {
       router.push("/dashboard");
-    }, 2000);
+    }, 1500);
   };
 
-  const handleResend = () => {
-    if (resendTimer > 0) return;
-    setResendTimer(RESEND_COOLDOWN);
+  const handleResend = async () => {
+    if (resendTimer > 0 || resending) return;
+    if (!email) {
+      setError("Adresse e-mail manquante. Reprends depuis l'inscription.");
+      return;
+    }
+
+    setResending(true);
     setError(null);
+
+    const { error: resendError } = await supabase.auth.resend({
+      type: "signup",
+      email,
+    });
+
+    setResending(false);
+
+    if (resendError) {
+      setError(resendError.message);
+      return;
+    }
+
+    setResendTimer(RESEND_COOLDOWN);
     setDigits(Array(CODE_LENGTH).fill(""));
     focusInput(0);
   };
@@ -113,6 +151,30 @@ export default function VerifyClient() {
 
   return (
     <form className="space-y-6" onSubmit={handleVerify}>
+      {!emailFromUrl && (
+        <div>
+          <label htmlFor="verify-email" className="mb-1 block text-xs font-medium uppercase tracking-[0.15em] text-white/70">
+            Adresse e-mail
+          </label>
+          <input
+            id="verify-email"
+            className="px-input"
+            type="email"
+            placeholder="Ton adresse e-mail"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            autoComplete="email"
+            required
+          />
+        </div>
+      )}
+
+      {emailFromUrl && (
+        <p className="text-center text-xs text-white/70">
+          Code envoyé à <span className="text-white">{emailFromUrl}</span>
+        </p>
+      )}
+
       <div className="flex justify-center gap-3">
         {digits.map((digit, index) => (
           <input
@@ -156,14 +218,18 @@ export default function VerifyClient() {
         <button
           type="button"
           className={`font-semibold transition ${
-            resendTimer > 0
+            resendTimer > 0 || resending
               ? "cursor-not-allowed text-white/30"
               : "text-[color:var(--px-accent)] hover:underline"
           }`}
           onClick={handleResend}
-          disabled={resendTimer > 0}
+          disabled={resendTimer > 0 || resending}
         >
-          {resendTimer > 0 ? `Renvoyer (${resendTimer}s)` : "Renvoyer"}
+          {resending
+            ? "Envoi..."
+            : resendTimer > 0
+              ? `Renvoyer (${resendTimer}s)`
+              : "Renvoyer"}
         </button>
       </p>
     </form>

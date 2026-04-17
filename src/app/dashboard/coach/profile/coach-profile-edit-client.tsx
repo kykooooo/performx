@@ -15,7 +15,6 @@ import {
 } from "@/components/icons";
 import { parseTextArray } from "@/lib/football";
 import { supabase } from "@/lib/supabase";
-import { mockCoaches } from "@/lib/mock-data";
 
 const SPECIALITIES = [
   "Coach technique",
@@ -44,6 +43,8 @@ export default function CoachProfileEditPage() {
   const [pedagogy, setPedagogy] = useState("");
   const [price, setPrice] = useState<number>(0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [rating, setRating] = useState<number>(0);
+  const [reviewsCount, setReviewsCount] = useState<number>(0);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
@@ -83,59 +84,39 @@ export default function CoachProfileEditPage() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
         if (mounted) {
-          const mock = mockCoaches[0];
-          setName(mock.name);
-          setSpeciality(mock.speciality);
-          setBio(mock.bio);
-          setLocation(mock.location);
-          setDepartment(mock.department ?? "");
-          setExperienceYears(mock.experienceYears ?? 0);
-          setDiplomas((mock.diplomas ?? []).join(", "));
-          setCertifications((mock.certifications ?? []).join(", "));
-          setFocusAreas((mock.focusAreas ?? []).join(", "));
-          setSessionFormats((mock.sessionFormats ?? []).join(", "));
-          setPedagogy(mock.pedagogy ?? "");
-          setPrice(mock.pricePerSession);
           setIsDemo(true);
           setLoading(false);
         }
         return;
       }
 
-      const { data: coachData, error } = await supabase
+      const { data: coachData } = await supabase
         .from("coaches")
-        .select("id, name, speciality, bio, location, department, diplomas, experience_years, certifications, focus_areas, session_formats, pedagogy, price_per_session")
+        .select("id, name, speciality, bio, location, department, diplomas, experience_years, certifications, focus_areas, session_formats, pedagogy, price_per_session, rating, reviews_count")
         .eq("user_id", userData.user.id)
-        .single();
+        .maybeSingle();
 
       const { data: profileData } = await supabase
         .from("profiles")
         .select("avatar_url")
         .eq("user_id", userData.user.id)
-        .single();
+        .maybeSingle();
 
       if (!mounted) return;
-      if (error || !coachData) {
-        const mock = mockCoaches[0];
-        setName(mock.name);
-        setSpeciality(mock.speciality);
-        setBio(mock.bio);
-        setLocation(mock.location);
-        setDepartment(mock.department ?? "");
-        setExperienceYears(mock.experienceYears ?? 0);
-        setDiplomas((mock.diplomas ?? []).join(", "));
-        setCertifications((mock.certifications ?? []).join(", "));
-        setFocusAreas((mock.focusAreas ?? []).join(", "));
-        setSessionFormats((mock.sessionFormats ?? []).join(", "));
-        setPedagogy(mock.pedagogy ?? "");
-        setPrice(mock.pricePerSession);
-        setIsDemo(true);
+
+      setUserId(userData.user.id);
+      setAvatarUrl(profileData?.avatar_url ?? null);
+
+      if (!coachData) {
+        const metadata = userData.user.user_metadata ?? {};
+        const firstName = (metadata.first_name as string | undefined) ?? "";
+        const lastName = (metadata.last_name as string | undefined) ?? "";
+        setName([firstName, lastName].filter(Boolean).join(" "));
         setLoading(false);
         return;
       }
 
       setCoachId(coachData.id);
-      setUserId(userData.user.id);
       setName(coachData.name ?? "");
       setSpeciality(coachData.speciality ?? "");
       setBio(coachData.bio ?? "");
@@ -148,7 +129,8 @@ export default function CoachProfileEditPage() {
       setSessionFormats(parseTextArray(coachData.session_formats as string[] | string | null).join(", "));
       setPedagogy(coachData.pedagogy ?? "");
       setPrice(coachData.price_per_session ?? 0);
-      setAvatarUrl(profileData?.avatar_url ?? null);
+      setRating(Number(coachData.rating ?? 0));
+      setReviewsCount(Number(coachData.reviews_count ?? 0));
       setLoading(false);
     };
 
@@ -614,13 +596,21 @@ export default function CoachProfileEditPage() {
                     )}
 
                     <div className="mt-4 flex items-center gap-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <StarIcon
-                          key={i}
-                          className={`h-3.5 w-3.5 ${i < 5 ? "text-[color:var(--px-accent)]" : "text-white/15"}`}
-                        />
-                      ))}
-                      <span className="ml-1 text-xs text-white/70">4.7 (52 avis)</span>
+                      {reviewsCount > 0 ? (
+                        <>
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <StarIcon
+                              key={i}
+                              className={`h-3.5 w-3.5 ${i < Math.round(rating) ? "text-[color:var(--px-accent)]" : "text-white/15"}`}
+                            />
+                          ))}
+                          <span className="ml-1 text-xs text-white/70">
+                            {rating.toFixed(1)} ({reviewsCount} avis)
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-xs text-white/50">Pas encore d&apos;avis</span>
+                      )}
                     </div>
                   </div>
                 </div>
