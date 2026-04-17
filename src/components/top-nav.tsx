@@ -113,11 +113,10 @@ export default function TopNav({ active }: { active?: string }) {
       ];
     }
 
-    // Coach : voit l'annuaire joueurs, ses séances, messages, son dashboard
+    // Coach : ses séances, messages, son dashboard (pas d'annuaire joueurs)
     if (userRole === "coach") {
       return [
         ...base,
-        { label: "Joueurs", href: "/players", icon: <UserIcon className="h-4 w-4" /> },
         { label: "Mes séances", href: "/sessions", icon: <CalendarIcon className="h-4 w-4" /> },
         {
           label: "Messages",
