@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 
@@ -69,13 +70,21 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { data: coach, error: coachError } = await supabase
-    .from("public_coaches")
+  // Lookup coach via admin client (bypass RLS, données déjà publiques)
+  const admin = getSupabaseAdmin();
+  const { data: coach, error: coachError } = await admin
+    .from("coaches")
     .select("id, name, speciality, price_per_session")
     .eq("id", body.coachId)
     .maybeSingle();
 
-  if (coachError || !coach) {
+  if (coachError) {
+    console.error("[stripe checkout] coach lookup error:", coachError, "coachId:", body.coachId);
+    return NextResponse.json({ error: coachError.message }, { status: 500 });
+  }
+
+  if (!coach) {
+    console.error("[stripe checkout] coach not found for id:", body.coachId);
     return NextResponse.json({ error: "Coach introuvable." }, { status: 404 });
   }
 
