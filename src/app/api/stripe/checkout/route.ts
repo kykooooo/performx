@@ -4,6 +4,7 @@ import { getStripe, isStripeConfigured } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
+export const maxDuration = 30;
 
 type CheckoutBody = {
   coachId: string;
