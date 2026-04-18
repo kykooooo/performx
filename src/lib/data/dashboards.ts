@@ -125,6 +125,23 @@ function buildDemoPlayerDashboardData(): PlayerDashboardData {
   };
 }
 
+function buildEmptyPlayerDashboardData(): PlayerDashboardData {
+  return {
+    upcoming: [],
+    completed: [],
+    coaches: [],
+    coachLookup: {},
+    totalSpent: 0,
+    playerSnapshot: {
+      currentClub: null,
+      dominantFoot: null,
+      trainingFrequencyPerWeek: null,
+    },
+    skillsData: [],
+    progressionData: [],
+  };
+}
+
 export async function getPlayerDashboardData(): Promise<DataResult<PlayerDashboardData>> {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id ?? null;
@@ -195,8 +212,9 @@ export async function getPlayerDashboardData(): Promise<DataResult<PlayerDashboa
       skillsData,
       progressionData,
     });
-  } catch {
-    return demoResult(buildDemoPlayerDashboardData(), "error");
+  } catch (error) {
+    console.error("[PerformX] getPlayerDashboardData failed:", error);
+    return liveResult(buildEmptyPlayerDashboardData());
   }
 }
 
@@ -267,8 +285,14 @@ export async function getCoachDashboardData(): Promise<DataResult<CoachDashboard
       activityData,
       dayData,
     });
-  } catch {
-    return demoResult(buildDemoCoachDashboardData(), "error");
+  } catch (error) {
+    console.error("[PerformX] getCoachDashboardData failed:", error);
+    return liveResult({
+      coach: null,
+      sessions: [],
+      activityData: [],
+      dayData: [],
+    });
   }
 }
 
@@ -385,8 +409,21 @@ export async function getParentDashboardHomeData(): Promise<DataResult<ParentDas
       legacyChildHint: buildLegacyHint(user.user_metadata ?? {}),
       error: null,
     });
-  } catch {
-    return demoResult(buildDemoParentHomeData(), "error");
+  } catch (error) {
+    console.error("[PerformX] getParentDashboardHomeData failed:", error);
+    return liveResult({
+      parentName:
+        [user.user_metadata?.first_name as string | undefined, user.user_metadata?.last_name as string | undefined]
+          .filter(Boolean)
+          .join(" ") || "Parent",
+      children: [],
+      coaches: [],
+      coachCount: 0,
+      totalSpent: 0,
+      completedCount: 0,
+      legacyChildHint: buildLegacyHint(user.user_metadata ?? {}),
+      error: null,
+    });
   }
 }
 

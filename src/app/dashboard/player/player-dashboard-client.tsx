@@ -349,29 +349,39 @@ export default function PlayerDashboardPage() {
               <ScrollReveal>
                 <div className="px-card p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg text-white">Coachs recommandes</h3>
+                    <h3 className="text-lg text-white">Coachs recommandés</h3>
                     <Link href="/coach" className="text-xs text-[color:var(--px-accent)] hover:underline">
                       Voir annuaire
                     </Link>
                   </div>
-                  <div className="space-y-3">
-                    {coaches.map((coach) => (
-                      <div key={coach.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-white/70">
-                            <WhistleIcon className="h-4 w-4" />
+                  {coaches.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
+                      <WhistleIcon className="mx-auto h-8 w-8 text-white/20" />
+                      <p className="mt-2 text-sm text-white/70">Aucun coach pour l&apos;instant</p>
+                      <p className="mt-1 text-xs text-white/50">
+                        Les premiers coachs arrivent — reviens bientôt.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {coaches.map((coach) => (
+                        <div key={coach.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-white/70">
+                              <WhistleIcon className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-white">{coach.name}</p>
+                              <p className="text-xs text-white/70">{coach.speciality}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-medium text-white">{coach.name}</p>
-                            <p className="text-xs text-white/70">{coach.speciality}</p>
-                          </div>
+                          <Link href={`/coach/${coach.id}`} className="text-xs text-[color:var(--px-accent)] hover:underline">
+                            Voir profil
+                          </Link>
                         </div>
-                        <Link href={`/coach/${coach.id}`} className="text-xs text-[color:var(--px-accent)] hover:underline">
-                          Voir profil
-                        </Link>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </ScrollReveal>
             </div>
