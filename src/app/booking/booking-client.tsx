@@ -14,6 +14,7 @@ import {
   getBookingPageData,
   getReservedCoachSessions,
 } from "@/lib/data/booking";
+import { expandCoachAvailability } from "@/lib/data/coach-availability";
 import type { BookingRecord, CoachRecord } from "@/lib/data/types";
 import { addDays, formatLongDate, startOfWeek, toISODate } from "@/lib/date";
 import {
@@ -64,6 +65,8 @@ export default function BookingClient() {
   const [booking, setBooking] = useState(false);
   const [isDemo, setIsDemo] = useState(false);
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
+  // Créneaux générés par les patterns de récurrence du coach (expand RPC)
+  const [expandedSlots, setExpandedSlots] = useState<AvailabilitySlot[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -130,13 +133,23 @@ export default function BookingClient() {
   useEffect(() => {
     if (!selectedCoachId) return;
 
-    const fetchSessions = async () => {
-      const result = await getReservedCoachSessions(selectedCoachId);
-      setSessions(result.data);
+    const fetchAll = async () => {
+      const [sessionsRes, expanded] = await Promise.all([
+        getReservedCoachSessions(selectedCoachId),
+        // En mode démo (pas d'user auth), on saute l'expand (RPC nécessite auth)
+        isDemo
+          ? Promise.resolve([])
+          : expandCoachAvailability(selectedCoachId).catch((err) => {
+              console.warn("[booking] expandCoachAvailability failed:", err);
+              return [];
+            }),
+      ]);
+      setSessions(sessionsRes.data);
+      setExpandedSlots(expanded);
     };
 
-    fetchSessions();
-  }, [selectedCoachId]);
+    fetchAll();
+  }, [selectedCoachId, isDemo]);
 
   const selectedCoach = useMemo(
     () => coaches.find((coach) => coach.id === selectedCoachId) ?? null,
@@ -177,9 +190,23 @@ export default function BookingClient() {
   );
 
   const availableSlots = useMemo(() => {
-    const availability = selectedCoach?.availability ?? [];
+    // Source 1 : créneaux ponctuels stockés sur coaches.availability (legacy)
+    const oneShot = selectedCoach?.availability ?? [];
+    // Source 2 : créneaux générés par les patterns de récurrence (via RPC)
+    const fromPatterns = expandedSlots;
 
-    return availability.filter((slot) => {
+    // Fusion avec dédoublonnage sur (date, time)
+    const seen = new Set<string>();
+    const merged: AvailabilitySlot[] = [];
+    for (const slot of [...fromPatterns, ...oneShot]) {
+      const key = `${slot.date}-${normalizeTime(slot.time)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push(slot);
+    }
+
+    // Filtre les slots déjà réservés (non-cancelled)
+    const filtered = merged.filter((slot) => {
       const normalized = normalizeTime(slot.time);
       return !sessions.some(
         (session) =>
@@ -188,7 +215,12 @@ export default function BookingClient() {
           session.status !== "cancelled",
       );
     });
-  }, [selectedCoach, sessions]);
+
+    // Trie par date puis par heure
+    return filtered.sort((a, b) =>
+      `${a.date}${normalizeTime(a.time)}`.localeCompare(`${b.date}${normalizeTime(b.time)}`),
+    );
+  }, [selectedCoach, sessions, expandedSlots]);
 
   const weekSlots = useMemo(() => {
     const weekStartKey = toISODate(weekStart);

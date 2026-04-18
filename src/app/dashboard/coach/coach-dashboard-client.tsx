@@ -7,6 +7,7 @@ import AppShell from "@/components/app-shell";
 import ConfirmModal from "@/components/confirm-modal";
 import ScrollReveal from "@/components/scroll-reveal";
 import StripeConnectPanel from "@/components/stripe-connect-panel";
+import RecurringAvailabilityPanel from "@/components/recurring-availability-panel";
 import { getCoachDashboardData } from "@/lib/data/dashboards";
 import type { CoachDashboardCoachRecord, SessionRecord } from "@/lib/data/types";
 import {
@@ -709,54 +710,65 @@ export default function CoachDashboardPage() {
         {/* ── Right column ── */}
         <div className="space-y-6">
           <ScrollReveal>
-            <div id="section-dispos" className="px-card-strong p-6 scroll-mt-32">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">
-                  <BoltIcon className="h-4 w-4" />
-                </div>
-                <div>
-                  <h3 className="text-lg text-white">Disponibilités</h3>
-                  <p className="text-xs text-white/70">Gère tes créneaux ouverts à la réservation.</p>
+            <div id="section-dispos" className="space-y-4 scroll-mt-32">
+              <div className="px-card-strong p-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">
+                    <BoltIcon className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg text-white">Disponibilités</h3>
+                    <p className="text-xs text-white/70">
+                      Crée une récurrence (ex : mardi + jeudi 18h-20h) pour générer automatiquement
+                      tes créneaux. Ajoute des exceptions pour tes vacances.
+                    </p>
+                  </div>
                 </div>
               </div>
-              <form className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_100px_auto]" onSubmit={handleAddSlot}>
-                <input className="px-input" type="date" value={slotDate} onChange={(e) => setSlotDate(e.target.value)} />
-                <input className="px-input" type="time" value={slotTime} onChange={(e) => setSlotTime(e.target.value)} />
-                <input className="px-input" type="number" min={30} step={15} value={slotDuration} onChange={(e) => setSlotDuration(Number(e.target.value))} />
-                <button className="px-button" type="submit">Ajouter</button>
-              </form>
-              {slotNotice && (
-                <div className={`mt-3 rounded-xl border px-3 py-2 text-xs ${slotNotice.type === "success" ? "border-[color:var(--px-success)]/40 bg-[color:var(--px-success)]/15 text-[color:var(--px-success)]" : "border-[color:var(--px-danger)]/40 bg-[color:var(--px-danger)]/15 text-[color:var(--px-danger)]"}`}>
-                  {slotNotice.text}
-                </div>
-              )}
-              <div className="mt-4 space-y-2">
-                {availableSlots.length === 0 && !loading && (
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
-                    <p className="text-xs text-white/70">Aucun créneau disponible.</p>
+
+              <RecurringAvailabilityPanel coachId={coach?.id ?? null} />
+
+              {/* Créneaux ponctuels (ancien flow) en repli discret */}
+              <details className="px-card p-5">
+                <summary className="cursor-pointer text-sm font-semibold text-white/80 hover:text-white">
+                  Ajouter un créneau ponctuel (hors récurrence)
+                </summary>
+                <p className="mt-2 text-xs text-white/60">
+                  Pour un créneau exceptionnel qui ne rentre dans aucune récurrence.
+                </p>
+                <form className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_100px_auto]" onSubmit={handleAddSlot}>
+                  <input className="px-input" type="date" value={slotDate} onChange={(e) => setSlotDate(e.target.value)} />
+                  <input className="px-input" type="time" value={slotTime} onChange={(e) => setSlotTime(e.target.value)} />
+                  <input className="px-input" type="number" min={30} step={15} value={slotDuration} onChange={(e) => setSlotDuration(Number(e.target.value))} />
+                  <button className="px-button-ghost text-sm" type="submit">Ajouter</button>
+                </form>
+                {slotNotice && (
+                  <div className={`mt-3 rounded-xl border px-3 py-2 text-xs ${slotNotice.type === "success" ? "border-[color:var(--px-success)]/40 bg-[color:var(--px-success)]/15 text-[color:var(--px-success)]" : "border-[color:var(--px-danger)]/40 bg-[color:var(--px-danger)]/15 text-[color:var(--px-danger)]"}`}>
+                    {slotNotice.text}
                   </div>
                 )}
-                {availableSlots.slice(0, 5).map((slot) => (
-                  <div key={`${slot.date}-${slot.time}`} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-[color:var(--px-accent)]/20">
-                    <div className="flex items-center gap-3">
-                      <span className="relative flex h-2 w-2">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[color:var(--px-success)] opacity-75" />
-                        <span className="relative inline-flex h-2 w-2 rounded-full bg-[color:var(--px-success)]" />
-                      </span>
-                      <div>
-                        <p className="text-sm text-white">{formatLongDate(new Date(`${slot.date}T12:00`))}</p>
-                        <p className="text-xs text-white/70">{slot.time} · {slot.durationMinutes} min</p>
+                {availableSlots.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-white/50">
+                      Créneaux ponctuels actifs
+                    </p>
+                    {availableSlots.slice(0, 5).map((slot) => (
+                      <div key={`${slot.date}-${slot.time}`} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-2">
+                        <div>
+                          <p className="text-sm text-white">{formatLongDate(new Date(`${slot.date}T12:00`))}</p>
+                          <p className="text-xs text-white/60">{slot.time} · {slot.durationMinutes} min</p>
+                        </div>
+                        <button className="text-xs text-white/60 hover:text-[color:var(--px-danger)]" type="button" onClick={() => handleRemoveSlot(slot)}>
+                          Supprimer
+                        </button>
                       </div>
-                    </div>
-                    <button className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70 transition hover:border-[color:var(--px-danger)]/30 hover:text-[color:var(--px-danger)]" type="button" onClick={() => handleRemoveSlot(slot)}>
-                      Supprimer
-                    </button>
+                    ))}
+                    {availableSlots.length > 5 && (
+                      <p className="text-center text-xs text-white/60">+{availableSlots.length - 5} autres</p>
+                    )}
                   </div>
-                ))}
-                {availableSlots.length > 5 && (
-                  <p className="text-center text-xs text-white/70">+{availableSlots.length - 5} autres créneaux</p>
                 )}
-              </div>
+              </details>
             </div>
           </ScrollReveal>
 
