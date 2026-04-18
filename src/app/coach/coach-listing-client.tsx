@@ -25,13 +25,13 @@ import type { CoachRecord } from "@/lib/data/types";
 const SPECIALITY_CHIPS = [
   "Tous",
   "Technique",
-  "Preparation physique",
-  "Gardienne",
+  "Préparation physique",
+  "Gardien",
   "Vision de jeu",
   "Frappe",
   "Dribbles",
   "Endurance",
-  "Jeu defensif",
+  "Jeu défensif",
 ] as const;
 
 export default function CoachPage() {
