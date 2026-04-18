@@ -113,10 +113,11 @@ export default function TopNav({ active }: { active?: string }) {
       ];
     }
 
-    // Coach : ses séances, messages, son dashboard (pas d'annuaire joueurs)
+    // Coach : annuaire joueurs (scouting léger), ses séances, messages, dashboard
     if (userRole === "coach") {
       return [
         ...base,
+        { label: "Joueurs", href: "/players", icon: <UserIcon className="h-4 w-4" /> },
         { label: "Mes séances", href: "/sessions", icon: <CalendarIcon className="h-4 w-4" /> },
         {
           label: "Messages",
