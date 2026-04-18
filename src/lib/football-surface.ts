@@ -14,7 +14,7 @@ const normalizeSignal = (value: string) =>
 
 export function getNextAvailabilityLabel(availability: AvailabilitySlot[] | null | undefined) {
   const slots = Array.isArray(availability) ? availability : [];
-  if (slots.length === 0) return "Planning a ouvrir";
+  if (slots.length === 0) return "Planning à ouvrir";
 
   const now = Date.now();
   const sorted = [...slots].sort((left, right) =>
@@ -36,14 +36,14 @@ export function getCoachBestForLabel(
   if (signals.includes("gard")) return "Best for gardiens";
   if (signals.includes("finition") || signals.includes("frappe")) return "Best for profils offensifs";
   if (signals.includes("vision") || signals.includes("prise d'information") || signals.includes("lecture")) {
-    return "Best for milieux createurs";
+    return "Best for milieux créateurs";
   }
   if (signals.includes("def") || signals.includes("duel")) return "Best for joueurs de duel";
   if (signals.includes("intens") || signals.includes("explos") || signals.includes("endurance")) {
     return "Best for reprise physique";
   }
 
-  return "Best for progression ciblee";
+  return "Best for progression ciblée";
 }
 
 export function getCoachStyleLabel(

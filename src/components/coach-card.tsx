@@ -89,7 +89,7 @@ export default function CoachCard({
         </span>
 
         {/* Availability indicator */}
-        <div className="absolute bottom-3 left-4 flex items-center gap-1.5" aria-label={`Prochaine disponibilite ${nextAvailability}`}>
+        <div className="absolute bottom-3 left-4 flex items-center gap-1.5" aria-label={`Prochaine disponibilité ${nextAvailability}`}>
           <span className="inline-flex h-2 w-2 rounded-full bg-[color:var(--px-success)]" />
           <span className="text-[10px] font-medium text-[color:var(--px-success)]">{nextAvailability}</span>
         </div>
@@ -143,7 +143,7 @@ export default function CoachCard({
           {location}
         </div>
         <div className="text-xs text-white/70 sm:text-right">
-          {credentialLabel ? `Repere diplome: ${credentialLabel}` : "Formats et cycle sur demande"}
+          {credentialLabel ? `Diplôme : ${credentialLabel}` : "Formats et cycle sur demande"}
         </div>
       </div>
 
