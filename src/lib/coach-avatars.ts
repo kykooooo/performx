@@ -1,11 +1,5 @@
-const COACH_AVATAR_POOL = [
-  "https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=200",
-  "https://images.pexels.com/photos/3621104/pexels-photo-3621104.jpeg?auto=compress&cs=tinysrgb&w=200",
-  "https://images.pexels.com/photos/2202685/pexels-photo-2202685.jpeg?auto=compress&cs=tinysrgb&w=200",
-  "https://images.pexels.com/photos/274506/pexels-photo-274506.jpeg?auto=compress&cs=tinysrgb&w=200",
-  "https://images.pexels.com/photos/8622140/pexels-photo-8622140.jpeg?auto=compress&cs=tinysrgb&w=200",
-  "https://images.pexels.com/photos/3621168/pexels-photo-3621168.jpeg?auto=compress&cs=tinysrgb&w=200",
-];
+// Palette accent-aligned (orange PerformX + quelques tons complémentaires)
+const AVATAR_COLORS = ["ff6a00", "ff8a33", "22c55e", "f59e0b", "6366f1", "ec4899"];
 
 function hashString(value: string) {
   let hash = 0;
@@ -16,12 +10,18 @@ function hashString(value: string) {
   return Math.abs(hash);
 }
 
+function buildInitialsAvatar(seed: string) {
+  const color = AVATAR_COLORS[hashString(seed) % AVATAR_COLORS.length];
+  const encoded = encodeURIComponent(seed.trim() || "Coach");
+  // Dicebear "initials" : rendu propre, initiales sur fond plein coloré.
+  return `https://api.dicebear.com/7.x/initials/svg?seed=${encoded}&backgroundColor=${color}&textColor=ffffff&fontSize=42`;
+}
+
 export function getCoachAvatarUrl(avatarUrl: string | null | undefined, identity: string) {
   if (avatarUrl && avatarUrl.trim().length > 0) {
     return avatarUrl;
   }
-  const index = hashString(identity) % COACH_AVATAR_POOL.length;
-  return COACH_AVATAR_POOL[index];
+  return buildInitialsAvatar(identity);
 }
 
 type CoachAvatarInput = {
@@ -33,28 +33,13 @@ type CoachAvatarInput = {
 
 export function buildCoachAvatarMap(items: CoachAvatarInput[]) {
   const map = new Map<string, string>();
-  const usedFallbacks = new Set<string>();
 
   items.forEach((item) => {
     if (item.avatar_url && item.avatar_url.trim().length > 0) {
       map.set(item.id, item.avatar_url);
       return;
     }
-
-    const identity = `${item.name ?? ""}-${item.speciality ?? ""}-${item.id}`;
-    const baseIndex = hashString(identity) % COACH_AVATAR_POOL.length;
-    let selected = COACH_AVATAR_POOL[baseIndex];
-
-    for (let offset = 0; offset < COACH_AVATAR_POOL.length; offset += 1) {
-      const candidate = COACH_AVATAR_POOL[(baseIndex + offset) % COACH_AVATAR_POOL.length];
-      if (!usedFallbacks.has(candidate)) {
-        selected = candidate;
-        break;
-      }
-    }
-
-    usedFallbacks.add(selected);
-    map.set(item.id, selected);
+    map.set(item.id, buildInitialsAvatar(item.name ?? item.id));
   });
 
   return map;
