@@ -187,7 +187,7 @@ export default function LoginPage() {
           </button>
         </div>
         <p className="text-center text-xs text-white/70">
-          Pas encore inscrit ? <Link className="text-[color:var(--px-accent)]" href="/auth/register">Créer un compte</Link>
+          Pas encore inscrit ? <Link className="text-[color:var(--px-accent)]" href={redirectTo ? `/auth/register?redirect=${encodeURIComponent(redirectTo)}` : "/auth/register"}>Créer un compte</Link>
         </p>
       </form>
     </AuthShell>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import AuthShell from "@/components/auth-shell";
 import { FieldError, Notice, type NoticeData } from "@/components/notice";
 import { syncProfile } from "@/lib/profile-sync";
@@ -20,6 +20,10 @@ import {
 
 export default function RegisterCoachPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
+  const safeRedirect = redirectParam && redirectParam.startsWith("/") ? redirectParam : null;
+  const loginQs = safeRedirect ? `?redirect=${encodeURIComponent(safeRedirect)}` : "";
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -90,9 +94,12 @@ export default function RegisterCoachPage() {
 
   const validateStep3 = (): boolean => {
     const next: FieldErrors = {};
-    if (selectedDiplomas.length === 0) next.diplomas = "Sélectionne au moins un diplôme.";
-    if (!diplomaFile) next.diplomaFile = "Un justificatif est requis pour vérification.";
-    else if (diplomaFile.size > 10 * 1024 * 1024) next.diplomaFile = "Le fichier ne doit pas dépasser 10 Mo.";
+    // Diplôme et justificatif sont optionnels à l'inscription.
+    // Le coach pourra les ajouter depuis son dashboard — un statut "non vérifié"
+    // apparaîtra sur son profil jusqu'à validation.
+    if (diplomaFile && diplomaFile.size > 10 * 1024 * 1024) {
+      next.diplomaFile = "Le fichier ne doit pas dépasser 10 Mo.";
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -148,7 +155,7 @@ export default function RegisterCoachPage() {
 
     if (data.user && data.session) {
       syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
-      router.push("/dashboard");
+      router.push(safeRedirect ?? "/dashboard");
       return;
     }
 
@@ -423,7 +430,7 @@ export default function RegisterCoachPage() {
         )}
 
         <p className="text-center text-xs text-white/70">
-          Déjà un compte ? <Link className="text-[color:var(--px-accent)]" href="/auth/login">Se connecter</Link>
+          Déjà un compte ? <Link className="text-[color:var(--px-accent)]" href={`/auth/login${loginQs}`}>Se connecter</Link>
         </p>
       </form>
     </AuthShell>

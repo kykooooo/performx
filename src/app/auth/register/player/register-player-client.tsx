@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import AuthShell from "@/components/auth-shell";
 import { FieldError, Notice, type NoticeData } from "@/components/notice";
 import { DEPARTMENTS } from "@/lib/constants";
@@ -32,6 +32,10 @@ const stepLabels = ["Compte", "Profil", "Football"];
 
 export default function RegisterPlayerPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
+  const safeRedirect = redirectParam && redirectParam.startsWith("/") ? redirectParam : null;
+  const loginQs = safeRedirect ? `?redirect=${encodeURIComponent(safeRedirect)}` : "";
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -89,9 +93,8 @@ export default function RegisterPlayerPage() {
 
   const validateStep2 = () => {
     const next: FieldErrors = {};
-    if (!gender) next.gender = "Le genre est requis.";
-    if (!birthDate) next.birthDate = "La date de naissance est requise.";
-    if (!department) next.department = "Le departement est requis.";
+    // Seul le niveau et le poste sont requis pour activer le matching coach pertinent.
+    // Le reste est renseignable plus tard dans le profil.
     if (!level) next.level = "Le niveau est requis.";
     if (!position) next.position = "Le poste est requis.";
     setErrors(next);
@@ -99,12 +102,9 @@ export default function RegisterPlayerPage() {
   };
 
   const validateStep3 = () => {
-    const next: FieldErrors = {};
-    if (!dominantFoot) next.dominantFoot = "Le pied fort est requis.";
-    if (trainingFrequency === "") next.trainingFrequency = "La fréquence d'entraînement est requise.";
-    if (!ageCategory) next.ageCategory = "La catégorie d'age est requise.";
-    setErrors(next);
-    return Object.keys(next).length === 0;
+    // Toute l'étape 3 est optionnelle — on ne bloque plus la création de compte.
+    setErrors({});
+    return true;
   };
 
   const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
@@ -155,7 +155,7 @@ export default function RegisterPlayerPage() {
 
     if (data.user && data.session) {
       syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
-      router.push("/dashboard");
+      router.push(safeRedirect ?? "/dashboard");
       return;
     }
 
@@ -250,32 +250,32 @@ export default function RegisterPlayerPage() {
 
         {step === 2 && (
           <>
+            <p className="mb-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
+              Seuls ton niveau et ton poste sont requis. Les autres champs aident à affiner les recommandations mais restent optionnels.
+            </p>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs text-white/70">Genre <span className="text-[color:var(--px-danger)]">*</span></label>
-                <select className={`px-select ${errors.gender ? "border-[color:var(--px-danger)]" : ""}`} value={gender} onChange={(e) => { setGender(e.target.value); clearField("gender"); }}>
-                  <option value="">Selectionner</option>
+                <label className="mb-1 block text-xs text-white/70">Genre</label>
+                <select className="px-select" value={gender} onChange={(e) => setGender(e.target.value)}>
+                  <option value="">Sélectionner</option>
                   <option value="Homme">Homme</option>
                   <option value="Femme">Femme</option>
                   <option value="Autre">Autre</option>
                 </select>
-                <FieldError error={errors.gender} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/70">Date de naissance <span className="text-[color:var(--px-danger)]">*</span></label>
-                <input className={`px-input ${errors.birthDate ? "border-[color:var(--px-danger)]" : ""}`} type="date" value={birthDate} onChange={(e) => { setBirthDate(e.target.value); clearField("birthDate"); }} />
-                <FieldError error={errors.birthDate} />
+                <label className="mb-1 block text-xs text-white/70">Date de naissance</label>
+                <input className="px-input" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-xs text-white/70">Departement <span className="text-[color:var(--px-danger)]">*</span></label>
-              <select className={`px-select ${errors.department ? "border-[color:var(--px-danger)]" : ""}`} value={department} onChange={(e) => { setDepartment(e.target.value); clearField("department"); }}>
-                <option value="">Selectionner un departement</option>
+              <label className="mb-1 block text-xs text-white/70">Département</label>
+              <select className="px-select" value={department} onChange={(e) => setDepartment(e.target.value)}>
+                <option value="">Sélectionner un département</option>
                 {DEPARTMENTS.map((department) => (
                   <option key={department} value={department}>{department}</option>
                 ))}
               </select>
-              <FieldError error={errors.department} />
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
@@ -312,26 +312,28 @@ export default function RegisterPlayerPage() {
 
         {step === 3 && (
           <>
+            <p className="mb-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
+              Tous les champs ci-dessous sont facultatifs. Tu pourras compléter ton profil plus tard depuis ton dashboard.
+            </p>
+
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs text-white/70">Pied fort <span className="text-[color:var(--px-danger)]">*</span></label>
-                <select className={`px-select ${errors.dominantFoot ? "border-[color:var(--px-danger)]" : ""}`} value={dominantFoot} onChange={(e) => { setDominantFoot(e.target.value); clearField("dominantFoot"); }}>
-                  <option value="">Selectionner</option>
+                <label className="mb-1 block text-xs text-white/70">Pied fort</label>
+                <select className="px-select" value={dominantFoot} onChange={(e) => setDominantFoot(e.target.value)}>
+                  <option value="">Sélectionner</option>
                   {DOMINANT_FEET.map((foot) => (
                     <option key={foot} value={foot}>{foot}</option>
                   ))}
                 </select>
-                <FieldError error={errors.dominantFoot} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/70">Frequence d&apos;entraînement <span className="text-[color:var(--px-danger)]">*</span></label>
-                <select className={`px-select ${errors.trainingFrequency ? "border-[color:var(--px-danger)]" : ""}`} value={trainingFrequency} onChange={(e) => { setTrainingFrequency(e.target.value === "" ? "" : Number(e.target.value)); clearField("trainingFrequency"); }}>
-                  <option value="">Selectionner</option>
+                <label className="mb-1 block text-xs text-white/70">Fréquence d&apos;entraînement</label>
+                <select className="px-select" value={trainingFrequency} onChange={(e) => setTrainingFrequency(e.target.value === "" ? "" : Number(e.target.value))}>
+                  <option value="">Sélectionner</option>
                   {TRAINING_FREQUENCY_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
                 </select>
-                <FieldError error={errors.trainingFrequency} />
               </div>
             </div>
 
@@ -341,14 +343,13 @@ export default function RegisterPlayerPage() {
                 <input className="px-input" value={currentClub} onChange={(e) => setCurrentClub(e.target.value)} placeholder="Club actuel" />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/70">Categorie d&apos;age <span className="text-[color:var(--px-danger)]">*</span></label>
-                <select className={`px-select ${errors.ageCategory ? "border-[color:var(--px-danger)]" : ""}`} value={ageCategory} onChange={(e) => { setAgeCategory(e.target.value); clearField("ageCategory"); }}>
-                  <option value="">Selectionner</option>
+                <label className="mb-1 block text-xs text-white/70">Catégorie d&apos;âge</label>
+                <select className="px-select" value={ageCategory} onChange={(e) => setAgeCategory(e.target.value)}>
+                  <option value="">Sélectionner</option>
                   {AGE_CATEGORIES.map((category) => (
                     <option key={category} value={category}>{category}</option>
                   ))}
                 </select>
-                <FieldError error={errors.ageCategory} />
               </div>
             </div>
 
@@ -414,7 +415,7 @@ export default function RegisterPlayerPage() {
         )}
 
         <p className="text-center text-xs text-white/70">
-          Déjà un compte ? <Link className="text-[color:var(--px-accent)]" href="/auth/login">Se connecter</Link>
+          Déjà un compte ? <Link className="text-[color:var(--px-accent)]" href={`/auth/login${loginQs}`}>Se connecter</Link>
         </p>
       </form>
     </AuthShell>

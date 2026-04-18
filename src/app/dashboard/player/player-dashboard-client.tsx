@@ -129,6 +129,48 @@ export default function PlayerDashboardPage() {
         </div>
       </section>
 
+      {!loading && !isDemo && upcoming.length === 0 && completed.length === 0 && (
+        <ScrollReveal>
+          <section className="mb-6 overflow-hidden rounded-2xl border border-[color:var(--px-accent)]/25 bg-gradient-to-br from-[color:var(--px-accent)]/12 via-[color:var(--px-accent)]/5 to-transparent p-5 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="max-w-xl space-y-2">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--px-accent)]">
+                  <BoltIcon className="h-3 w-3" />
+                  Bienvenue sur PerformX
+                </span>
+                <h2 className="text-xl text-white sm:text-2xl">
+                  Trois étapes pour démarrer
+                </h2>
+                <ul className="mt-3 space-y-2 text-sm text-white/75">
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--px-accent)]/20 text-[10px] font-bold text-[color:var(--px-accent)]">1</span>
+                    Complète ton profil pour que les coachs te connaissent.
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--px-accent)]/20 text-[10px] font-bold text-[color:var(--px-accent)]">2</span>
+                    Explore l&apos;annuaire et choisis un coach adapté à ton objectif.
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--px-accent)]/20 text-[10px] font-bold text-[color:var(--px-accent)]">3</span>
+                    Réserve ta première séance et suis ta progression ici.
+                  </li>
+                </ul>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+                <Link href="/coach" className="px-button text-sm">
+                  <WhistleIcon className="h-4 w-4" />
+                  Trouver un coach
+                </Link>
+                <Link href="/dashboard/player/profile" className="px-button-ghost text-sm">
+                  <UserIcon className="h-4 w-4" />
+                  Compléter mon profil
+                </Link>
+              </div>
+            </div>
+          </section>
+        </ScrollReveal>
+      )}
+
       {!loading && (
         <ScrollReveal>
           <section className="px-role-band mb-6 p-5">
