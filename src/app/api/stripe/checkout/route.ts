@@ -97,8 +97,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Vérifier que le coach a activé ses paiements Stripe Connect
-  if (!coach.stripe_account_id || !coach.stripe_onboarded) {
+  // Feature flag : si STRIPE_CONNECT_ENABLED != "true", on skip le check
+  // onboarding + le transfert vers le coach. L'argent reste sur le compte
+  // plateforme (archi initiale) — pratique pour les phases de test.
+  const connectEnabled = process.env.STRIPE_CONNECT_ENABLED === "true";
+
+  if (connectEnabled && (!coach.stripe_account_id || !coach.stripe_onboarded)) {
     return NextResponse.json(
       {
         error:
@@ -116,10 +120,6 @@ export async function POST(request: NextRequest) {
   const stripe = getStripe();
 
   try {
-    // Commission plateforme : 0% pendant les tests / phase MVP.
-    // À ajuster ensuite via une variable d'env ou une table config.
-    const platformFeeCents = 0;
-
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
@@ -137,12 +137,18 @@ export async function POST(request: NextRequest) {
           },
         },
       ],
-      payment_intent_data: {
-        application_fee_amount: platformFeeCents,
-        transfer_data: {
-          destination: coach.stripe_account_id as string,
-        },
-      },
+      // Split vers le coach uniquement si Connect est activé globalement
+      // ET que ce coach est bien onboarded.
+      ...(connectEnabled && coach.stripe_account_id && coach.stripe_onboarded
+        ? {
+            payment_intent_data: {
+              application_fee_amount: 0,
+              transfer_data: {
+                destination: coach.stripe_account_id as string,
+              },
+            },
+          }
+        : {}),
       metadata: {
         player_id: user.id,
         coach_id: body.coachId,

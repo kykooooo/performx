@@ -365,7 +365,11 @@ export default function CoachDashboardPage() {
         </div>
       </section>
 
-      {!isDemo && (
+      {/* Panel Stripe Connect : affiché uniquement si la feature est activée
+          globalement (NEXT_PUBLIC_STRIPE_CONNECT_ENABLED=true). Pour la phase
+          de test initiale, on le masque : l'argent reste sur le compte
+          plateforme, les coachs n'ont pas d'onboarding Stripe à faire. */}
+      {!isDemo && process.env.NEXT_PUBLIC_STRIPE_CONNECT_ENABLED === "true" && (
         <section className="mb-6">
           {stripeReturn === "done" && (
             <div className="mb-3 rounded-xl border border-[color:var(--px-success)]/30 bg-[color:var(--px-success)]/10 px-4 py-2 text-xs text-[color:var(--px-success)]">
