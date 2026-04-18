@@ -40,10 +40,10 @@ export default function ContactPage() {
           email :
         </p>
         <ul className="list-disc pl-6 text-sm text-white/70 space-y-1 mb-4">
-          <li>Votre nom et prenom</li>
+          <li>Votre nom et prénom</li>
           <li>L&apos;adresse email associee a votre compte PerformX (le cas echeant)</li>
           <li>L&apos;objet de votre demande (question technique, signalement, partenariat, presse, etc.)</li>
-          <li>Une description detaillee de votre demande</li>
+          <li>Une description détaillée de votre demande</li>
         </ul>
 
         <h2 className="text-2xl text-white mt-8 mb-4">Editeur</h2>

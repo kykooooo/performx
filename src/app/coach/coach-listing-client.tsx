@@ -129,7 +129,7 @@ export default function CoachPage() {
           <div className="px-stack-3">
             <div className="flex items-center gap-3 px-fade-up">
               <span className="px-badge px-pulse">Annuaire</span>
-              <span className="px-pill">{isDemo ? "Mode demo" : `+${coaches.length} coachs actifs`}</span>
+              <span className="px-pill">{isDemo ? "Mode démo" : `+${coaches.length} coachs actifs`}</span>
             </div>
 
             <h1
@@ -143,20 +143,20 @@ export default function CoachPage() {
               className="px-fade-up max-w-lg text-base text-white/70"
               style={{ animationDelay: "160ms" }}
             >
-              Parcours notre reseau de coachs certifies, filtre par specialite et reserve une
-              seance en quelques clics.
+              Parcours notre réseau de coachs certifiés, filtre par spécialité et réserve une
+              séance en quelques clics.
             </p>
 
             <div
               className="px-fade-up flex items-center gap-4"
               style={{ animationDelay: "240ms" }}
             >
-              <Link href="/auth/register/coach" className="px-button px-6 py-3 text-sm">
+              <Link href="#coaches" className="px-button px-6 py-3 text-sm">
                 <BoltIcon className="h-4 w-4" />
-                Devenir coach
+                Explorer les coachs
               </Link>
-              <Link href="#coaches" className="px-button-ghost px-6 py-3 text-sm">
-                Explorer
+              <Link href="/auth/register/coach" className="px-button-ghost px-6 py-3 text-sm">
+                Devenir coach
                 <ArrowRightIcon className="h-4 w-4" />
               </Link>
             </div>
@@ -184,8 +184,8 @@ export default function CoachPage() {
             </div>
             <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-4">
               <p className="text-xs leading-relaxed text-white/70">
-                <span className="font-semibold text-white/70">{totalReviews} avis</span> laisses
-                par la communaute. Chaque coach est evalue apres chaque seance.
+                <span className="font-semibold text-white/70">{totalReviews} avis</span> laissés
+                par la communauté. Chaque coach est évalué après chaque séance.
               </p>
             </div>
           </div>
@@ -199,7 +199,7 @@ export default function CoachPage() {
               <div>
                 <p className="text-sm font-semibold text-white">Filtres rapides</p>
                 <p className="text-xs text-white/70">
-                  Affine ta recherche pour trouver le coach ideal.
+                  Affine ta recherche pour trouver le coach idéal.
                 </p>
               </div>
               <div className="relative w-full sm:w-[320px]">
@@ -207,7 +207,7 @@ export default function CoachPage() {
                 <input
                   className="px-input pl-9"
                   placeholder="Rechercher un coach..."
-                  aria-label="Rechercher un coach par nom, specialite ou localisation"
+                  aria-label="Rechercher un coach par nom, spécialité ou localisation"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                 />
@@ -251,7 +251,7 @@ export default function CoachPage() {
               >
                 <option value="rating">Meilleure note</option>
                 <option value="price-asc">Prix croissant</option>
-                <option value="price-desc">Prix decroissant</option>
+                <option value="price-desc">Prix décroissant</option>
                 <option value="name">Nom A-Z</option>
               </select>
             </div>
@@ -283,7 +283,7 @@ export default function CoachPage() {
           icon={<AlertIcon className="h-7 w-7 text-[color:var(--px-danger)]" />}
           title="Impossible de charger les coachs"
           description={error}
-          actionLabel="Reessayer"
+          actionLabel="Réessayer"
           onAction={() => window.location.reload()}
         />
       )}
@@ -291,9 +291,9 @@ export default function CoachPage() {
       {!loading && filteredCoaches.length === 0 && !error && (
         <FeedbackState
           icon={<SearchIcon className="h-7 w-7 text-white/70" />}
-          title="Aucun coach trouve"
-          description="Aucun coach ne correspond a tes filtres actuels."
-          actionLabel="Reinitialiser les filtres"
+          title="Aucun coach trouvé"
+          description="Aucun coach ne correspond à tes filtres actuels."
+          actionLabel="Réinitialiser les filtres"
           onAction={() => {
             setQuery("");
             setActiveChip("Tous");
@@ -353,7 +353,7 @@ export default function CoachPage() {
                 Tu es coach ? <span className="px-gradient-text">Rejoins-nous.</span>
               </h2>
               <p className="mx-auto mt-3 max-w-md text-sm text-white/70">
-                Cree ton profil, definis tes disponibilites et commence a recevoir des reservations
+                Créé ton profil, définis tes disponibilités et commence a recevoir des réservations
                 des aujourd&apos;hui.
               </p>
               <Link
@@ -361,7 +361,7 @@ export default function CoachPage() {
                 className="px-button mt-6 inline-flex px-6 py-3 text-sm"
               >
                 <BoltIcon className="h-4 w-4" />
-                Creer mon profil coach
+                Créer mon profil coach
               </Link>
             </div>
           </div>

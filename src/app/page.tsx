@@ -160,7 +160,7 @@ export default function HomePage() {
           <div className="space-y-8">
             <div className="flex items-center gap-3 px-fade-up">
               <span className="px-badge px-pulse">PerformX</span>
-              <span className="px-pill">Coachs certifies</span>
+              <span className="px-pill">Coachs certifiés</span>
               <span className="px-pill hidden sm:inline-flex">Réservation instantanée</span>
             </div>
 
@@ -176,7 +176,7 @@ export default function HomePage() {
               className="px-fade-up max-w-xl text-lg text-white/70"
               style={{ animationDelay: "160ms" }}
             >
-              Trouve le bon coach. Réserve simplement. Progresse vraiment.
+              Coaching foot individuel avec des coachs certifiés. Trouve le bon profil, réserve une séance et progresse vraiment.
             </p>
 
             <div
@@ -274,7 +274,7 @@ export default function HomePage() {
 
             <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-4">
               <p className="text-xs text-white/70 leading-relaxed">
-                Coaching individuel, suivi personnalise et reservation en quelques clics.
+                Coaching individuel, suivi personnalisé et réservation en quelques clics.
                 PerformX connecte joueurs, coachs et parents.
               </p>
             </div>
@@ -366,7 +366,7 @@ export default function HomePage() {
                   Une expérience rassurante et lisible
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm text-white/70">
-                  Suivez la progression de votre enfant, consultez les retours coach et reservez en toute simplicite.
+                  Suivez la progression de votre enfant, consultez les retours coach et réservez en toute simplicité.
                 </p>
               </div>
               <Link href="/dashboard/parent" className="px-button-ghost">
@@ -443,7 +443,7 @@ export default function HomePage() {
                 Tu es coach diplômé<span className="text-[color:var(--px-accent)]"> ?</span>
               </h2>
               <p className="mx-auto mt-4 max-w-lg text-white/70">
-                Rejoins les coachs qui developpent leur activite sur PerformX.
+                Rejoins les coachs qui développent leur activité sur PerformX.
               </p>
             </div>
 

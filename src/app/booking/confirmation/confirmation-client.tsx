@@ -306,8 +306,8 @@ export default function ConfirmationClient() {
       "BEGIN:VEVENT",
       `DTSTART:${formatIcsDate(start)}`,
       `DTEND:${formatIcsDate(end)}`,
-      `SUMMARY:Seance avec ${details.coachName}`,
-      `DESCRIPTION:Seance de coaching football avec ${details.coachName} via PerformX`,
+      `SUMMARY:Séance avec ${details.coachName}`,
+      `DESCRIPTION:Séance de coaching football avec ${details.coachName} via PerformX`,
       "END:VEVENT",
       "END:VCALENDAR",
     ].join("\r\n");
@@ -316,7 +316,7 @@ export default function ConfirmationClient() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `performx-seance-${details.date}.ics`;
+    anchor.download = `performx-séance-${details.date}.ics`;
     anchor.click();
     URL.revokeObjectURL(url);
   };
@@ -373,7 +373,7 @@ export default function ConfirmationClient() {
   return (
     <AppShell
       active="/sessions"
-      title="Reservation confirmee"
+      title="Réservation confirmee"
       description="Le creneau est bloque et la conversation avec le coach est prete."
     >
       <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-50" />
@@ -384,16 +384,16 @@ export default function ConfirmationClient() {
             role="status"
             className="rounded-xl border border-[color:var(--px-success)]/30 bg-[color:var(--px-success)]/12 px-3 py-2 text-xs text-[color:var(--px-success)]"
           >
-            Reservation enregistree avec succes
+            Réservation enregistrée avec succès
           </div>
 
           <div className="mt-5 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
-              <p className="px-role-kicker text-[color:var(--px-success)]">Seance verrouillee</p>
-              <h2 className="mt-2 text-2xl text-white">Ton creneau est confirme</h2>
+              <p className="px-role-kicker text-[color:var(--px-success)]">Séance verrouillée</p>
+              <h2 className="mt-2 text-2xl text-white">Ton creneau est confirmé</h2>
               <p className="mt-2 text-sm leading-relaxed text-white/70">
-                Tout est pret pour la suite: recap, checklist de terrain, ajout calendrier et message
-                preparatoire pour cadrer la seance.
+                Tout est prêt pour la suite: recap, checklist de terrain, ajout calendrier et message
+                préparatoire pour cadrer la séance.
               </p>
 
               <div className="mt-5 flex flex-wrap gap-2">
@@ -470,7 +470,7 @@ export default function ConfirmationClient() {
                 <CheckCircleIcon className="h-4 w-4 text-[color:var(--px-success)]" />
               </div>
               <div>
-                <h3 className="text-lg text-white">Message preparatoire</h3>
+                <h3 className="text-lg text-white">Message préparatoire</h3>
                 <p className="text-xs text-white/70">
                   A envoyer tel quel ou a personnaliser dans la conversation.
                 </p>
@@ -482,7 +482,7 @@ export default function ConfirmationClient() {
             </div>
 
             <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4 text-xs text-white/65">
-              <p>Un recapitulatif a ete envoye par e-mail.</p>
+              <p>Un recapitulatif a ete envoyé par e-mail.</p>
               <p className="mt-2">
                 Le coach pourra confirmer les details de rendez-vous et d&apos;eventuelle reprogrammation dans
                 la conversation.
@@ -496,7 +496,7 @@ export default function ConfirmationClient() {
             <div>
               <h3 className="text-lg text-white">Etapes suivantes</h3>
               <p className="mt-1 text-sm text-white/70">
-                Ajoute la seance a ton calendrier, puis ouvre la conversation pour verrouiller le contexte.
+                Ajoute la séance a ton calendrier, puis ouvre la conversation pour verrouiller le contexte.
               </p>
             </div>
 
@@ -516,7 +516,7 @@ export default function ConfirmationClient() {
                 Revoir le profil coach
               </Link>
               <Link href="/sessions" className="px-button-ghost text-center">
-                Voir mes seances
+                Voir mes séances
               </Link>
             </div>
           </div>

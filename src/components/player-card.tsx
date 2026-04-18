@@ -112,7 +112,7 @@ export default function PlayerCard({
           <p className="text-[10px] uppercase tracking-[0.18em] text-white/50">Snapshot</p>
           <p className="mt-1 text-sm text-white">{currentClub || "Club a confirmer"}</p>
           <p className="mt-1 text-[11px] text-white/60">
-            {[ageCategory, dominantFoot].filter(Boolean).join(" · ") || "Infos terrain a completer"}
+            {[ageCategory, dominantFoot].filter(Boolean).join(" · ") || "Infos terrain a compléter"}
           </p>
         </div>
       </div>

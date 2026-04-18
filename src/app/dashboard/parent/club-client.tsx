@@ -137,7 +137,7 @@ export default function ParentDashboardPage() {
     }
 
     setLinkCode("");
-    setLinkNotice({ type: "success", text: "Compte joueur lie avec succes." });
+    setLinkNotice({ type: "success", text: "Compte joueur lié avec succès." });
     window.location.reload();
   };
 
@@ -162,7 +162,7 @@ export default function ParentDashboardPage() {
                 style={{ animationDelay: "160ms" }}
               >
                 Visualise la progression de tes enfants lies, les recommandations de charge et les
-                prochaines seances.
+                prochaines séances.
               </p>
             </div>
             <div className="px-fade-up flex gap-3" style={{ animationDelay: "200ms" }}>
@@ -204,11 +204,11 @@ export default function ParentDashboardPage() {
                     <p className="mt-2 text-sm text-white">{overview.nextFocus}</p>
                   </div>
                   <div className="px-role-stat min-w-[180px]">
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Prochaine seance</p>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Prochaine séance</p>
                     <p className="mt-2 text-sm text-white">
                       {nextUpcomingSession
                         ? formatLongDate(new Date(`${nextUpcomingSession.date}T12:00`))
-                        : "A programmer"}
+                        : "À programmer"}
                     </p>
                   </div>
                 </div>
@@ -241,7 +241,7 @@ export default function ParentDashboardPage() {
                 <div>
                   <h3 className="text-lg text-white">Lier un compte joueur</h3>
                   <p className="text-xs text-white/70">
-                    Demande le code temporaire genere depuis le profil du joueur.
+                    Demande le code temporaire généré depuis le profil du joueur.
                   </p>
                 </div>
               </div>
@@ -274,13 +274,13 @@ export default function ParentDashboardPage() {
               {legacyChildHint ? (
                 <p className="mt-3 text-sm leading-relaxed text-white/70">
                   Ancienne fiche detectee pour {legacyChildHint.firstName} {legacyChildHint.lastName}.
-                  Elle n&apos;est plus utilisee comme source principale: cree ou connecte maintenant un
+                  Elle n&apos;est plus utilisee comme source principale: créé ou connecte maintenant un
                   vrai compte joueur avec un code de liaison.
                 </p>
               ) : (
                 <p className="mt-3 text-sm leading-relaxed text-white/70">
-                  Aucun enfant lie pour le moment. Une fois un compte joueur connecte, tu retrouveras
-                  ici les seances, la progression et les recommandations coach.
+                  Aucun enfant lié pour le moment. Une fois un compte joueur connecte, tu retrouveras
+                  ici les séances, la progression et les recommandations coach.
                 </p>
               )}
             </div>
@@ -319,7 +319,7 @@ export default function ParentDashboardPage() {
                         {activeChild.firstName} {activeChild.lastName}
                       </h3>
                       <p className="text-xs text-white/70">
-                        {activeChild.currentClub || "Compte joueur lie"}
+                        {activeChild.currentClub || "Compte joueur lié"}
                         {parentName ? ` · suivi par ${parentName.split(" ")[0]}` : ""}
                       </p>
                     </div>
@@ -364,7 +364,7 @@ export default function ParentDashboardPage() {
                   color: "text-[color:var(--px-accent)]",
                 },
                 {
-                  label: "Seances terminees",
+                  label: "Séances terminées",
                   value: completedCount,
                   icon: <BoltIcon className="h-5 w-5" />,
                   color: "text-[color:var(--px-success)]",
@@ -429,7 +429,7 @@ export default function ParentDashboardPage() {
                 <ScrollReveal>
                   <div className="px-card-strong p-6">
                     <div className="mb-4 flex items-center justify-between">
-                      <h3 className="text-lg text-white">Seances a venir</h3>
+                      <h3 className="text-lg text-white">Séances a venir</h3>
                       <Link href="/sessions" className="text-xs text-[color:var(--px-accent)] hover:underline">
                         Voir tout
                       </Link>
@@ -438,10 +438,10 @@ export default function ParentDashboardPage() {
                       <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
                         <CalendarIcon className="mx-auto h-8 w-8 text-white/20" />
                         <p className="mt-2 text-sm text-white/70">
-                          Aucune seance programmee pour cet enfant.
+                          Aucune séance programmée pour cet enfant.
                         </p>
                         <Link href="/booking" className="px-button mt-4 text-sm">
-                          Reserver une seance
+                          Reserver une séance
                         </Link>
                       </div>
                     ) : (
@@ -532,7 +532,7 @@ export default function ParentDashboardPage() {
                     <div className="grid gap-3">
                       <Link href="/booking" className="px-button inline-flex items-center gap-2">
                         <BoltIcon className="h-4 w-4" />
-                        Reserver une seance
+                        Reserver une séance
                         <ArrowRightIcon className="ml-auto h-4 w-4" />
                       </Link>
                       <Link href="/messages" className="px-button-ghost inline-flex items-center gap-2">

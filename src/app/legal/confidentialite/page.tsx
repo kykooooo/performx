@@ -26,19 +26,19 @@ export default function ConfidentialitePage() {
         </p>
         <ul className="list-disc pl-6 text-sm text-white/70 space-y-1 mb-4">
           <li>
-            Donnees d&apos;identification : nom, prenom, adresse email, date
+            Donnees d&apos;identification : nom, prénom, adresse email, date
             de naissance, photo de profil.
           </li>
           <li>
             Donnees relatives au profil sportif : position de jeu, pied
-            prefere, categorie d&apos;age, niveau, club.
+            prefere, catégorie d&apos;age, niveau, club.
           </li>
           <li>
             Donnees de connexion : adresse IP, type de navigateur, pages
             consultees, dates et heures de connexion.
           </li>
           <li>
-            Donnees de reservation : historique des seances, evaluations,
+            Donnees de réservation : historique des séances, évaluations,
             retours des coachs.
           </li>
           <li>
@@ -62,10 +62,10 @@ export default function ConfidentialitePage() {
             Mise en relation entre joueurs, coachs et parents.
           </li>
           <li>
-            Gestion des reservations et du suivi des seances.
+            Gestion des réservations et du suivi des séances.
           </li>
           <li>
-            Suivi de la progression des joueurs et generation de statistiques.
+            Suivi de la progression des joueurs et génération de statistiques.
           </li>
           <li>
             Communication entre les utilisateurs via la messagerie integree.
@@ -74,7 +74,7 @@ export default function ConfidentialitePage() {
             Amelioration de la plateforme et analyse d&apos;usage.
           </li>
           <li>
-            Envoi de notifications relatives aux seances et a l&apos;activite
+            Envoi de notifications relatives aux séances et a l&apos;activité
             du compte.
           </li>
         </ul>
@@ -84,7 +84,7 @@ export default function ConfidentialitePage() {
         </h2>
         <p className="text-sm text-white/70 leading-relaxed mb-4">
           Le traitement des donnees repose sur les bases legales suivantes :
-          l&apos;execution du contrat (creation de compte, reservations), le
+          l&apos;execution du contrat (creation de compte, réservations), le
           consentement (cookies, communications marketing), l&apos;interet
           legitime (amelioration du service, securite) et les obligations
           legales (facturation, conservation des donnees).
@@ -100,10 +100,10 @@ export default function ConfidentialitePage() {
         <ul className="list-disc pl-6 text-sm text-white/70 space-y-1 mb-4">
           <li>
             Donnees de compte : pendant toute la duree de l&apos;inscription,
-            puis 3 ans apres la derniere activite du compte.
+            puis 3 ans apres la derniere activité du compte.
           </li>
           <li>
-            Donnees de reservation et facturation : 5 ans conformement aux
+            Donnees de réservation et facturation : 5 ans conformement aux
             obligations legales.
           </li>
           <li>
@@ -175,7 +175,7 @@ export default function ConfidentialitePage() {
           La plateforme utilise des cookies necessaires au fonctionnement du
           service (authentification, preferences). Des cookies analytiques
           peuvent egalement etre utilises pour mesurer l&apos;audience et
-          ameliorer l&apos;experience utilisateur. Vous pouvez configurer votre
+          améliorer l&apos;expérience utilisateur. Vous pouvez configurer votre
           navigateur pour refuser les cookies non essentiels.
         </p>
 
@@ -183,7 +183,7 @@ export default function ConfidentialitePage() {
           7. Sous-traitants et tiers
         </h2>
         <p className="text-sm text-white/70 leading-relaxed mb-4">
-          Dans le cadre de son activite, PerformX fait appel aux sous-traitants
+          Dans le cadre de son activité, PerformX fait appel aux sous-traitants
           suivants pour le traitement de donnees :
         </p>
         <ul className="list-disc pl-6 text-sm text-white/70 space-y-1 mb-4">
@@ -233,7 +233,7 @@ export default function ConfidentialitePage() {
         </p>
 
         <p className="text-xs text-white/40 mt-12">
-          Derniere mise a jour : avril 2026
+          Derniere mise à jour : avril 2026
         </p>
       </div>
     </AppShell>

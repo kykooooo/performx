@@ -85,7 +85,7 @@ function CoachCard({
             {coach.verified && (
               <span className="px-badge flex items-center gap-1 text-[10px]">
                 <CheckCircleIcon className="h-3 w-3" />
-                Verifie
+                Vérifie
               </span>
             )}
           </div>
@@ -211,7 +211,7 @@ export default function AdminClient() {
                 : `Verification de ${coachName} revoquee.`,
             });
           } catch {
-            setNotice({ type: "error", text: "Erreur lors de la mise a jour." });
+            setNotice({ type: "error", text: "Erreur lors de la mise à jour." });
           } finally {
             setBusy(false);
           }
@@ -227,7 +227,7 @@ export default function AdminClient() {
       <AppShell active="/admin" title="Administration">
         <div className="flex flex-col items-center justify-center gap-4 py-20">
           <ShieldIcon className="h-12 w-12 text-[color:var(--px-danger)]" />
-          <h2 className="text-xl font-semibold text-white">Acces refuse</h2>
+          <h2 className="text-xl font-semibold text-white">Accès refuse</h2>
           <p className="text-sm text-white/70">
             Vous n&apos;avez pas les droits d&apos;acces a cette page.
           </p>
@@ -325,7 +325,7 @@ export default function AdminClient() {
               {verifiedCoaches.length > 0 && (
                 <section>
                   <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-                    Coachs verifies ({verifiedCoaches.length})
+                    Coachs vérifiés ({verifiedCoaches.length})
                   </h2>
                   <div className="space-y-3">
                     {verifiedCoaches.map((coach) => (
@@ -376,12 +376,12 @@ export default function AdminClient() {
               />
               <StatCard
                 icon={<CalendarIcon className="h-5 w-5" />}
-                label="Seances"
+                label="Séances"
                 value={stats.sessions}
               />
               <StatCard
                 icon={<StarIcon className="h-5 w-5" />}
-                label="Reservations"
+                label="Réservations"
                 value={stats.bookings}
               />
             </div>

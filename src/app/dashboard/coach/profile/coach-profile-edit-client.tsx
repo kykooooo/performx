@@ -446,7 +446,7 @@ export default function CoachProfileEditPage() {
                       <input className="px-input mt-2" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="76 - Seine-Maritime" />
                     </div>
                     <div>
-                      <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Experience</label>
+                      <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Expérience</label>
                       <input className="px-input mt-2" type="number" min={0} value={experienceYears} onChange={(e) => setExperienceYears(Number(e.target.value) || 0)} placeholder="8" />
                     </div>
                   </div>
@@ -467,7 +467,7 @@ export default function CoachProfileEditPage() {
                   </div>
 
                   <div className="mt-4">
-                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Formats de seance</label>
+                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Formats de séance</label>
                     <input className="px-input mt-2" value={sessionFormats} onChange={(e) => setSessionFormats(e.target.value)} placeholder="Individuel, duo, analyse video" />
                   </div>
 

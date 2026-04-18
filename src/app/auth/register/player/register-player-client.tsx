@@ -72,7 +72,7 @@ export default function RegisterPlayerPage() {
 
   const validateStep1 = () => {
     const next: FieldErrors = {};
-    const fnErr = validateRequired(firstName, "Le prenom");
+    const fnErr = validateRequired(firstName, "Le prénom");
     if (fnErr) next.firstName = fnErr;
     const lnErr = validateRequired(lastName, "Le nom");
     if (lnErr) next.lastName = lnErr;
@@ -101,8 +101,8 @@ export default function RegisterPlayerPage() {
   const validateStep3 = () => {
     const next: FieldErrors = {};
     if (!dominantFoot) next.dominantFoot = "Le pied fort est requis.";
-    if (trainingFrequency === "") next.trainingFrequency = "La frequence d'entrainement est requise.";
-    if (!ageCategory) next.ageCategory = "La categorie d'age est requise.";
+    if (trainingFrequency === "") next.trainingFrequency = "La fréquence d'entraînement est requise.";
+    if (!ageCategory) next.ageCategory = "La catégorie d'age est requise.";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -179,7 +179,7 @@ export default function RegisterPlayerPage() {
   return (
     <AuthShell
       title="Inscription joueur"
-      subtitle={`Etape ${step}/3 : ${stepLabels[step - 1].toLowerCase()}.`}
+      subtitle={`Étape ${step}/3 : ${stepLabels[step - 1].toLowerCase()}.`}
     >
       <form className="space-y-4" onSubmit={handleRegister} noValidate>
         <div className="flex items-center justify-between">
@@ -324,7 +324,7 @@ export default function RegisterPlayerPage() {
                 <FieldError error={errors.dominantFoot} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-white/70">Frequence d&apos;entrainement <span className="text-[color:var(--px-danger)]">*</span></label>
+                <label className="mb-1 block text-xs text-white/70">Frequence d&apos;entraînement <span className="text-[color:var(--px-danger)]">*</span></label>
                 <select className={`px-select ${errors.trainingFrequency ? "border-[color:var(--px-danger)]" : ""}`} value={trainingFrequency} onChange={(e) => { setTrainingFrequency(e.target.value === "" ? "" : Number(e.target.value)); clearField("trainingFrequency"); }}>
                   <option value="">Selectionner</option>
                   {TRAINING_FREQUENCY_OPTIONS.map((option) => (
@@ -396,7 +396,7 @@ export default function RegisterPlayerPage() {
                   className="min-h-[110px] w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30"
                   value={loadConstraints}
                   onChange={(e) => setLoadConstraints(e.target.value)}
-                  placeholder="Ex: eviter doubles seances explosives sur 48h."
+                  placeholder="Ex: eviter doubles séances explosives sur 48h."
                 />
               </div>
             </div>
@@ -407,14 +407,14 @@ export default function RegisterPlayerPage() {
                 Retour
               </button>
               <button className="px-button w-full" type="submit" disabled={loading}>
-                {loading ? <><span className="px-spinner mr-2" /> Creation...</> : "Creer le compte joueur"}
+                {loading ? <><span className="px-spinner mr-2" /> Creation...</> : "Créer le compte joueur"}
               </button>
             </div>
           </>
         )}
 
         <p className="text-center text-xs text-white/70">
-          Deja un compte ? <Link className="text-[color:var(--px-accent)]" href="/auth/login">Se connecter</Link>
+          Déjà un compte ? <Link className="text-[color:var(--px-accent)]" href="/auth/login">Se connecter</Link>
         </p>
       </form>
     </AuthShell>

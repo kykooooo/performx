@@ -183,7 +183,7 @@ export default function TopNav({ active }: { active?: string }) {
           <div className="flex items-center gap-4">
             <Logo />
             <span className="hidden text-xs uppercase tracking-[0.4em] text-white/70 xl:block">
-              La plateforme qui connecte les talents
+              Coaching foot individuel
             </span>
             <span className="hidden rounded-full border border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/12 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--px-accent)] md:inline-flex">
               Beta

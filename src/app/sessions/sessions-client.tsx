@@ -42,7 +42,7 @@ export default function SessionsPage() {
     if (result.error) {
       setNotice({ type: "error", text: result.error });
     } else {
-      setNotice({ type: "success", text: "Seance annulee avec succes." });
+      setNotice({ type: "success", text: "Séance annulée avec succès." });
       // Update local state
       setSessions((prev) =>
         prev.map((s) => (s.id === cancelTarget.id ? { ...s, status: "cancelled" as const } : s)),
@@ -82,39 +82,39 @@ export default function SessionsPage() {
   return (
     <AppShell
       active="/sessions"
-      title="Mes seances"
-      description="Suivi de tes reservations et de ton planning."
+      title="Mes séances"
+      description="Suivi de tes réservations et de ton planning."
     >
       <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
         <div className="px-stack-3">
           <div className="px-card-strong px-fade-up p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h3 className="text-lg text-white">Reserver une seance</h3>
+                <h3 className="text-lg text-white">Reserver une séance</h3>
                 <p className="mt-2 text-xs text-white/70">
-                  Accede a la reservation automatique et choisis un coach disponible.
+                  Accede a la réservation automatique et choisis un coach disponible.
                 </p>
               </div>
               {isDemo && <span className="px-pill">Mode demo</span>}
             </div>
             <Link href="/booking" className="px-button mt-4 w-full">
-              Aller a la reservation
+              Aller a la réservation
             </Link>
           </div>
           <div className="px-card px-fade-up p-4" style={{ animationDelay: "80ms" }}>
-            <h3 className="text-lg text-white">Mes prochaines seances</h3>
+            <h3 className="text-lg text-white">Mes prochaines séances</h3>
             <div className="mt-4 space-y-3">
               {loading && (
                 <LoadingState
-                  title="Chargement des seances"
-                  description="Recuperation des prochaines seances..."
+                  title="Chargement des séances"
+                  description="Recuperation des prochaines séances..."
                 />
               )}
               {!loading && upcomingSessions.length === 0 && (
                 <FeedbackState
                   icon={<CalendarIcon className="h-7 w-7 text-white/35" />}
-                  title="Aucune seance a venir"
-                  description="Tu n&apos;as pas encore de reservation future."
+                  title="Aucune séance a venir"
+                  description="Tu n&apos;as pas encore de réservation future."
                   actionLabel="Reserver maintenant"
                   actionHref="/booking"
                 />
@@ -133,7 +133,7 @@ export default function SessionsPage() {
                     </div>
                     <button
                       type="button"
-                      title="Annuler cette seance"
+                      title="Annuler cette séance"
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/50 transition hover:border-[color:var(--px-danger)]/40 hover:text-[color:var(--px-danger)]"
                       onClick={() => setCancelTarget(session)}
                     >
@@ -149,13 +149,13 @@ export default function SessionsPage() {
             </div>
           </div>
           <div className="px-card px-fade-up p-4" style={{ animationDelay: "160ms" }}>
-            <h3 className="text-lg text-white">Mes seances passees</h3>
+            <h3 className="text-lg text-white">Mes séances passees</h3>
             <div className="mt-4 space-y-3">
               {!loading && pastSessions.length === 0 && (
                 <FeedbackState
                   icon={<InboxIcon className="h-7 w-7 text-white/35" />}
-                  title="Aucune seance passee"
-                  description="Tes seances terminees apparaitront ici."
+                  title="Aucune séance passee"
+                  description="Tes séances terminées apparaitront ici."
                 />
               )}
               {pastSessions.map((session) => (
@@ -249,10 +249,10 @@ export default function SessionsPage() {
 
       <ConfirmModal
         open={!!cancelTarget}
-        title="Annuler cette seance ?"
+        title="Annuler cette séance ?"
         description={
           cancelTarget
-            ? `Tu es sur le point d'annuler la seance "${cancelTarget.title}" du ${formatLongDate(new Date(`${cancelTarget.date}T12:00`))} a ${cancelTarget.time}. L'annulation est possible jusqu'a 24h avant la seance.`
+            ? `Tu es sur le point d'annuler la séance "${cancelTarget.title}" du ${formatLongDate(new Date(`${cancelTarget.date}T12:00`))} a ${cancelTarget.time}. L'annulation est possible jusqu'a 24h avant la séance.`
             : ""
         }
         confirmLabel={cancelling ? "Annulation..." : "Confirmer l'annulation"}

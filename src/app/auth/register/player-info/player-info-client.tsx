@@ -58,7 +58,7 @@ export default function PlayerInfoClient() {
         if (!mounted) return;
         setNotice({
           type: "error",
-          text: "Connecte-toi ou cree ton compte joueur pour completer ces informations.",
+          text: "Connecte-toi ou créé ton compte joueur pour compléter ces informations.",
         });
         setLoading(false);
         return;
@@ -188,13 +188,13 @@ export default function PlayerInfoClient() {
       return;
     }
 
-    setNotice({ type: "success", text: "Profil joueur complete. Redirection en cours..." });
+    setNotice({ type: "success", text: "Profil joueur complète. Redirection en cours..." });
     window.setTimeout(() => router.push("/dashboard/player"), 700);
   };
 
   return (
     <AuthShell
-      title="Completer mon profil joueur"
+      title="Compléter mon profil joueur"
       subtitle="On aligne ici le profil terrain, la charge hebdo et les informations privees utiles au suivi."
     >
       {loading ? (
@@ -210,7 +210,7 @@ export default function PlayerInfoClient() {
             Se connecter
           </Link>
           <Link className="px-button-ghost block w-full text-center" href="/auth/register/player">
-            Creer un compte joueur
+            Créer un compte joueur
           </Link>
         </div>
       ) : (
@@ -229,7 +229,7 @@ export default function PlayerInfoClient() {
           </button>
 
           <p className="text-center text-xs text-white/70">
-            Deja complete ?{" "}
+            Déjà complète ?{" "}
             <Link className="text-[color:var(--px-accent)]" href="/dashboard/player/profile">
               Ouvrir mon profil
             </Link>

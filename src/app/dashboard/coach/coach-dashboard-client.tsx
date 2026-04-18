@@ -368,16 +368,16 @@ export default function CoachDashboardPage() {
               <h2 className="mt-2 text-xl text-white">Vue business + terrain</h2>
               <p className="mt-2 max-w-2xl text-sm text-white/70">
                 Tu pilotes ton planning, ta capacite vendable et les feedbacks a envoyer apres chaque
-                seance.
+                séance.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="px-role-stat min-w-[180px]">
                 <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Pipeline</p>
-                <p className="mt-2 text-sm text-white">{upcoming.length} seances planifiees</p>
+                <p className="mt-2 text-sm text-white">{upcoming.length} séances planifiees</p>
               </div>
               <div className="px-role-stat min-w-[180px]">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Disponibilites</p>
+                <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Disponibilités</p>
                 <p className="mt-2 text-sm text-white">{availableSlots.length} creneaux ouverts</p>
               </div>
               <div className="px-role-stat min-w-[180px]">

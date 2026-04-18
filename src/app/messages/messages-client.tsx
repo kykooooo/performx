@@ -309,9 +309,9 @@ export default function MessagesClient() {
 
   const quickTemplates = useMemo(() => {
     const templates = [
-      "Bonjour, je confirme ma presence 10 min avant la seance.",
+      "Bonjour, je confirmé ma presence 10 min avant la séance.",
       "Peux-tu me confirmer le lieu exact et ce que je dois apporter ?",
-      "Je veux axer la seance sur mon premier controle et ma prise d'information.",
+      "Je veux axer la séance sur mon premier controle et ma prise d'information.",
       "Si besoin, on peut garder 5 min a la fin pour fixer le prochain focus.",
     ];
 
@@ -324,9 +324,9 @@ export default function MessagesClient() {
     }
 
     return [
-      "Bonjour, je te fais un point rapide avant la seance.",
+      "Bonjour, je te fais un point rapide avant la séance.",
       "Peux-tu me partager la consigne principale du prochain cycle ?",
-      "Je confirme que tout est bon de mon cote.",
+      "Je confirmé que tout est bon de mon cote.",
       "Dis-moi si tu veux que je t'envoie un rappel ou une note de suivi.",
     ];
   }, [activeConversation?.role, prefill]);
@@ -654,7 +654,7 @@ export default function MessagesClient() {
                   ))}
                 </div>
                 <p className="mt-3 text-xs text-[color:var(--px-text-secondary)]">
-                  Raccourcis utiles avant seance: rappel, consigne, logistique et focus de cycle.
+                  Raccourcis utiles avant séance: rappel, consigne, logistique et focus de cycle.
                 </p>
               </div>
 

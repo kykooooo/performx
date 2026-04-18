@@ -37,7 +37,7 @@ export default function RegisterParentPage() {
 
   const validateStep1 = (): boolean => {
     const next: FieldErrors = {};
-    const fnErr = validateRequired(firstName, "Le prenom");
+    const fnErr = validateRequired(firstName, "Le prénom");
     if (fnErr) next.firstName = fnErr;
     const lnErr = validateRequired(lastName, "Le nom");
     if (lnErr) next.lastName = lnErr;
@@ -108,7 +108,7 @@ export default function RegisterParentPage() {
   return (
     <AuthShell
       title="Inscription parent"
-      subtitle={`Etape ${step}/2 : ${stepLabels[step - 1].toLowerCase()}.`}
+      subtitle={`Étape ${step}/2 : ${stepLabels[step - 1].toLowerCase()}.`}
     >
       <form className="space-y-4" onSubmit={handleRegister} noValidate>
         <div className="flex items-center justify-between">
@@ -135,11 +135,11 @@ export default function RegisterParentPage() {
           <>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <label htmlFor="reg-parent-firstName" className="mb-1 block text-xs text-white/70">Ton prenom <span className="text-[color:var(--px-danger)]">*</span></label>
+                <label htmlFor="reg-parent-firstName" className="mb-1 block text-xs text-white/70">Ton prénom <span className="text-[color:var(--px-danger)]">*</span></label>
                 <input
                   id="reg-parent-firstName"
                   className={`px-input ${errors.firstName ? "border-[color:var(--px-danger)]" : ""}`}
-                  placeholder="Prenom"
+                  placeholder="Prénom"
                   value={firstName}
                   onChange={(e) => { setFirstName(e.target.value); clearField("firstName"); }}
                 />
@@ -218,7 +218,7 @@ export default function RegisterParentPage() {
         {step === 2 && (
           <>
             <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
-              Le compte parent n&apos;embarque plus une fiche enfant statique. Une fois inscrit, tu lieras un vrai compte joueur depuis ton dashboard avec un code temporaire genere cote joueur.
+              Le compte parent n&apos;embarque plus une fiche enfant statique. Une fois inscrit, tu lieras un vrai compte joueur depuis ton dashboard avec un code temporaire généré cote joueur.
             </div>
             <div>
               <label htmlFor="reg-parent-department" className="mb-1 block text-xs text-white/70">Departement <span className="text-[color:var(--px-danger)]">*</span></label>
@@ -241,14 +241,14 @@ export default function RegisterParentPage() {
                 Retour
               </button>
               <button className="px-button w-full" type="submit" disabled={loading}>
-                {loading ? <><span className="px-spinner mr-2" /> Creation...</> : "Creer le compte parent"}
+                {loading ? <><span className="px-spinner mr-2" /> Creation...</> : "Créer le compte parent"}
               </button>
             </div>
           </>
         )}
 
         <p className="text-center text-xs text-white/70">
-          Deja un compte ? <Link className="text-[color:var(--px-accent)]" href="/auth/login">Se connecter</Link>
+          Déjà un compte ? <Link className="text-[color:var(--px-accent)]" href="/auth/login">Se connecter</Link>
         </p>
       </form>
     </AuthShell>

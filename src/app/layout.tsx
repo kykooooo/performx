@@ -49,7 +49,7 @@ export default async function RootLayout({
   try {
     nonce = (await headers()).get("x-nonce") ?? "";
   } catch {
-    // headers() unavailable during static generation (e.g. global-error prerender)
+    // headers() unavailable during static génération (e.g. global-error prerender)
   }
 
   return (

@@ -54,12 +54,12 @@ export default function PlayerProfileFormSections({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Prenom</label>
+              <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Prénom</label>
               <input
                 className="px-input mt-2"
                 value={values.firstName}
                 onChange={(event) => onChange("firstName", event.target.value)}
-                placeholder="Prenom"
+                placeholder="Prénom"
               />
             </div>
             <div>
@@ -144,7 +144,7 @@ export default function PlayerProfileFormSections({
             </select>
           </div>
           <div>
-            <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Poste detaille</label>
+            <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Poste détaillé</label>
             <select
               className="px-select mt-2"
               value={values.position}
@@ -283,7 +283,7 @@ export default function PlayerProfileFormSections({
               className="mt-2 min-h-[120px] w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30"
               value={values.injuryHistory}
               onChange={(event) => onChange("injuryHistory", event.target.value)}
-              placeholder="Ex: entorse cheville droite en 2024, reprise complete."
+              placeholder="Ex: entorse cheville droite en 2024, reprise complète."
             />
           </div>
           <div>
@@ -292,7 +292,7 @@ export default function PlayerProfileFormSections({
               className="mt-2 min-h-[120px] w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30"
               value={values.loadConstraints}
               onChange={(event) => onChange("loadConstraints", event.target.value)}
-              placeholder="Ex: eviter les doubles seances explosives sur 48h."
+              placeholder="Ex: eviter les doubles séances explosives sur 48h."
             />
           </div>
         </div>

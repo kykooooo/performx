@@ -25,7 +25,7 @@ type CoachRow = {
   location: string | null;
   department: string | null;
   diplomas: string[] | null;
-  experience?: number | null;
+  expérience?: number | null;
   experience_years: number | null;
   certifications: string[] | null;
   focus_areas: string[] | null;
@@ -146,7 +146,7 @@ export default function CoachProfileClient() {
       if (coachData) {
         setCoach({
           ...coachData,
-          experience: coachData.experience_years ?? null,
+          expérience: coachData.experience_years ?? null,
           diplomas: parseTextArray(coachData.diplomas as string[] | string | null),
           certifications: parseTextArray(coachData.certifications as string[] | string | null),
           focus_areas: parseTextArray(coachData.focus_areas as string[] | string | null),
@@ -164,7 +164,7 @@ export default function CoachProfileClient() {
             location: mock.location,
             department: mock.department ?? null,
             diplomas: mock.diplomas ?? null,
-            experience: mock.experienceYears ?? null,
+            expérience: mock.experienceYears ?? null,
             experience_years: mock.experienceYears ?? null,
             certifications: mock.certifications ?? null,
             focus_areas: mock.focusAreas ?? null,
@@ -321,7 +321,7 @@ export default function CoachProfileClient() {
             )}
             {coach.experience_years != null && coach.experience_years > 0 && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
-                {coach.experience} ans d&apos;expérience
+                {coach.expérience} ans d&apos;expérience
               </span>
             )}
           </div>
@@ -360,7 +360,7 @@ export default function CoachProfileClient() {
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
               {coach.session_formats && coach.session_formats.length > 0 && (
                 <>
-                  <p className="text-xs uppercase tracking-[0.3em] text-white/70">Formats de seance</p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-white/70">Formats de séance</p>
                   <p className="mt-2 text-sm text-white/80">{coach.session_formats.join(" · ")}</p>
                 </>
               )}

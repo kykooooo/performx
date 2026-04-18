@@ -42,15 +42,15 @@ export default function CGUPage() {
         <ul className="list-disc pl-6 text-sm text-white/70 space-y-1 mb-4">
           <li>
             Les joueurs peuvent consulter les profils des coachs, reserver des
-            seances et suivre leur progression.
+            séances et suivre leur progression.
           </li>
           <li>
-            Les coachs peuvent publier leur profil, gerer leurs disponibilites
-            et fournir des retours sur les seances.
+            Les coachs peuvent publier leur profil, gérer leurs disponibilités
+            et fournir des retours sur les séances.
           </li>
           <li>
             Les parents peuvent suivre la progression de leurs enfants et
-            gerer les reservations.
+            gérer les réservations.
           </li>
         </ul>
         <p className="text-sm text-white/70 leading-relaxed mb-4">
@@ -59,30 +59,30 @@ export default function CGUPage() {
         </p>
 
         <h2 className="text-2xl text-white mt-8 mb-4">
-          Article 3 - Reservations et annulations
+          Article 3 - Réservations et annulations
         </h2>
         <p className="text-sm text-white/70 leading-relaxed mb-4">
-          Les reservations de seances de coaching sont effectuees via la
+          Les réservations de séances de coaching sont effectuees via la
           plateforme et sont soumises a la disponibilite du coach selectionne.
-          Une fois la reservation confirmee, les conditions suivantes
+          Une fois la réservation confirmee, les conditions suivantes
           s&apos;appliquent :
         </p>
         <ul className="list-disc pl-6 text-sm text-white/70 space-y-1 mb-4">
           <li>
             Toute annulation effectuee au moins 24 heures avant le debut de la
-            seance donnera lieu a un remboursement integral.
+            séance donnera lieu a un remboursement integral.
           </li>
           <li>
             Toute annulation effectuee moins de 24 heures avant le debut de la
-            seance ne donnera lieu a aucun remboursement.
+            séance ne donnera lieu a aucun remboursement.
           </li>
           <li>
             En cas d&apos;annulation par le coach, l&apos;utilisateur sera
-            integralement rembourse et pourra reprogrammer la seance.
+            integralement rembourse et pourra reprogrammer la séance.
           </li>
           <li>
             En cas de non-presentation du joueur sans annulation prealable, la
-            seance sera consideree comme effectuee.
+            séance sera consideree comme effectuee.
           </li>
         </ul>
 
@@ -90,9 +90,9 @@ export default function CGUPage() {
           Article 4 - Tarifs et paiement
         </h2>
         <p className="text-sm text-white/70 leading-relaxed mb-4">
-          Les tarifs des seances de coaching sont fixes par chaque coach et
+          Les tarifs des séances de coaching sont fixes par chaque coach et
           affiches sur leur profil. Le paiement est effectue en ligne lors de
-          la reservation via les moyens de paiement securises proposes par la
+          la réservation via les moyens de paiement securises proposes par la
           plateforme. Les prix sont indiques en euros toutes taxes comprises.
           PerformX se reserve le droit de modifier ses commissions a tout
           moment, les utilisateurs etant informes prealablement de tout
@@ -110,7 +110,7 @@ export default function CGUPage() {
           exploitation non autorisee de ces elements est interdite.
         </p>
         <p className="text-sm text-white/70 leading-relaxed mb-4">
-          Les contenus publies par les utilisateurs (commentaires, avis,
+          Les contenus publiés par les utilisateurs (commentaires, avis,
           photos de profil) restent la propriete de leurs auteurs.
           L&apos;utilisateur accorde a PerformX une licence non exclusive et
           gratuite d&apos;utilisation de ces contenus dans le cadre du
@@ -126,7 +126,7 @@ export default function CGUPage() {
         </p>
         <ul className="list-disc pl-6 text-sm text-white/70 space-y-1 mb-4">
           <li>
-            De la qualite des seances de coaching dispensees par les coachs.
+            De la qualite des séances de coaching dispensees par les coachs.
           </li>
           <li>
             Des dommages directs ou indirects resultant de l&apos;utilisation
@@ -170,7 +170,7 @@ export default function CGUPage() {
         </p>
 
         <p className="text-xs text-white/40 mt-12">
-          Derniere mise a jour : avril 2026
+          Derniere mise à jour : avril 2026
         </p>
       </div>
     </AppShell>

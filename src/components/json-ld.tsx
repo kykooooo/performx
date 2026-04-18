@@ -9,7 +9,7 @@ export default async function JsonLd({ data }: JsonLdProps) {
   try {
     nonce = (await headers()).get("x-nonce") ?? "";
   } catch {
-    // headers() unavailable during static generation
+    // headers() unavailable during static génération
   }
 
   return (

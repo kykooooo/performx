@@ -200,7 +200,7 @@ export default function PlayerProfileEditPage() {
 
   const handleAvatarUpload = async (file: File) => {
     if (isDemo) {
-      setNotice({ type: "success", text: "Photo mise a jour (mode demo)." });
+      setNotice({ type: "success", text: "Photo mise à jour (mode demo)." });
       return;
     }
 
@@ -232,14 +232,14 @@ export default function PlayerProfileEditPage() {
       return;
     }
 
-    setNotice({ type: "success", text: "Photo mise a jour." });
+    setNotice({ type: "success", text: "Photo mise à jour." });
   };
 
   const handleGenerateParentLinkCode = async () => {
     if (isDemo) {
       setParentLinkCode("PXDEMO76");
       setParentLinkExpiresAt(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString());
-      setNotice({ type: "success", text: "Code parent genere (mode demo)." });
+      setNotice({ type: "success", text: "Code parent généré (mode demo)." });
       return;
     }
 
@@ -256,7 +256,7 @@ export default function PlayerProfileEditPage() {
     const payload = (Array.isArray(data) ? data[0] : data) as LinkCodeRow | null;
     setParentLinkCode(payload?.code ?? null);
     setParentLinkExpiresAt(payload?.expires_at ?? null);
-    setNotice({ type: "success", text: "Code parent genere avec succes." });
+    setNotice({ type: "success", text: "Code parent généré avec succès." });
   };
 
   return (
@@ -392,7 +392,7 @@ export default function PlayerProfileEditPage() {
                       disabled={generatingLinkCode}
                     >
                       <ShieldIcon className="h-4 w-4" />
-                      {generatingLinkCode ? "Generation..." : "Generer un code parent"}
+                      {generatingLinkCode ? "Génération..." : "Générer un code parent"}
                     </button>
                     {parentLinkCode && (
                       <div className="rounded-2xl border border-[color:var(--px-accent)]/25 bg-[color:var(--px-accent)]/10 px-4 py-3">
@@ -496,7 +496,7 @@ export default function PlayerProfileEditPage() {
                           Charge hebdo:{" "}
                           {values.trainingFrequency === ""
                             ? "A renseigner"
-                            : `${values.trainingFrequency} seance(s) / semaine`}
+                            : `${values.trainingFrequency} séance(s) / semaine`}
                         </li>
                         <li>
                           Objectifs de poste:{" "}
@@ -526,7 +526,7 @@ export default function PlayerProfileEditPage() {
                   <p className="mb-2 text-xs font-semibold text-white/70">Conseils de completion</p>
                   <ul className="space-y-2 text-xs leading-relaxed text-white/70">
                     <li>
-                      Un profil complet aide le coach a calibrer les seances, surtout sur la
+                      Un profil complet aide le coach à calibrer les séances, surtout sur la
                       charge et les objectifs de poste.
                     </li>
                     <li>

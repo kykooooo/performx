@@ -188,7 +188,7 @@ export default function BookingClient() {
     if (!selectedCoach || !effectiveSelectedSlot) return;
 
     if (!userId) {
-      setNotice({ type: "error", text: "Connecte-toi pour reserver une seance." });
+      setNotice({ type: "error", text: "Connecte-toi pour reserver une séance." });
       return;
     }
 
@@ -287,13 +287,13 @@ export default function BookingClient() {
   return (
     <AppShell
       active="/sessions"
-      title="Reservation"
-      description="Choisis un coach, un creneau disponible et confirme ta seance."
+      title="Réservation"
+      description="Choisis un coach, un creneau disponible et confirmé ta séance."
     >
       <section className="px-card px-stack-2 p-4 sm:p-6">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg text-white">Parcours de reservation</h2>
-          <span className="px-pill">Etape {bookingStep} / 3</span>
+          <h2 className="text-lg text-white">Parcours de réservation</h2>
+          <span className="px-pill">Étape {bookingStep} / 3</span>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
           {[
@@ -322,7 +322,7 @@ export default function BookingClient() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="text-xl text-white">Selection du coach</h3>
-                <p className="mt-1 text-xs text-white/70">Reservation automatique si le creneau est libre.</p>
+                <p className="mt-1 text-xs text-white/70">Réservation automatique si le creneau est libre.</p>
               </div>
               <Link
                 href={selectedCoach ? `/coach/${selectedCoach.id}` : "/coach"}
@@ -353,7 +353,7 @@ export default function BookingClient() {
             <div className="mt-4 space-y-3">
               {loading && (
                 <LoadingState
-                  title="Chargement des disponibilites"
+                  title="Chargement des disponibilités"
                   description="Nous recuperons les creneaux de ce coach."
                 />
               )}
@@ -362,7 +362,7 @@ export default function BookingClient() {
                 <FeedbackState
                   icon={<AlertIcon className="h-7 w-7 text-[color:var(--px-warning)]" />}
                   title="Aucun coach disponible"
-                  description="Ajoute des coachs dans la base pour activer la reservation."
+                  description="Ajoute des coachs dans la base pour activer la réservation."
                   actionLabel="Voir les coachs"
                   actionHref="/coach"
                 />
@@ -430,12 +430,12 @@ export default function BookingClient() {
                 <div className="px-role-stat">
                   <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Format</p>
                   <p className="mt-2 text-sm text-white">
-                    {selectedCoachSessionFormats[0] ?? "Seance individuelle"}
+                    {selectedCoachSessionFormats[0] ?? "Séance individuelle"}
                   </p>
                   <p className="mt-1 text-xs text-white/60">{coachAudienceLabel}</p>
                 </div>
                 <div className="px-role-stat">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Experience</p>
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Expérience</p>
                   <p className="mt-2 text-sm text-white">
                     {selectedCoach.experienceYears
                       ? `${selectedCoach.experienceYears} ans terrain`
@@ -448,7 +448,7 @@ export default function BookingClient() {
                 <div className="px-role-stat">
                   <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Lieu</p>
                   <p className="mt-2 text-sm text-white">
-                    {selectedCoach.location ?? selectedCoach.department ?? "Lieu confirme apres validation"}
+                    {selectedCoach.location ?? selectedCoach.department ?? "Lieu confirmé apres validation"}
                   </p>
                   <p className="mt-1 text-xs text-white/60">
                     {selectedCoachFocusAreas[0] ?? "Focus defini avec le coach"}
@@ -474,15 +474,15 @@ export default function BookingClient() {
           )}
 
           <div className="px-card p-6">
-            <h3 className="text-lg text-white">Dernieres reservations</h3>
-            <p className="mt-1 text-xs text-white/70">{bookings.length} reservations confirmees.</p>
+            <h3 className="text-lg text-white">Dernières réservations</h3>
+            <p className="mt-1 text-xs text-white/70">{bookings.length} réservations confirmées.</p>
 
             <div className="mt-4 space-y-3">
               {bookings.length === 0 && (
                 <FeedbackState
                   icon={<CalendarIcon className="h-7 w-7 text-white/35" />}
-                  title="Aucune reservation"
-                  description="Tes reservations confirmees apparaitront ici."
+                  title="Aucune réservation"
+                  description="Tes réservations confirmées apparaitront ici."
                 />
               )}
 
@@ -491,7 +491,7 @@ export default function BookingClient() {
                   key={bookingRow.id}
                   className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm transition duration-200 hover:border-[color:var(--px-accent)]/30"
                 >
-                  <p className="text-white">Reservation confirmee</p>
+                  <p className="text-white">Réservation confirmee</p>
                   <p className="text-xs text-white/70">
                     Paiement :{" "}
                     {bookingRow.paymentStatus === "paid"
@@ -540,7 +540,7 @@ export default function BookingClient() {
 
             <div className="mt-5 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Avant la seance</p>
+                <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Avant la séance</p>
                 <div className="mt-3 grid gap-2">
                   {sessionChecklist.map((item) => (
                     <div key={item} className="flex items-center gap-2 text-sm text-white/75">
@@ -554,7 +554,7 @@ export default function BookingClient() {
               <div className="px-divider" />
 
               <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Message preparatoire</p>
+                <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Message préparatoire</p>
                 <p className="mt-2 text-sm leading-relaxed text-white/75">
                   {preparationMessage || "Selectionne un creneau pour previsualiser le message de preparation."}
                 </p>
@@ -572,7 +572,7 @@ export default function BookingClient() {
                   <span className="px-spinner mr-2" /> Redirection vers le paiement...
                 </>
               ) : isDemo ? (
-                "Confirmer la reservation (démo)"
+                "Confirmer la réservation (démo)"
               ) : (
                 "Payer et confirmer"
               )}
@@ -603,7 +603,7 @@ export default function BookingClient() {
                 ? isDemo
                   ? "Tu es en mode demo."
                   : "Tu es connecte."
-                : "Connecte-toi pour finaliser la reservation."}
+                : "Connecte-toi pour finaliser la réservation."}
             </p>
             {!userId && (
               <Link href="/auth/login" className="px-button mt-4">

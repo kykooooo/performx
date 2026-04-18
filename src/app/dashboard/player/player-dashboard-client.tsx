@@ -73,13 +73,13 @@ export default function PlayerDashboardPage() {
 
   const statCards = [
     {
-      label: "Seances a venir",
+      label: "Séances a venir",
       value: upcoming.length,
       icon: <CalendarIcon className="h-5 w-5" />,
       color: "text-[color:var(--px-accent)]",
     },
     {
-      label: "Seances terminees",
+      label: "Séances terminées",
       value: completed.length,
       icon: <TrophyIcon className="h-5 w-5" />,
       color: "text-[color:var(--px-success)]",
@@ -113,7 +113,7 @@ export default function PlayerDashboardPage() {
               className="px-fade-up max-w-md text-base text-white/70"
               style={{ animationDelay: "160ms" }}
             >
-              Suis ta progression sur les 5 axes foot, retrouve tes seances et lis le dernier feedback coach.
+              Suis ta progression sur les 5 axes foot, retrouve tes séances et lis le dernier feedback coach.
             </p>
           </div>
           <div className="px-fade-up flex gap-3" style={{ animationDelay: "200ms" }}>
@@ -137,15 +137,15 @@ export default function PlayerDashboardPage() {
                 <p className="px-role-kicker text-[color:var(--px-accent)]">Performance</p>
                 <h2 className="mt-2 text-xl text-white">Lecture terrain de ta progression</h2>
                 <p className="mt-2 max-w-2xl text-sm text-white/70">
-                  Ici, on suit le cycle, la charge et le prochain focus coach plutot qu&apos;un dashboard
-                  trop generique.
+                  Ici, on suit le cycle, la charge et le prochain focus coach plutôt qu&apos;un dashboard
+                  trop générique.
                 </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="px-role-stat min-w-[180px]">
                   <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Prochain focus</p>
                   <p className="mt-2 text-sm text-white">
-                    {latestFeedback?.next_focus || "Seance completee pour debloquer le suivi"}
+                    {latestFeedback?.next_focus || "Séance complétée pour débloquer le suivi"}
                   </p>
                 </div>
                 <div className="px-role-stat min-w-[180px]">
@@ -153,13 +153,13 @@ export default function PlayerDashboardPage() {
                   <p className="mt-2 text-sm text-white">
                     {latestFeedback?.load_recommendation
                       ? LOAD_RECOMMENDATION_LABELS[latestFeedback.load_recommendation]
-                      : "Charge a calibrer"}
+                      : "Charge à calibrer"}
                   </p>
                 </div>
                 <div className="px-role-stat min-w-[180px]">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Prochaine seance</p>
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Prochaine séance</p>
                   <p className="mt-2 text-sm text-white">
-                    {nextSession ? formatLongDate(new Date(`${nextSession.date}T12:00`)) : "A programmer"}
+                    {nextSession ? formatLongDate(new Date(`${nextSession.date}T12:00`)) : "À programmer"}
                   </p>
                 </div>
               </div>
@@ -262,7 +262,7 @@ export default function PlayerDashboardPage() {
               <ScrollReveal>
                 <div className="px-card-strong p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg text-white">Seances a venir</h3>
+                    <h3 className="text-lg text-white">Séances a venir</h3>
                     <Link href="/sessions" className="text-xs text-[color:var(--px-accent)] hover:underline">
                       Voir tout
                     </Link>
@@ -270,9 +270,9 @@ export default function PlayerDashboardPage() {
                   {upcoming.length === 0 ? (
                     <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
                       <CalendarIcon className="mx-auto h-8 w-8 text-white/20" />
-                      <p className="mt-2 text-sm text-white/70">Aucune seance programmee</p>
+                      <p className="mt-2 text-sm text-white/70">Aucune séance programmée</p>
                       <Link href="/booking" className="px-button mt-4 text-sm">
-                        Reserver une seance
+                        Reserver une séance
                       </Link>
                     </div>
                   ) : (
@@ -352,7 +352,7 @@ export default function PlayerDashboardPage() {
                   ) : (
                     <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-6 text-center">
                       <p className="text-sm text-white/70">
-                        Aucun feedback structure disponible pour l&apos;instant. Termine une seance pour debloquer le suivi detaille.
+                        Aucun feedback structure disponible pour l&apos;instant. Termine une séance pour débloquer le suivi détaillé.
                       </p>
                     </div>
                   )}
@@ -376,7 +376,7 @@ export default function PlayerDashboardPage() {
                       Charge hebdo:{" "}
                       {playerSnapshot.trainingFrequencyPerWeek == null
                         ? "A renseigner"
-                        : `${playerSnapshot.trainingFrequencyPerWeek} seance(s)`}
+                        : `${playerSnapshot.trainingFrequencyPerWeek} séance(s)`}
                     </li>
                   </ul>
                 </div>

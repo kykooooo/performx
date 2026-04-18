@@ -290,8 +290,8 @@ export default function RegisterCoachPage() {
                 <FieldError error={errors.price} />
               </div>
               <div>
-                <label htmlFor="reg-coach-experience" className="mb-1 block text-xs text-white/70">Années d&apos;expérience</label>
-                <input id="reg-coach-experience" className="px-input" type="number" min={0} step={1} placeholder="Ex: 5" value={experienceYears} onChange={(e) => setExperienceYears(e.target.value === "" ? "" : Number(e.target.value))} />
+                <label htmlFor="reg-coach-expérience" className="mb-1 block text-xs text-white/70">Années d&apos;expérience</label>
+                <input id="reg-coach-expérience" className="px-input" type="number" min={0} step={1} placeholder="Ex: 5" value={experienceYears} onChange={(e) => setExperienceYears(e.target.value === "" ? "" : Number(e.target.value))} />
               </div>
             </div>
             <div>

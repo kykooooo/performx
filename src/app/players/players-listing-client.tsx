@@ -109,9 +109,9 @@ export default function PlayersPage() {
         <div className="grid items-center gap-8 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="px-stack-3">
             <div className="flex items-center gap-3 px-fade-up">
-              <span className="px-badge px-pulse">Communaute</span>
+              <span className="px-badge px-pulse">Communauté</span>
               <span className="px-pill">
-                {isDemo ? "Mode demo" : `+${players.length} joueurs inscrits`}
+                {isDemo ? "Mode démo" : `+${players.length} joueurs inscrits`}
               </span>
             </div>
 
@@ -126,8 +126,8 @@ export default function PlayersPage() {
               className="px-fade-up max-w-lg text-base text-white/70"
               style={{ animationDelay: "160ms" }}
             >
-              Decouvre les profils joueurs, leurs objectifs et leur progression. Trouve le
-              partenaire d&apos;entrainement ideal.
+              Découvre les profils joueurs, leurs objectifs et leur progression. Trouve le
+              partenaire d&apos;entraînement idéal.
             </p>
 
             <div
@@ -136,7 +136,7 @@ export default function PlayersPage() {
             >
               <Link href="/auth/register/player" className="px-button px-6 py-3 text-sm">
                 <BoltIcon className="h-4 w-4" />
-                Creer mon profil
+                Créer mon profil
               </Link>
               <Link href="#players" className="px-button-ghost px-6 py-3 text-sm">
                 Explorer
@@ -168,7 +168,7 @@ export default function PlayersPage() {
             <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-4">
               <p className="text-xs leading-relaxed text-white/70">
                 <span className="font-semibold text-white/70">{allCities.length} villes</span>{" "}
-                representees. Des joueurs de tous niveaux prets a progresser ensemble.
+                représentées. Des joueurs de tous niveaux prêts à progresser ensemble.
               </p>
             </div>
           </div>
@@ -289,7 +289,7 @@ export default function PlayersPage() {
       {!loading && filteredPlayers.length === 0 && !error && (
         <FeedbackState
           icon={<SearchIcon className="h-7 w-7 text-white/70" />}
-          title="Aucun joueur trouve"
+          title="Aucun joueur trouvé"
           description="Aucun joueur ne correspond a tes filtres actuels."
           actionLabel="Reinitialiser les filtres"
           onAction={() => {
