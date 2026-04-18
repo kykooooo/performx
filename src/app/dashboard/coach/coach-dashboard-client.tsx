@@ -51,6 +51,7 @@ export default function CoachDashboardPage() {
   } | null>(null);
   const [activityData, setActivityData] = useState<{ month: string; seances: number; revenus: number }[]>([]);
   const [dayData, setDayData] = useState<{ day: string; count: number }[]>([]);
+  const [monthRevenue, setMonthRevenue] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -69,6 +70,7 @@ export default function CoachDashboardPage() {
       );
       setActivityData(result.data.activityData);
       setDayData(result.data.dayData);
+      setMonthRevenue(result.data.monthRevenue ?? 0);
       setLoading(false);
     };
 
@@ -91,7 +93,6 @@ export default function CoachDashboardPage() {
     [completed],
   );
 
-  const revenue = (coach?.pricePerSession ?? 0) * upcoming.length;
 
   const availableSlots = useMemo(() => {
     if (!coach?.availability) return [] as AvailabilitySlot[];
@@ -395,7 +396,7 @@ export default function CoachDashboardPage() {
           {[
             { label: "Séances à venir", value: upcoming.length, icon: <CalendarIcon className="h-5 w-5" />, accent: true },
             { label: "Séances terminées", value: completed.length, icon: <CheckCircleIcon className="h-5 w-5" />, accent: false },
-            { label: "Revenus estimés", value: `${revenue}€`, icon: <BoltIcon className="h-5 w-5" />, accent: true },
+            { label: "Revenus ce mois", value: `${monthRevenue}€`, icon: <BoltIcon className="h-5 w-5" />, accent: true },
             { label: "Note moyenne", value: (coach?.rating ?? 0).toFixed(1), icon: <StarIcon className="h-5 w-5" />, accent: false },
           ].map((stat) => (
             <div key={stat.label} className={`${stat.accent ? "px-card-strong" : "px-card"} group flex items-center gap-4 p-5`}>

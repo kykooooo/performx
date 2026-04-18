@@ -78,6 +78,8 @@ export type PlayerDashboardData = {
 export type CoachDashboardData = {
   coach: CoachDashboardCoachRecord | null;
   sessions: SessionRecord[];
+  totalRevenue: number;
+  monthRevenue: number;
   activityData: typeof coachMonthlyActivity;
   dayData: typeof coachDayDistribution;
 };
@@ -219,6 +221,8 @@ export async function getPlayerDashboardData(): Promise<DataResult<PlayerDashboa
 }
 
 function buildDemoCoachDashboardData(): CoachDashboardData {
+  const demoSessions = mockSessions.map(mapMockSessionToSessionRecord);
+  const demoTotal = mockBookings.reduce((sum, b) => sum + b.price, 0);
   return {
     coach: {
       id: mockCoaches[0].id,
@@ -228,7 +232,9 @@ function buildDemoCoachDashboardData(): CoachDashboardData {
       pricePerSession: mockCoaches[0].pricePerSession,
       availability: mockCoaches[0].availability,
     },
-    sessions: mockSessions.map(mapMockSessionToSessionRecord),
+    sessions: demoSessions,
+    totalRevenue: demoTotal,
+    monthRevenue: Math.round(demoTotal * 0.3),
     activityData: coachMonthlyActivity,
     dayData: coachDayDistribution,
   };
@@ -254,18 +260,47 @@ export async function getCoachDashboardData(): Promise<DataResult<CoachDashboard
       return liveResult({
         coach: null,
         sessions: [],
+        totalRevenue: 0,
+        monthRevenue: 0,
         activityData: [],
         dayData: [],
       });
     }
 
-    const { data: sessionData, error: sessionError } = await supabase
-      .from("sessions")
-      .select("id, coach_id, player_id, title, date, time, duration_minutes, status, feedback")
-      .eq("coach_id", coachData.id)
-      .order("date", { ascending: true });
+    const firstOfMonth = new Date();
+    firstOfMonth.setDate(1);
+    firstOfMonth.setHours(0, 0, 0, 0);
+    const firstOfMonthIso = firstOfMonth.toISOString();
+
+    const [{ data: sessionData, error: sessionError }, bookingsTotalRes, bookingsMonthRes] = await Promise.all([
+      supabase
+        .from("sessions")
+        .select("id, coach_id, player_id, title, date, time, duration_minutes, status, feedback")
+        .eq("coach_id", coachData.id)
+        .order("date", { ascending: true }),
+      supabase
+        .from("bookings")
+        .select("price")
+        .eq("coach_id", coachData.id)
+        .eq("payment_status", "paid"),
+      supabase
+        .from("bookings")
+        .select("price")
+        .eq("coach_id", coachData.id)
+        .eq("payment_status", "paid")
+        .gte("created_at", firstOfMonthIso),
+    ]);
 
     if (sessionError) throw sessionError;
+
+    const totalRevenue = (bookingsTotalRes.data ?? []).reduce(
+      (sum, booking) => sum + (booking.price ?? 0),
+      0,
+    );
+    const monthRevenue = (bookingsMonthRes.data ?? []).reduce(
+      (sum, booking) => sum + (booking.price ?? 0),
+      0,
+    );
 
     const [activityData, dayData] = await Promise.all([
       fetchCoachMonthlyActivity(coachData.id),
@@ -282,6 +317,8 @@ export async function getCoachDashboardData(): Promise<DataResult<CoachDashboard
         availability: coachData.availability ?? [],
       },
       sessions: ((sessionData as SessionRow[] | null) ?? []).map(mapSessionLikeToSessionRecord),
+      totalRevenue,
+      monthRevenue,
       activityData,
       dayData,
     });
@@ -290,6 +327,8 @@ export async function getCoachDashboardData(): Promise<DataResult<CoachDashboard
     return liveResult({
       coach: null,
       sessions: [],
+      totalRevenue: 0,
+      monthRevenue: 0,
       activityData: [],
       dayData: [],
     });
