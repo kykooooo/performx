@@ -288,7 +288,17 @@ export default function CoachPage() {
         />
       )}
 
-      {!loading && filteredCoaches.length === 0 && !error && (
+      {!loading && filteredCoaches.length === 0 && !error && coaches.length === 0 && (
+        <FeedbackState
+          icon={<WhistleIcon className="h-7 w-7 text-[color:var(--px-accent)]" />}
+          title="Les premiers coachs arrivent"
+          description="PerformX est en phase de lancement. Reviens bientôt ou inscris-toi pour être notifié dès que de nouveaux coachs rejoignent la plateforme."
+          actionLabel="Devenir coach"
+          actionHref="/auth/register/coach"
+        />
+      )}
+
+      {!loading && filteredCoaches.length === 0 && !error && coaches.length > 0 && (
         <FeedbackState
           icon={<SearchIcon className="h-7 w-7 text-white/70" />}
           title="Aucun coach trouvé"

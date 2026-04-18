@@ -40,6 +40,18 @@ export default function FeaturedCoaches() {
     );
   }
 
+  if (coaches.length === 0) {
+    return (
+      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[color:var(--px-accent)]/10 via-white/5 to-transparent p-8 text-center">
+        <p className="text-sm text-white/70">
+          <span className="px-gradient-text font-semibold">PerformX est en phase de lancement.</span>
+          <br />
+          Les premiers coachs arrivent — reviens bientôt ou inscris-toi pour être notifié.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
       {coaches.map((coach, index) => (

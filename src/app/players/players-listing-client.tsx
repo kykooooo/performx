@@ -286,12 +286,22 @@ export default function PlayersPage() {
         />
       )}
 
-      {!loading && filteredPlayers.length === 0 && !error && (
+      {!loading && filteredPlayers.length === 0 && !error && players.length === 0 && (
+        <FeedbackState
+          icon={<UsersIcon className="h-7 w-7 text-[color:var(--px-accent)]" />}
+          title="Les premiers joueurs arrivent"
+          description="PerformX est en phase de lancement. Inscris-toi en tant que joueur pour rejoindre la communauté."
+          actionLabel="Créer mon profil joueur"
+          actionHref="/auth/register/player"
+        />
+      )}
+
+      {!loading && filteredPlayers.length === 0 && !error && players.length > 0 && (
         <FeedbackState
           icon={<SearchIcon className="h-7 w-7 text-white/70" />}
           title="Aucun joueur trouvé"
-          description="Aucun joueur ne correspond a tes filtres actuels."
-          actionLabel="Reinitialiser les filtres"
+          description="Aucun joueur ne correspond à tes filtres actuels."
+          actionLabel="Réinitialiser les filtres"
           onAction={() => {
             setQuery("");
             setActiveLevel("Tous");
