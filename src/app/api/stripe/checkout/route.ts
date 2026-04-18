@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
   const admin = getSupabaseAdmin();
   const { data: coach, error: coachError } = await admin
     .from("coaches")
-    .select("id, name, speciality, price_per_session")
+    .select("id, name, speciality, price_per_session, stripe_account_id, stripe_onboarded")
     .eq("id", body.coachId)
     .maybeSingle();
 
@@ -97,6 +97,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Vérifier que le coach a activé ses paiements Stripe Connect
+  if (!coach.stripe_account_id || !coach.stripe_onboarded) {
+    return NextResponse.json(
+      {
+        error:
+          "Ce coach n'a pas encore activé ses paiements. Demande-lui de configurer son compte depuis son dashboard avant de réserver.",
+      },
+      { status: 409 },
+    );
+  }
+
   const origin =
     request.headers.get("origin") ??
     process.env.NEXT_PUBLIC_SITE_URL ??
@@ -105,6 +116,10 @@ export async function POST(request: NextRequest) {
   const stripe = getStripe();
 
   try {
+    // Commission plateforme : 0% pendant les tests / phase MVP.
+    // À ajuster ensuite via une variable d'env ou une table config.
+    const platformFeeCents = 0;
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
@@ -122,6 +137,12 @@ export async function POST(request: NextRequest) {
           },
         },
       ],
+      payment_intent_data: {
+        application_fee_amount: platformFeeCents,
+        transfer_data: {
+          destination: coach.stripe_account_id as string,
+        },
+      },
       metadata: {
         player_id: user.id,
         coach_id: body.coachId,
