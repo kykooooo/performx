@@ -135,7 +135,18 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erreur Stripe.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const stripeErr = error as { type?: string; code?: string; message?: string };
+    console.error("[stripe checkout] session.create failed", {
+      type: stripeErr.type,
+      code: stripeErr.code,
+      message: stripeErr.message,
+      coachId: body.coachId,
+      priceInCents,
+    });
+    const userMessage =
+      stripeErr.type === "StripeConnectionError"
+        ? "Connexion Stripe momentanément indisponible. Réessaie dans quelques secondes."
+        : stripeErr.message ?? "Erreur Stripe.";
+    return NextResponse.json({ error: userMessage }, { status: 500 });
   }
 }
