@@ -265,6 +265,39 @@ export default function CoachProfileClient() {
         { label: "Coachs", href: "/coach" },
         { label: coach.name },
       ]} />
+
+      {/* Barre CTA sticky : prix + Réserver toujours visibles en scroll */}
+      <div className="sticky top-[73px] z-20 -mx-4 mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-[color:var(--px-bg)]/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
+        <div className="flex items-center gap-3">
+          <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-black/60 text-xs font-semibold text-white">
+            {coachAvatar ? (
+              <Image src={coachAvatar} alt={coach.name} fill sizes="36px" className="object-cover" />
+            ) : (
+              coach.name
+                .split(" ")
+                .map((part) => part[0])
+                .slice(0, 2)
+                .join("")
+                .toUpperCase()
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-white">{coach.name}</p>
+            <p className="truncate text-xs text-white/60">
+              {coach.speciality} · {coach.price_per_session ?? 0}€/séance
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href={`/messages?coach=${coach.id}`} className="px-button-ghost text-xs sm:text-sm">
+            Message
+          </Link>
+          <Link href={`/booking?coach=${coach.id}`} className="px-button text-xs sm:text-sm">
+            Réserver
+          </Link>
+        </div>
+      </div>
+
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="px-card-strong space-y-6 p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">

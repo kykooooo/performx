@@ -11,6 +11,8 @@ type CheckoutBody = {
   date: string;
   time: string;
   durationMinutes: number;
+  /** Optionnel : si un parent réserve pour son enfant, l'id du child user. */
+  childId?: string;
 };
 
 const isValidBody = (value: unknown): value is CheckoutBody => {
@@ -71,8 +73,40 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Lookup coach via admin client (bypass RLS, données déjà publiques)
   const admin = getSupabaseAdmin();
+
+  // Si childId fourni → vérifier que c'est bien un enfant lié au parent authentifié
+  let beneficiaryId = user.id;
+  let beneficiaryName: string | null = null;
+
+  if (body.childId) {
+    const { data: link } = await admin
+      .from("parent_children")
+      .select("child_user_id")
+      .eq("parent_user_id", user.id)
+      .eq("child_user_id", body.childId)
+      .maybeSingle();
+
+    if (!link) {
+      return NextResponse.json(
+        { error: "Cet enfant n'est pas lié à ton compte parent." },
+        { status: 403 },
+      );
+    }
+
+    const { data: childProfile } = await admin
+      .from("profiles")
+      .select("first_name, last_name")
+      .eq("user_id", body.childId)
+      .maybeSingle();
+
+    beneficiaryId = body.childId;
+    beneficiaryName = childProfile
+      ? [childProfile.first_name, childProfile.last_name].filter(Boolean).join(" ")
+      : null;
+  }
+
+  // Lookup coach via admin client (bypass RLS, données déjà publiques)
   const { data: coach, error: coachError } = await admin
     .from("coaches")
     .select("id, name, speciality, price_per_session, stripe_account_id, stripe_onboarded")
@@ -131,7 +165,9 @@ export async function POST(request: NextRequest) {
             currency: "eur",
             unit_amount: priceInCents,
             product_data: {
-              name: `Séance avec ${coach.name}`,
+              name: beneficiaryName
+                ? `Séance avec ${coach.name} (pour ${beneficiaryName})`
+                : `Séance avec ${coach.name}`,
               description: `${coach.speciality} · ${body.date} à ${body.time} (${body.durationMinutes} min)`,
             },
           },
@@ -150,12 +186,16 @@ export async function POST(request: NextRequest) {
           }
         : {}),
       metadata: {
-        player_id: user.id,
+        player_id: beneficiaryId,
         coach_id: body.coachId,
         session_date: body.date,
         session_time: body.time,
         duration_minutes: String(body.durationMinutes),
         price_cents: String(priceInCents),
+        // Si c'est un parent qui paie pour son enfant, on trace aussi le payeur
+        ...(body.childId && beneficiaryId !== user.id
+          ? { booked_by_parent_id: user.id, beneficiary_name: beneficiaryName ?? "" }
+          : {}),
       },
       success_url: `${origin}/booking/confirmation?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/booking?canceled=1&coach=${body.coachId}`,

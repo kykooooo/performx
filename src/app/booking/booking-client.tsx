@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AppShell from "@/components/app-shell";
 import { FeedbackState, LoadingState } from "@/components/feedback-state";
-import { AlertIcon, CalendarIcon, CheckCircleIcon, WhistleIcon } from "@/components/icons";
+import { AlertIcon, CalendarIcon, CheckCircleIcon, UserIcon, WhistleIcon } from "@/components/icons";
 import { Notice, type NoticeData } from "@/components/notice";
 import SlotCalendar from "@/components/slot-calendar";
 import { normalizeTime } from "@/lib/booking";
@@ -23,7 +23,14 @@ import {
   getCoachBestForLabel,
   getCoachStyleLabel,
 } from "@/lib/football-surface";
+import { supabase } from "@/lib/supabase";
 import type { AvailabilitySlot } from "@/lib/types";
+
+type LinkedChild = {
+  userId: string;
+  firstName: string;
+  lastName: string;
+};
 
 const formatSlotLabel = (slot: AvailabilitySlot) => {
   const date = new Date(`${slot.date}T12:00`);
@@ -50,6 +57,9 @@ export default function BookingClient() {
   );
   const [lastBookedCoachId, setLastBookedCoachId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<"player" | "coach" | "parent" | null>(null);
+  const [linkedChildren, setLinkedChildren] = useState<LinkedChild[]>([]);
+  const [selectedChildId, setSelectedChildId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(false);
   const [isDemo, setIsDemo] = useState(false);
@@ -69,6 +79,44 @@ export default function BookingClient() {
       setUserId(result.data.userId);
       setSelectedCoachId(initialCoachId ?? result.data.coaches[0]?.id ?? "");
       setIsDemo(result.mode === "demo");
+
+      // Récupère le rôle utilisateur (parent → sélecteur enfant)
+      if (result.data.userId) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("user_id", result.data.userId)
+          .maybeSingle();
+
+        const role = profile?.role as "player" | "coach" | "parent" | null;
+        if (mounted) setUserRole(role ?? null);
+
+        if (role === "parent") {
+          const { data: links } = await supabase
+            .from("parent_children")
+            .select("child_user_id")
+            .eq("parent_user_id", result.data.userId);
+
+          const childIds = (links ?? []).map((l) => l.child_user_id as string);
+          if (childIds.length > 0) {
+            const { data: children } = await supabase
+              .from("profiles")
+              .select("user_id, first_name, last_name")
+              .in("user_id", childIds);
+
+            if (mounted) {
+              const list = (children ?? []).map((c) => ({
+                userId: c.user_id as string,
+                firstName: (c.first_name as string) ?? "",
+                lastName: (c.last_name as string) ?? "",
+              }));
+              setLinkedChildren(list);
+              setSelectedChildId(list[0]?.userId ?? "");
+            }
+          }
+        }
+      }
+
       setLoading(false);
     };
 
@@ -192,6 +240,24 @@ export default function BookingClient() {
       return;
     }
 
+    // Garde-fou côté parent : doit avoir choisi un enfant
+    if (userRole === "parent") {
+      if (linkedChildren.length === 0) {
+        setNotice({
+          type: "error",
+          text: "Lie d'abord un compte joueur à ton compte parent depuis ton dashboard.",
+        });
+        return;
+      }
+      if (!selectedChildId) {
+        setNotice({
+          type: "error",
+          text: "Sélectionne pour quel enfant tu réserves cette séance.",
+        });
+        return;
+      }
+    }
+
     setBooking(true);
 
     // Mode démo (pas de Supabase) → flow local sans paiement
@@ -255,6 +321,8 @@ export default function BookingClient() {
           date: effectiveSelectedSlot.date,
           time: normalizeTime(effectiveSelectedSlot.time),
           durationMinutes: effectiveSelectedSlot.durationMinutes,
+          // Si parent : on réserve pour l'enfant, pas pour soi-même
+          childId: userRole === "parent" ? selectedChildId : undefined,
         }),
       });
 
@@ -508,7 +576,41 @@ export default function BookingClient() {
 
         <div className="px-stack-3">
           <div className="px-card-strong p-6">
-            <h3 className="text-xl text-white">Recapitulatif</h3>
+            <h3 className="text-xl text-white">Récapitulatif</h3>
+
+            {/* Bloc "Pour ton enfant" : visible uniquement si parent connecté */}
+            {userRole === "parent" && (
+              <div className="mt-4 rounded-xl border border-[color:var(--px-accent)]/25 bg-[color:var(--px-accent)]/8 p-3">
+                <p className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-[color:var(--px-accent)]">
+                  <UserIcon className="h-3 w-3" />
+                  Tu réserves pour
+                </p>
+                {linkedChildren.length === 0 ? (
+                  <div className="text-xs text-white/70">
+                    Aucun enfant lié.{" "}
+                    <Link href="/dashboard/parent" className="text-[color:var(--px-accent)] underline">
+                      Lier un compte joueur
+                    </Link>
+                  </div>
+                ) : linkedChildren.length === 1 ? (
+                  <p className="text-sm font-semibold text-white">
+                    {linkedChildren[0].firstName} {linkedChildren[0].lastName}
+                  </p>
+                ) : (
+                  <select
+                    className="px-select w-full"
+                    value={selectedChildId}
+                    onChange={(e) => setSelectedChildId(e.target.value)}
+                  >
+                    {linkedChildren.map((child) => (
+                      <option key={child.userId} value={child.userId}>
+                        {child.firstName} {child.lastName}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
 
             <div className="mt-4 space-y-3 text-sm text-white/70">
               <div className="flex items-center justify-between">
@@ -516,19 +618,19 @@ export default function BookingClient() {
                 <span className="text-white">{selectedCoach?.name ?? "-"}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span>Creneau</span>
+                <span>Créneau</span>
                 <span className="text-right text-white">
-                  {effectiveSelectedSlot ? formatSlotLabel(effectiveSelectedSlot) : "Selectionne un creneau"}
+                  {effectiveSelectedSlot ? formatSlotLabel(effectiveSelectedSlot) : "Sélectionne un créneau"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span>Duree</span>
+                <span>Durée</span>
                 <span className="text-white">{effectiveSelectedSlot?.durationMinutes ?? "-"} min</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Lieu</span>
                 <span className="text-right text-white">
-                  {selectedCoach?.location ?? "Confirme apres validation"}
+                  {selectedCoach?.location ?? "Confirmé après validation"}
                 </span>
               </div>
               <div className="px-divider" />

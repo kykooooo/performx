@@ -18,7 +18,7 @@ import {
   WhistleIcon,
 } from "@/components/icons";
 import { formatLongDate } from "@/lib/date";
-import { LOAD_RECOMMENDATION_LABELS } from "@/lib/football";
+import { FOOTBALL_SKILL_AXES, LOAD_RECOMMENDATION_LABELS } from "@/lib/football";
 import { CHART_COLORS } from "@/lib/chart-data";
 import { normalizeSessionFeedback } from "@/lib/session-feedback";
 import { ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
@@ -389,22 +389,93 @@ export default function PlayerDashboardPage() {
             <div className="space-y-6">
               <ScrollReveal>
                 <div className="px-card-strong p-6">
-                  <h3 className="text-lg text-white">Dernier feedback coach</h3>
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-lg text-white">Dernier feedback coach</h3>
+                    {completed[0] && (
+                      <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] text-white/60">
+                        {formatLongDate(new Date(`${completed[0].date}T12:00`))}
+                      </span>
+                    )}
+                  </div>
+
+                  {latestFeedback && completed[0] && (
+                    <p className="mt-1 text-xs text-white/60">
+                      Par <span className="text-white/80">{coachMap[completed[0].coachId] ?? "ton coach"}</span> · Séance « {completed[0].title} »
+                    </p>
+                  )}
+
                   {latestFeedback ? (
                     <div className="mt-4 space-y-4">
+                      {/* Notes sur les 5 axes foot */}
                       <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-xs uppercase tracking-[0.2em] text-white/50">Synthese</p>
-                        <p className="mt-2 text-sm leading-relaxed text-white/80">{latestFeedback.summary}</p>
+                        <p className="mb-3 text-xs uppercase tracking-[0.2em] text-white/50">
+                          Ton score sur les 5 axes
+                        </p>
+                        <div className="space-y-2">
+                          {FOOTBALL_SKILL_AXES.map((axis) => {
+                            const value = latestFeedback.ratings[axis.key] ?? 0;
+                            return (
+                              <div key={axis.key} className="flex items-center gap-3">
+                                <span className="w-20 text-xs text-white/60">{axis.label}</span>
+                                <div className="flex flex-1 gap-1">
+                                  {[1, 2, 3, 4, 5].map((n) => (
+                                    <span
+                                      key={n}
+                                      className={`h-1.5 flex-1 rounded-full transition ${
+                                        n <= value
+                                          ? "bg-[color:var(--px-accent)]"
+                                          : "bg-white/10"
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="w-6 text-right text-xs font-medium text-white/80">
+                                  {value}/5
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-xs uppercase tracking-[0.2em] text-white/50">Prochain focus</p>
-                        <p className="mt-2 text-sm leading-relaxed text-white/80">{latestFeedback.next_focus || "Feedback en cours de structuration."}</p>
+
+                      {latestFeedback.summary && (
+                        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                          <p className="text-xs uppercase tracking-[0.2em] text-white/50">Synthèse</p>
+                          <p className="mt-2 text-sm leading-relaxed text-white/80">
+                            {latestFeedback.summary}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-xl border border-[color:var(--px-accent)]/25 bg-[color:var(--px-accent)]/8 p-4">
+                          <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--px-accent)]">
+                            Prochain focus
+                          </p>
+                          <p className="mt-2 text-sm leading-relaxed text-white/90">
+                            {latestFeedback.next_focus || "En cours de structuration."}
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                          <p className="text-xs uppercase tracking-[0.2em] text-white/50">
+                            Charge recommandée
+                          </p>
+                          <p className="mt-2 text-sm leading-relaxed text-white/80">
+                            {latestFeedback.load_recommendation
+                              ? LOAD_RECOMMENDATION_LABELS[latestFeedback.load_recommendation]
+                              : "À calibrer"}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-6 text-center">
-                      <p className="text-sm text-white/70">
-                        Aucun feedback structure disponible pour l&apos;instant. Termine une séance pour débloquer le suivi détaillé.
+                    <div className="mt-4 rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
+                      <TrophyIcon className="mx-auto h-8 w-8 text-white/20" />
+                      <p className="mt-2 text-sm text-white/70">
+                        Aucun feedback disponible pour l&apos;instant
+                      </p>
+                      <p className="mt-1 text-xs text-white/50">
+                        Termine ta première séance pour débloquer le suivi détaillé
                       </p>
                     </div>
                   )}

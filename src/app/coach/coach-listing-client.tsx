@@ -47,6 +47,10 @@ export default function CoachPage() {
   const [activeCity, setActiveCity] = useState("");
   const [sortBy, setSortBy] = useState<"rating" | "price-asc" | "price-desc" | "name">("rating");
   const [isDemo, setIsDemo] = useState(false);
+  const [priceMin, setPriceMin] = useState<number | "">("");
+  const [priceMax, setPriceMax] = useState<number | "">("");
+  const [minRating, setMinRating] = useState<number>(0);
+  const [onlyThisWeek, setOnlyThisWeek] = useState<boolean>(false);
 
   const fetchPage = useCallback(async (pageNum: number, append: boolean) => {
     if (append) setLoadingMore(true);
@@ -74,6 +78,9 @@ export default function CoachPage() {
 
   const filteredCoaches = useMemo(() => {
     const normalized = query.trim().toLowerCase();
+    const now = new Date();
+    const endOfWeek = new Date(now);
+    endOfWeek.setDate(now.getDate() + 7);
 
     const filtered = coaches.filter((coach) => {
       const location = `${coach.location ?? ""} ${coach.department ?? ""}`.toLowerCase();
@@ -86,8 +93,26 @@ export default function CoachPage() {
         activeChip === "Tous" || coach.speciality.toLowerCase().includes(activeChip.toLowerCase());
       const matchesCity =
         !activeCity || (coach.location ?? "").toLowerCase() === activeCity.toLowerCase();
+      const price = coach.pricePerSession ?? 0;
+      const matchesPriceMin = priceMin === "" || price >= priceMin;
+      const matchesPriceMax = priceMax === "" || price <= priceMax;
+      const matchesRating = minRating === 0 || (coach.rating ?? 0) >= minRating;
+      const matchesThisWeek =
+        !onlyThisWeek ||
+        (coach.availability ?? []).some((slot) => {
+          const slotDate = new Date(`${slot.date}T${slot.time}:00`);
+          return slotDate >= now && slotDate <= endOfWeek;
+        });
 
-      return matchesQuery && matchesChip && matchesCity;
+      return (
+        matchesQuery &&
+        matchesChip &&
+        matchesCity &&
+        matchesPriceMin &&
+        matchesPriceMax &&
+        matchesRating &&
+        matchesThisWeek
+      );
     });
 
     const sorted = [...filtered];
@@ -107,7 +132,7 @@ export default function CoachPage() {
     }
 
     return sorted;
-  }, [activeChip, activeCity, coaches, query, sortBy]);
+  }, [activeChip, activeCity, coaches, query, sortBy, priceMin, priceMax, minRating, onlyThisWeek]);
 
   const avgRating = useMemo(() => {
     const ratings = coaches.map((coach) => coach.rating ?? 0).filter((rating) => rating > 0);
@@ -254,6 +279,90 @@ export default function CoachPage() {
                 <option value="price-desc">Prix décroissant</option>
                 <option value="name">Nom A-Z</option>
               </select>
+            </div>
+
+            {/* Filtres avancés : prix, note, dispo */}
+            <div className="flex flex-wrap items-center gap-4 border-t border-white/5 pt-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">Budget</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="Min €"
+                  className="px-input w-20 text-xs"
+                  value={priceMin}
+                  onChange={(e) =>
+                    setPriceMin(e.target.value === "" ? "" : Number(e.target.value))
+                  }
+                  min={0}
+                  aria-label="Prix minimum"
+                />
+                <span className="text-white/40">–</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="Max €"
+                  className="px-input w-20 text-xs"
+                  value={priceMax}
+                  onChange={(e) =>
+                    setPriceMax(e.target.value === "" ? "" : Number(e.target.value))
+                  }
+                  min={0}
+                  aria-label="Prix maximum"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">Note</span>
+                {[0, 3.5, 4, 4.5].map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setMinRating(value)}
+                    className={`rounded-full border px-3 py-1 text-xs transition ${
+                      minRating === value
+                        ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]"
+                        : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
+                    }`}
+                  >
+                    {value === 0 ? "Toutes" : `${value}+`}
+                  </button>
+                ))}
+              </div>
+
+              <label className="flex cursor-pointer items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70 transition hover:border-white/20">
+                <input
+                  type="checkbox"
+                  checked={onlyThisWeek}
+                  onChange={(e) => setOnlyThisWeek(e.target.checked)}
+                  className="h-3.5 w-3.5"
+                />
+                Dispo cette semaine
+              </label>
+
+              {(priceMin !== "" ||
+                priceMax !== "" ||
+                minRating !== 0 ||
+                onlyThisWeek ||
+                activeCity ||
+                activeChip !== "Tous" ||
+                query) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPriceMin("");
+                    setPriceMax("");
+                    setMinRating(0);
+                    setOnlyThisWeek(false);
+                    setActiveCity("");
+                    setActiveChip("Tous");
+                    setQuery("");
+                  }}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60 transition hover:border-white/20 hover:text-white"
+                >
+                  Réinitialiser
+                </button>
+              )}
             </div>
           </div>
 

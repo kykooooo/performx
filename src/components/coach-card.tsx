@@ -88,12 +88,6 @@ export default function CoachCard({
           Coach
         </span>
 
-        {/* Availability indicator */}
-        <div className="absolute bottom-3 left-4 flex items-center gap-1.5" aria-label={`Prochaine disponibilité ${nextAvailability}`}>
-          <span className="inline-flex h-2 w-2 rounded-full bg-[color:var(--px-success)]" />
-          <span className="text-[10px] font-medium text-[color:var(--px-success)]">{nextAvailability}</span>
-        </div>
-
         {/* Price tag */}
         <div className="absolute bottom-3 right-3 rounded-lg bg-black/60 px-2.5 py-1 backdrop-blur-sm">
           <p className="text-sm font-semibold text-white" aria-label={`${price} par séance`}>{price}<span className="text-[10px] text-white/70">/séance</span></p>
@@ -102,6 +96,20 @@ export default function CoachCard({
 
       {/* Description */}
       <p className="line-clamp-2 text-sm leading-relaxed text-white/70">{description}</p>
+
+      {/* Bloc prochaine dispo — l'info la plus importante pour décider */}
+      <div className="flex items-center gap-2 rounded-xl border border-[color:var(--px-success)]/25 bg-[color:var(--px-success)]/8 px-3 py-2">
+        <span className="relative flex h-2 w-2 shrink-0">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[color:var(--px-success)] opacity-60" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-[color:var(--px-success)]" />
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] uppercase tracking-[0.15em] text-[color:var(--px-success)]/80">
+            Prochaine dispo
+          </p>
+          <p className="truncate text-sm font-medium text-white">{nextAvailability}</p>
+        </div>
+      </div>
 
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="rounded-xl border border-white/10 bg-white/5 p-3">
