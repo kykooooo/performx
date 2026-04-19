@@ -98,9 +98,10 @@ export default function CoachCard({
               className="absolute inset-0 bg-[radial-gradient(circle_at_85%_20%,rgba(255,106,0,0.18),transparent_55%)] transition duration-500 group-hover:bg-[radial-gradient(circle_at_85%_20%,rgba(255,106,0,0.28),transparent_60%)]"
               aria-hidden="true"
             />
-            {/* Emoji spécialité : petit, coin bas-droit, discret */}
+            {/* Emoji spécialité : centré verticalement à droite, entre
+                le tag Coach (haut) et le tag prix (bas) — pas de chevauchement */}
             <span
-              className="pointer-events-none absolute bottom-2 right-12 text-3xl leading-none opacity-40 transition duration-500 group-hover:opacity-60"
+              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-3xl leading-none opacity-40 transition duration-500 group-hover:opacity-60"
               aria-hidden="true"
             >
               {specialityEmoji}
