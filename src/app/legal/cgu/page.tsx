@@ -87,16 +87,18 @@ export default function CGUPage() {
         </ul>
 
         <h2 className="text-2xl text-white mt-8 mb-4">
-          Article 4 - Tarifs et paiement
+          Article 4 - Tarifs et rémunération
         </h2>
         <p className="text-sm text-white/70 leading-relaxed mb-4">
-          Les tarifs des séances de coaching sont fixes par chaque coach et
-          affiches sur leur profil. Le paiement est effectue en ligne lors de
-          la réservation via les moyens de paiement securises proposes par la
-          plateforme. Les prix sont indiques en euros toutes taxes comprises.
-          PerformX se reserve le droit de modifier ses commissions a tout
-          moment, les utilisateurs etant informes prealablement de tout
-          changement.
+          Les tarifs des séances de coaching sont fixés par chaque coach et
+          affichés sur leur profil à titre indicatif. Pendant la phase de test
+          de la plateforme, PerformX n&apos;encaisse aucun paiement en ligne :
+          les modalités financières sont convenues directement entre le coach
+          et le joueur (ou son parent) via la messagerie intégrée ou lors de
+          la séance. Les prix affichés sont indiqués en euros toutes taxes
+          comprises. PerformX se réserve le droit d&apos;introduire un
+          paiement en ligne et une commission à une date ultérieure, les
+          utilisateurs étant informés préalablement de tout changement.
         </p>
 
         <h2 className="text-2xl text-white mt-8 mb-4">

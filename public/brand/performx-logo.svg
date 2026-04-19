@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480" fill="none" role="img" aria-label="PerformX">
+  <!-- Chevron blanc (moitié gauche du X) -->
+  <path d="M60 60 L130 60 L210 240 L130 420 L60 420 L140 240 Z" fill="#ffffff" />
+  <!-- Chevron orange (moitié droite du X) -->
+  <path d="M340 60 L270 60 L190 240 L270 420 L340 420 L260 240 Z" fill="#ff6a00" />
+  <!-- Texte PERFORMX -->
+  <g font-family="'Bebas Neue','Arial Black','Helvetica Neue',sans-serif" font-weight="900" font-size="68" letter-spacing="2">
+    <text x="200" y="470" text-anchor="middle" fill="#ffffff">PERFORM<tspan fill="#ff6a00">X</tspan></text>
+  </g>
+</svg>

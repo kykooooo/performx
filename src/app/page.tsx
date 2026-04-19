@@ -118,8 +118,8 @@ const PARENT_BENEFITS = [
     text: "Visualisez les séances réservées, terminées et les prochaines étapes depuis un seul espace.",
   },
   {
-    title: "Paiement clair",
-    text: "Montants, coach et horaires validés avant confirmation pour éviter les surprises.",
+    title: "Profils vérifiés",
+    text: "Les coachs sont validés par notre équipe avant d'apparaître sur la plateforme.",
   },
   {
     title: "Communication directe",
@@ -165,11 +165,12 @@ export default function HomePage() {
             </div>
 
             <h1
-              className="px-fade-up text-5xl leading-[1.1] text-white sm:text-6xl lg:text-7xl"
+              className="px-fade-up text-4xl font-semibold uppercase leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl"
               style={{ animationDelay: "80ms" }}
             >
-              Le bon coach
-              <span className="block px-gradient-text">Au bon moment</span>
+              <span className="block">Trouver un coach fiable,</span>
+              <span className="block">réserver facilement,</span>
+              <span className="block px-gradient-text">suivre la progression.</span>
             </h1>
 
             <p
@@ -451,7 +452,7 @@ export default function HomePage() {
               {[
                 { icon: <CalendarIcon className="h-6 w-6" />, text: "Gère tes créneaux facilement" },
                 { icon: <UsersIcon className="h-6 w-6" />, text: "Trouve des joueurs motivés" },
-                { icon: <ShieldIcon className="h-6 w-6" />, text: "Reçois tes paiements simplement" },
+                { icon: <ShieldIcon className="h-6 w-6" />, text: "Échange directement avec eux en messagerie" },
               ].map((item) => (
                 <div key={item.text} className="flex flex-col items-center gap-3 text-center">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">

@@ -304,10 +304,11 @@ export default function RegisterCoachPage() {
         {/* ── Step 3: Diplomas & Certifications ── */}
         {step === 3 && (
           <>
-            <div className="rounded-xl border border-[color:var(--px-warning)]/30 bg-[color:var(--px-warning)]/5 p-4">
-              <p className="text-xs font-semibold text-[color:var(--px-warning)]">Vérification obligatoire</p>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="text-xs font-semibold text-white">Dis-nous ton niveau</p>
               <p className="mt-1 text-xs text-white/70">
-                Tes diplômes seront vérifiés par notre équipe avant l&apos;activation de ton profil coach. Envoie un justificatif (scan ou photo).
+                Sélectionne les diplômes et certifications que tu as obtenus.
+                C&apos;est facultatif et les joueurs les verront sur ton profil.
               </p>
             </div>
 

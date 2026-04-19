@@ -640,7 +640,7 @@ export default function CoachPage() {
                 <div className="grid gap-3 pt-4 sm:grid-cols-3">
                   {[
                     { emoji: "🎯", label: "Matching coach/joueur sur tranche d'âge, poste et zone" },
-                    { emoji: "⚡", label: "Réservation et paiement sécurisé en 2 clics" },
+                    { emoji: "💬", label: "Messagerie directe pour caler les séances en 2 clics" },
                     { emoji: "📈", label: "Suivi de progression sur 5 axes après chaque séance" },
                   ].map((item) => (
                     <div

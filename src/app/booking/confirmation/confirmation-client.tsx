@@ -112,27 +112,14 @@ type BookingDetails = {
   certifications: string[];
 };
 
-type StripeBookingRow = {
-  booking_id: string;
-  session_id: string;
-  conversation_id: string | null;
-  coach_id: string;
-  player_id: string;
-  session_date: string;
-  session_time: string;
-  payment_status: string;
-};
-
 export default function ConfirmationClient() {
   const searchParams = useSearchParams();
   const bookingIdParam = searchParams.get("bookingId") ?? "";
   const coachIdParam = searchParams.get("coach") ?? "";
   const conversationIdParam = searchParams.get("conversationId");
-  const stripeSessionId = searchParams.get("session_id");
 
   const [details, setDetails] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const [stripeError, setStripeError] = useState<string | null>(null);
   const { canvasRef, fire } = useConfetti();
 
   useEffect(() => {
@@ -186,46 +173,7 @@ export default function ConfirmationClient() {
       setLoading(false);
     };
 
-    const loadFromStripeSession = async (sessionId: string) => {
-      // Poll jusqu'à 10 fois (30s max) : le webhook peut avoir 1-2s de délai
-      const MAX_ATTEMPTS = 10;
-      const DELAY_MS = 3000;
-
-      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
-        if (!mounted) return;
-
-        const { data, error } = await supabase.rpc("get_booking_by_stripe_session", {
-          p_stripe_session_id: sessionId,
-        });
-
-        if (error) {
-          setStripeError(error.message);
-          setLoading(false);
-          return;
-        }
-
-        const row = (Array.isArray(data) ? data[0] : data) as StripeBookingRow | null;
-        if (row?.booking_id) {
-          await loadFromBookingId(row.booking_id);
-          return;
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
-      }
-
-      if (!mounted) return;
-      setStripeError(
-        "Le paiement est confirmé mais le traitement prend plus longtemps que prévu. Vérifie tes séances dans quelques instants.",
-      );
-      setLoading(false);
-    };
-
     const run = async () => {
-      if (stripeSessionId) {
-        await loadFromStripeSession(stripeSessionId);
-        return;
-      }
-
       if (bookingIdParam) {
         await loadFromBookingId(bookingIdParam);
         return;
@@ -258,7 +206,7 @@ export default function ConfirmationClient() {
     return () => {
       mounted = false;
     };
-  }, [bookingIdParam, coachIdParam, conversationIdParam, searchParams, stripeSessionId]);
+  }, [bookingIdParam, coachIdParam, conversationIdParam, searchParams]);
 
   useEffect(() => {
     if (!loading && details) {
@@ -325,41 +273,13 @@ export default function ConfirmationClient() {
     return (
       <AppShell
         active="/sessions"
-        title="Validation du paiement"
-        description="Nous confirmons ton paiement auprès de Stripe..."
+        title="Confirmation de la réservation"
+        description="Finalisation de ta séance..."
       >
         <LoadingState
           title="Confirmation en cours"
-          description={
-            stripeSessionId
-              ? "Paiement Stripe validé. Finalisation de ta réservation..."
-              : "Récupération de la confirmation..."
-          }
+          description="Récupération des détails de la réservation..."
         />
-      </AppShell>
-    );
-  }
-
-  if (stripeError) {
-    return (
-      <AppShell
-        active="/sessions"
-        title="Paiement en cours de traitement"
-        description="Ton paiement est confirmé mais la finalisation prend un peu de temps."
-      >
-        <section className="mx-auto grid w-full max-w-2xl gap-4">
-          <div className="px-card p-6">
-            <p className="text-sm text-white/70">{stripeError}</p>
-            <div className="mt-4 flex gap-3">
-              <Link href="/sessions" className="px-button">
-                Voir mes séances
-              </Link>
-              <Link href="/messages" className="px-button-ghost">
-                Ouvrir la messagerie
-              </Link>
-            </div>
-          </div>
-        </section>
       </AppShell>
     );
   }
