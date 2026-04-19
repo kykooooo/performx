@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import AppShell from "@/components/app-shell";
 import CoachCard from "@/components/coach-card";
 import { FeedbackState } from "@/components/feedback-state";
@@ -24,16 +25,18 @@ import type { CoachRecord } from "@/lib/data/types";
 import { AGE_CATEGORIES } from "@/lib/football";
 
 const SPECIALITY_CHIPS = [
-  "Tous",
-  "Technique",
-  "Préparation physique",
-  "Gardien",
-  "Vision de jeu",
-  "Frappe",
-  "Dribbles",
-  "Endurance",
-  "Jeu défensif",
+  { key: "Tous", label: "Tous", emoji: null },
+  { key: "Technique", label: "Technique", emoji: "⚽" },
+  { key: "Préparation physique", label: "Prépa physique", emoji: "💪" },
+  { key: "Gardien", label: "Gardien", emoji: "🧤" },
+  { key: "Vision de jeu", label: "Vision", emoji: "🎯" },
+  { key: "Frappe", label: "Frappe", emoji: "⚡" },
+  { key: "Dribbles", label: "Dribbles", emoji: "🔥" },
+  { key: "Endurance", label: "Endurance", emoji: "🏃" },
+  { key: "Jeu défensif", label: "Défense", emoji: "🛡️" },
 ] as const;
+
+type SpecialityChipKey = (typeof SPECIALITY_CHIPS)[number]["key"];
 
 const LOCATION_FILTERS = [
   { value: "", label: "Tous lieux" },
@@ -52,7 +55,8 @@ export default function CoachPage() {
   const [page, setPage] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [activeChip, setActiveChip] = useState<(typeof SPECIALITY_CHIPS)[number]>("Tous");
+  const [activeChip, setActiveChip] = useState<SpecialityChipKey>("Tous");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [activeCity, setActiveCity] = useState("");
   const [sortBy, setSortBy] = useState<"rating" | "price-asc" | "price-desc" | "name">("rating");
   const [isDemo, setIsDemo] = useState(false);
@@ -169,6 +173,32 @@ export default function CoachPage() {
     activeLocation,
   ]);
 
+  const chipCounts = useMemo(() => {
+    const result: Record<string, number> = { Tous: coaches.length };
+    for (const chip of SPECIALITY_CHIPS) {
+      if (chip.key === "Tous") continue;
+      result[chip.key] = coaches.filter((coach) => {
+        const hay = [coach.speciality, ...(coach.specialities ?? [])]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return hay.includes(chip.key.toLowerCase());
+      }).length;
+    }
+    return result;
+  }, [coaches]);
+
+  const advancedFilterCount = useMemo(() => {
+    let count = 0;
+    if (priceMin !== "") count += 1;
+    if (priceMax !== "") count += 1;
+    if (minRating > 0) count += 1;
+    if (onlyThisWeek) count += 1;
+    if (activeAgeCategory) count += 1;
+    if (activeLocation) count += 1;
+    return count;
+  }, [priceMin, priceMax, minRating, onlyThisWeek, activeAgeCategory, activeLocation]);
+
   const avgRating = useMemo(() => {
     const ratings = coaches.map((coach) => coach.rating ?? 0).filter((rating) => rating > 0);
     if (ratings.length === 0) return 0;
@@ -223,30 +253,51 @@ export default function CoachPage() {
           </div>
 
           <div
-            className="px-fade-up hidden flex-col gap-4 lg:flex"
+            className="px-fade-up relative hidden aspect-[4/5] overflow-hidden rounded-3xl border border-white/10 shadow-[0_40px_120px_-40px_rgba(255,106,0,0.45)] lg:block"
             style={{ animationDelay: "200ms" }}
           >
-            <div className="grid grid-cols-2 gap-3">
-              <div className="px-card p-4 text-center">
-                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">
-                  <WhistleIcon className="h-5 w-5" />
-                </div>
-                <p className="text-2xl font-semibold text-white">{coaches.length}</p>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/70">Coachs</p>
-              </div>
-              <div className="px-card p-4 text-center">
-                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">
-                  <StarIcon className="h-5 w-5" />
-                </div>
-                <p className="text-2xl font-semibold text-white">{avgRating.toFixed(1)}</p>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/70">Note moyenne</p>
-              </div>
+            {/* Photo terrain / action */}
+            <Image
+              src="https://images.pexels.com/photos/46798/pexels-photo-46798.jpeg?auto=compress&cs=tinysrgb&w=1200"
+              alt="Terrain de football au coucher du soleil"
+              fill
+              sizes="(min-width: 1024px) 40vw, 100vw"
+              priority
+              className="object-cover"
+            />
+            {/* Overlays : accent orange + vignette sombre pour la lisibilité */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[color:var(--px-bg)] via-[color:var(--px-bg)]/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--px-bg)] via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,106,0,0.35),transparent_55%)]" />
+
+            {/* Badge "En ligne" flottant */}
+            <div className="absolute right-4 top-4 flex items-center gap-2 rounded-full border border-white/20 bg-black/50 px-3 py-1.5 text-[11px] font-medium text-white backdrop-blur-md">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[color:var(--px-success)] opacity-70" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[color:var(--px-success)]" />
+              </span>
+              Coachs en ligne
             </div>
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/8 to-transparent p-4">
-              <p className="text-xs leading-relaxed text-white/70">
-                <span className="font-semibold text-white/70">{totalReviews} avis</span> laissés
-                par la communauté. Chaque coach est évalué après chaque séance.
-              </p>
+
+            {/* Stats card glass en bas */}
+            <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/15 bg-black/55 p-4 backdrop-blur-xl">
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/60">Coachs</p>
+                  <p className="mt-1 text-2xl font-semibold text-white">{coaches.length}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/60">Note</p>
+                  <div className="mt-1 flex items-baseline gap-1">
+                    <p className="text-2xl font-semibold text-white">{avgRating.toFixed(1)}</p>
+                    <StarIcon className="h-3.5 w-3.5 text-[color:var(--px-accent)]" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/60">Avis</p>
+                  <p className="mt-1 text-2xl font-semibold text-white">{totalReviews}</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -275,17 +326,43 @@ export default function CoachPage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {SPECIALITY_CHIPS.map((chip) => (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => setActiveChip(chip)}
-                  data-active={activeChip === chip}
-                  className="px-chip"
-                >
-                  {chip}
-                </button>
-              ))}
+              {SPECIALITY_CHIPS.map((chip) => {
+                const count = chipCounts[chip.key] ?? 0;
+                const isActive = activeChip === chip.key;
+                const disabled = chip.key !== "Tous" && count === 0;
+                return (
+                  <button
+                    key={chip.key}
+                    type="button"
+                    onClick={() => setActiveChip(chip.key)}
+                    data-active={isActive}
+                    disabled={disabled}
+                    className={`group inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                      isActive
+                        ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)] shadow-[0_0_0_3px_rgba(255,106,0,0.08)]"
+                        : disabled
+                          ? "border-white/5 bg-white/[0.02] text-white/30 cursor-not-allowed"
+                          : "border-white/10 bg-white/5 text-white/75 hover:border-white/30 hover:text-white"
+                    }`}
+                  >
+                    {chip.emoji && (
+                      <span className="text-sm leading-none" aria-hidden="true">
+                        {chip.emoji}
+                      </span>
+                    )}
+                    <span>{chip.label}</span>
+                    <span
+                      className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                        isActive
+                          ? "bg-[color:var(--px-accent)]/20 text-[color:var(--px-accent)]"
+                          : "bg-white/5 text-white/50"
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -316,8 +393,31 @@ export default function CoachPage() {
               </select>
             </div>
 
+            {/* Toggle filtres avancés */}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/5 pt-3">
+              <button
+                type="button"
+                onClick={() => setShowAdvancedFilters((prev) => !prev)}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/75 transition hover:border-white/30 hover:text-white"
+              >
+                <FilterIcon className="h-3.5 w-3.5" />
+                {showAdvancedFilters ? "Masquer les filtres" : "Plus de filtres"}
+                {advancedFilterCount > 0 && (
+                  <span className="rounded-full bg-[color:var(--px-accent)]/20 px-2 py-0.5 text-[10px] font-semibold text-[color:var(--px-accent)]">
+                    {advancedFilterCount}
+                  </span>
+                )}
+              </button>
+              {advancedFilterCount > 0 && !showAdvancedFilters && (
+                <p className="text-[11px] text-white/50">
+                  {advancedFilterCount} filtre{advancedFilterCount > 1 ? "s" : ""} actif
+                  {advancedFilterCount > 1 ? "s" : ""}
+                </p>
+              )}
+            </div>
+
             {/* Filtres avancés : prix, note, dispo */}
-            <div className="flex flex-wrap items-center gap-4 border-t border-white/5 pt-3">
+            <div className={`flex-wrap items-center gap-4 ${showAdvancedFilters ? "flex" : "hidden"}`}>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">Budget</span>
                 <input

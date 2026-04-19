@@ -61,15 +61,24 @@ export default function CoachCard({
   const credentialLabel = certifications?.[0] ?? null;
 
   return (
-    <div className="px-card group flex h-full flex-col gap-4 p-4 transition-transform duration-300 hover:translate-y-[-3px]">
+    <div className="px-card group relative flex h-full flex-col gap-4 overflow-hidden p-4 transition duration-300 hover:-translate-y-1 hover:border-[color:var(--px-accent)]/50 hover:shadow-[0_20px_60px_-20px_rgba(255,106,0,0.45)]">
+      {/* Soft accent glow that bleeds from the header on hover */}
+      <div
+        className="pointer-events-none absolute inset-x-0 -top-24 h-40 opacity-0 transition duration-500 group-hover:opacity-100"
+        style={{
+          background:
+            "radial-gradient(60% 100% at 50% 0%, rgba(255,106,0,0.22), transparent 70%)",
+        }}
+        aria-hidden="true"
+      />
       {/* Header banner */}
-      <div className="relative h-36 overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,106,0,0.25),transparent_55%)]" />
+      <div className="relative h-36 overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent transition duration-500 group-hover:border-[color:var(--px-accent)]/30">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,106,0,0.25),transparent_55%)] transition duration-500 group-hover:bg-[radial-gradient(circle_at_20%_20%,rgba(255,106,0,0.38),transparent_60%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,rgba(255,138,0,0.1),transparent_50%)]" />
 
         {/* Avatar + info */}
         <div className="absolute left-4 top-4 flex items-center gap-3">
-          <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-white/20 bg-black/60 text-sm font-semibold text-white shadow-lg">
+          <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-white/20 bg-black/60 text-sm font-semibold text-white shadow-lg transition duration-500 group-hover:scale-105 group-hover:border-[color:var(--px-accent)]/60">
             {resolvedAvatar ? (
               <Image src={resolvedAvatar} alt={name} fill sizes="48px" className="object-cover" />
             ) : (
