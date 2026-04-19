@@ -17,6 +17,7 @@ import {
   ArrowRightIcon,
   AlertIcon,
   MapPinIcon,
+  UserIcon,
 } from "@/components/icons";
 import { buildCoachAvatarMap } from "@/lib/coach-avatars";
 import { SEINE_MARITIME_CITIES } from "@/lib/constants";
@@ -219,7 +220,13 @@ export default function CoachPage() {
           <div className="px-stack-3">
             <div className="flex items-center gap-3 px-fade-up">
               <span className="px-badge px-pulse">Annuaire</span>
-              <span className="px-pill">{isDemo ? "Mode démo" : `+${coaches.length} coachs actifs`}</span>
+              <span className="px-pill">
+                {isDemo
+                  ? "Mode démo"
+                  : coaches.length > 0
+                    ? `+${coaches.length} coach${coaches.length > 1 ? "s" : ""} actif${coaches.length > 1 ? "s" : ""}`
+                    : "Lancement en cours"}
+              </span>
             </div>
 
             <h1
@@ -258,8 +265,8 @@ export default function CoachPage() {
           >
             {/* Photo terrain / action */}
             <Image
-              src="https://images.pexels.com/photos/46798/pexels-photo-46798.jpeg?auto=compress&cs=tinysrgb&w=1200"
-              alt="Terrain de football au coucher du soleil"
+              src="https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=1200"
+              alt="Joueur de football en action sur le terrain"
               fill
               sizes="(min-width: 1024px) 40vw, 100vw"
               priority
@@ -279,30 +286,45 @@ export default function CoachPage() {
               Coachs en ligne
             </div>
 
-            {/* Stats card glass en bas */}
+            {/* Stats / CTA en bas selon qu'il y ait des coachs ou non */}
             <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/15 bg-black/55 p-4 backdrop-blur-xl">
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/60">Coachs</p>
-                  <p className="mt-1 text-2xl font-semibold text-white">{coaches.length}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/60">Note</p>
-                  <div className="mt-1 flex items-baseline gap-1">
-                    <p className="text-2xl font-semibold text-white">{avgRating.toFixed(1)}</p>
-                    <StarIcon className="h-3.5 w-3.5 text-[color:var(--px-accent)]" />
+              {coaches.length > 0 ? (
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/60">Coachs</p>
+                    <p className="mt-1 text-2xl font-semibold text-white">{coaches.length}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/60">Note</p>
+                    <div className="mt-1 flex items-baseline gap-1">
+                      <p className="text-2xl font-semibold text-white">{avgRating.toFixed(1)}</p>
+                      <StarIcon className="h-3.5 w-3.5 text-[color:var(--px-accent)]" />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/60">Avis</p>
+                    <p className="mt-1 text-2xl font-semibold text-white">{totalReviews}</p>
                   </div>
                 </div>
+              ) : (
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/60">Avis</p>
-                  <p className="mt-1 text-2xl font-semibold text-white">{totalReviews}</p>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/60">
+                    Lancement officiel
+                  </p>
+                  <p className="mt-1 text-lg font-semibold text-white">
+                    Premiers coachs cette semaine.
+                  </p>
+                  <p className="mt-1 text-xs text-white/70">
+                    Inscris-toi maintenant pour réserver en priorité.
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
       </section>
 
+      {!loading && coaches.length > 0 && (
       <ScrollReveal>
         <section id="coaches" className="px-stack-3">
           <div className="px-card px-stack-2 p-4">
@@ -329,7 +351,9 @@ export default function CoachPage() {
               {SPECIALITY_CHIPS.map((chip) => {
                 const count = chipCounts[chip.key] ?? 0;
                 const isActive = activeChip === chip.key;
-                const disabled = chip.key !== "Tous" && count === 0;
+                const hasCoaches = coaches.length > 0;
+                const disabled = chip.key !== "Tous" && hasCoaches && count === 0;
+                const showCount = hasCoaches && count > 0;
                 return (
                   <button
                     key={chip.key}
@@ -351,15 +375,17 @@ export default function CoachPage() {
                       </span>
                     )}
                     <span>{chip.label}</span>
-                    <span
-                      className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                        isActive
-                          ? "bg-[color:var(--px-accent)]/20 text-[color:var(--px-accent)]"
-                          : "bg-white/5 text-white/50"
-                      }`}
-                    >
-                      {count}
-                    </span>
+                    {showCount && (
+                      <span
+                        className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                          isActive
+                            ? "bg-[color:var(--px-accent)]/20 text-[color:var(--px-accent)]"
+                            : "bg-white/5 text-white/50"
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -549,6 +575,7 @@ export default function CoachPage() {
           )}
         </section>
       </ScrollReveal>
+      )}
 
       {loading && (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
@@ -569,14 +596,87 @@ export default function CoachPage() {
         />
       )}
 
-      {!loading && filteredCoaches.length === 0 && !error && coaches.length === 0 && (
-        <FeedbackState
-          icon={<WhistleIcon className="h-7 w-7 text-[color:var(--px-accent)]" />}
-          title="Les premiers coachs arrivent"
-          description="PerformX est en phase de lancement. Reviens bientôt ou inscris-toi pour être notifié dès que de nouveaux coachs rejoignent la plateforme."
-          actionLabel="Devenir coach"
-          actionHref="/auth/register/coach"
-        />
+      {!loading && coaches.length === 0 && !error && (
+        <ScrollReveal>
+          <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[color:var(--px-accent)]/15 via-transparent to-[color:var(--px-accent-2)]/10 p-8 sm:p-12">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_15%,rgba(255,106,0,0.25),transparent_55%)]" />
+            <div className="absolute -left-10 -top-10 hidden h-48 w-48 rounded-full bg-[color:var(--px-accent)]/10 blur-3xl lg:block" />
+
+            <div className="relative grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+              <div className="space-y-5">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/12 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--px-accent)]">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[color:var(--px-accent)] opacity-70" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-[color:var(--px-accent)]" />
+                  </span>
+                  Lancement en cours
+                </span>
+
+                <h2 className="text-3xl leading-tight text-white sm:text-4xl lg:text-5xl">
+                  Les premiers coachs{" "}
+                  <span className="px-gradient-text">arrivent cette semaine.</span>
+                </h2>
+
+                <p className="max-w-lg text-base text-white/75">
+                  PerformX connecte joueurs et coachs certifiés pour des séances 1-to-1. Les
+                  coachs vérifiés apparaîtront ici dès la mise en ligne. Inscris-toi dès
+                  aujourd&apos;hui pour ne rien rater.
+                </p>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link href="/auth/register/coach" className="px-button px-6 py-3 text-sm">
+                    <BoltIcon className="h-4 w-4" />
+                    Devenir coach
+                  </Link>
+                  <Link
+                    href="/auth/register/player"
+                    className="px-button-ghost px-6 py-3 text-sm"
+                  >
+                    <UserIcon className="h-4 w-4" />
+                    Créer mon compte joueur
+                  </Link>
+                </div>
+
+                <div className="grid gap-3 pt-4 sm:grid-cols-3">
+                  {[
+                    { emoji: "🎯", label: "Matching coach/joueur sur tranche d'âge, poste et zone" },
+                    { emoji: "⚡", label: "Réservation et paiement sécurisé en 2 clics" },
+                    { emoji: "📈", label: "Suivi de progression sur 5 axes après chaque séance" },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-white/75"
+                    >
+                      <span className="mb-1 block text-xl">{item.emoji}</span>
+                      {item.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="hidden lg:block">
+                <div className="relative aspect-[3/4] overflow-hidden rounded-3xl border border-white/15 shadow-[0_40px_120px_-40px_rgba(255,106,0,0.45)]">
+                  <Image
+                    src="https://images.pexels.com/photos/274506/pexels-photo-274506.jpeg?auto=compress&cs=tinysrgb&w=900"
+                    alt="Entraînement de football"
+                    fill
+                    sizes="(min-width: 1024px) 35vw, 100vw"
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--px-bg)]/80 via-transparent to-transparent" />
+                  <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/15 bg-black/55 p-3 backdrop-blur-xl">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/60">
+                      Prochaine mise en ligne
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-white">
+                      Coachs certifiés · Seine-Maritime
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </ScrollReveal>
       )}
 
       {!loading && filteredCoaches.length === 0 && !error && coaches.length > 0 && (
@@ -641,29 +741,31 @@ export default function CoachPage() {
         </>
       )}
 
-      <ScrollReveal>
-        <section className="py-12">
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 p-8 text-center sm:p-12">
-            <div className="absolute inset-0 bg-gradient-to-br from-[color:var(--px-accent)]/15 via-transparent to-[color:var(--px-accent-2)]/8" />
-            <div className="relative">
-              <h2 className="text-3xl text-white sm:text-4xl">
-                Tu es coach ? <span className="px-gradient-text">Rejoins-nous.</span>
-              </h2>
-              <p className="mx-auto mt-3 max-w-md text-sm text-white/70">
-                Créé ton profil, définis tes disponibilités et commence a recevoir des réservations
-                des aujourd&apos;hui.
-              </p>
-              <Link
-                href="/auth/register/coach"
-                className="px-button mt-6 inline-flex px-6 py-3 text-sm"
-              >
-                <BoltIcon className="h-4 w-4" />
-                Créer mon profil coach
-              </Link>
+      {coaches.length > 0 && (
+        <ScrollReveal>
+          <section className="py-12">
+            <div className="relative overflow-hidden rounded-3xl border border-white/10 p-8 text-center sm:p-12">
+              <div className="absolute inset-0 bg-gradient-to-br from-[color:var(--px-accent)]/15 via-transparent to-[color:var(--px-accent-2)]/8" />
+              <div className="relative">
+                <h2 className="text-3xl text-white sm:text-4xl">
+                  Tu es coach ? <span className="px-gradient-text">Rejoins-nous.</span>
+                </h2>
+                <p className="mx-auto mt-3 max-w-md text-sm text-white/70">
+                  Créé ton profil, définis tes disponibilités et commence à recevoir des
+                  réservations dès aujourd&apos;hui.
+                </p>
+                <Link
+                  href="/auth/register/coach"
+                  className="px-button mt-6 inline-flex px-6 py-3 text-sm"
+                >
+                  <BoltIcon className="h-4 w-4" />
+                  Créer mon profil coach
+                </Link>
+              </div>
             </div>
-          </div>
-        </section>
-      </ScrollReveal>
+          </section>
+        </ScrollReveal>
+      )}
     </AppShell>
   );
 }
