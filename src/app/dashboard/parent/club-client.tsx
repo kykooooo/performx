@@ -155,7 +155,13 @@ export default function ParentDashboardPage() {
     setGeneratingInvite(false);
 
     if (rpcError) {
-      setInviteNotice({ type: "error", text: rpcError.message });
+      const raw = rpcError.message.toUpperCase();
+      const human = raw.includes("AUTH_REQUIRED")
+        ? "Connecte-toi pour générer un lien."
+        : raw.includes("PARENT_ROLE_REQUIRED")
+          ? "Ton compte doit être de type parent pour générer un lien d'invitation."
+          : rpcError.message;
+      setInviteNotice({ type: "error", text: human });
       return;
     }
 
@@ -405,7 +411,7 @@ export default function ParentDashboardPage() {
           <>
             <ScrollReveal>
               <div className="mb-6 flex flex-wrap items-center gap-2">
-                <span className="text-xs uppercase tracking-[0.2em] text-white/50">Enfants lies</span>
+                <span className="text-xs uppercase tracking-[0.2em] text-white/50">Enfants liés</span>
                 {children.map((child) => (
                   <button
                     key={child.userId}
@@ -420,8 +426,70 @@ export default function ParentDashboardPage() {
                     {child.firstName} {child.lastName}
                   </button>
                 ))}
+                <button
+                  type="button"
+                  onClick={handleGenerateInvite}
+                  disabled={generatingInvite}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-[color:var(--px-accent)]/40 bg-[color:var(--px-accent)]/10 px-3 py-1 text-xs text-[color:var(--px-accent)] transition hover:border-[color:var(--px-accent)] hover:bg-[color:var(--px-accent)]/15 disabled:opacity-50"
+                >
+                  {generatingInvite ? "Génération..." : "+ Inviter un enfant"}
+                </button>
               </div>
             </ScrollReveal>
+
+            {(inviteCode || inviteNotice) && (
+              <ScrollReveal>
+                <div className="mb-6 rounded-2xl border border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/10 p-4">
+                  {inviteCode && (
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.2em] text-white/60">
+                          Lien d&apos;invitation
+                        </p>
+                        <p className="mt-1 break-all text-xs text-white/80">{inviteUrl}</p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleCopyInvite}
+                          className="px-button-ghost text-xs"
+                        >
+                          {inviteCopied ? "Lien copié" : "Copier le lien"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleGenerateInvite}
+                          disabled={generatingInvite}
+                          className="px-button-ghost text-xs"
+                        >
+                          Régénérer
+                        </button>
+                        <span className="text-[11px] text-white/60">
+                          Code :{" "}
+                          <span className="font-semibold text-white">{inviteCode}</span>
+                        </span>
+                      </div>
+                      {inviteExpiresAt && (
+                        <p className="text-[11px] text-white/50">
+                          Expire le {formatLongDate(new Date(inviteExpiresAt))}.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {inviteNotice && (
+                    <div
+                      className={`${inviteCode ? "mt-3 " : ""}rounded-xl border px-4 py-2 text-xs ${
+                        inviteNotice.type === "success"
+                          ? "border-[color:var(--px-success)]/40 bg-[color:var(--px-success)]/15 text-[color:var(--px-success)]"
+                          : "border-[color:var(--px-danger)]/40 bg-[color:var(--px-danger)]/15 text-[color:var(--px-danger)]"
+                      }`}
+                    >
+                      {inviteNotice.text}
+                    </div>
+                  )}
+                </div>
+              </ScrollReveal>
+            )}
 
             {activeChild && (
               <ScrollReveal>
