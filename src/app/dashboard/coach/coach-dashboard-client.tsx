@@ -8,8 +8,17 @@ import ConfirmModal from "@/components/confirm-modal";
 import ScrollReveal from "@/components/scroll-reveal";
 import StripeConnectPanel from "@/components/stripe-connect-panel";
 import RecurringAvailabilityPanel from "@/components/recurring-availability-panel";
-import { getCoachDashboardData } from "@/lib/data/dashboards";
+import { getCoachDashboardData, type CoachSessionPlayerInfo } from "@/lib/data/dashboards";
 import type { CoachDashboardCoachRecord, SessionRecord } from "@/lib/data/types";
+
+const computeAge = (birthDate: string | null): number | null => {
+  if (!birthDate) return null;
+  const d = new Date(birthDate);
+  if (Number.isNaN(d.getTime())) return null;
+  const diff = Date.now() - d.getTime();
+  const age = Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000));
+  return age > 0 && age < 120 ? age : null;
+};
 import {
   CalendarIcon,
   StarIcon,
@@ -57,6 +66,7 @@ export default function CoachDashboardPage() {
   const [activityData, setActivityData] = useState<{ month: string; seances: number; revenus: number }[]>([]);
   const [dayData, setDayData] = useState<{ day: string; count: number }[]>([]);
   const [monthRevenue, setMonthRevenue] = useState(0);
+  const [playersInfo, setPlayersInfo] = useState<Record<string, CoachSessionPlayerInfo>>({});
 
   useEffect(() => {
     let mounted = true;
@@ -76,6 +86,7 @@ export default function CoachDashboardPage() {
       setActivityData(result.data.activityData);
       setDayData(result.data.dayData);
       setMonthRevenue(result.data.monthRevenue ?? 0);
+      setPlayersInfo(result.data.playersInfo ?? {});
       setLoading(false);
     };
 
@@ -540,33 +551,82 @@ export default function CoachDashboardPage() {
                     <p className="mt-2 text-xs text-white/70">Aucune séance à venir.</p>
                   </div>
                 )}
-                {upcoming.map((session) => (
-                  <div key={session.id} className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-[color:var(--px-accent)]/20">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">
-                      <WhistleIcon className="h-4 w-4" />
+                {upcoming.map((session) => {
+                  const player = playersInfo[session.playerId];
+                  const playerName = player
+                    ? [player.firstName, player.lastName].filter(Boolean).join(" ")
+                    : null;
+                  const age = player ? computeAge(player.birthDate) : null;
+                  const metaChips = [
+                    age !== null ? `${age} ans` : null,
+                    player?.ageCategory ?? null,
+                    player?.level ?? null,
+                    player?.position ?? null,
+                    player?.dominantFoot ? `Pied ${player.dominantFoot.toLowerCase()}` : null,
+                    player?.currentClub ?? null,
+                  ].filter(Boolean) as string[];
+
+                  return (
+                    <div
+                      key={session.id}
+                      className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-[color:var(--px-accent)]/20"
+                    >
+                      <div className="flex flex-wrap items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">
+                          <WhistleIcon className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-white">
+                            {playerName ?? session.title}
+                          </p>
+                          <p className="text-xs text-white/70">
+                            {formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            className="rounded-lg border border-[color:var(--px-success)]/25 bg-[color:var(--px-success)]/12 px-2.5 py-1 text-[10px] font-semibold uppercase text-[color:var(--px-success)]"
+                            type="button"
+                            onClick={() => handleSessionStatusChange(session.id, "completed")}
+                          >
+                            Terminée
+                          </button>
+                          <button
+                            className="rounded-lg border border-[color:var(--px-danger)]/30 bg-[color:var(--px-danger)]/10 px-2.5 py-1 text-[10px] font-semibold uppercase text-[color:var(--px-danger)]"
+                            type="button"
+                            onClick={() => handleSessionStatusChange(session.id, "cancelled")}
+                          >
+                            Annuler
+                          </button>
+                        </div>
+                      </div>
+
+                      {metaChips.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-1.5 pl-13">
+                          {metaChips.map((chip) => (
+                            <span
+                              key={chip}
+                              className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] text-white/70"
+                            >
+                              {chip}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {player?.objectives && (
+                        <div className="mt-2 rounded-lg border border-[color:var(--px-accent)]/20 bg-[color:var(--px-accent)]/8 px-3 py-2">
+                          <p className="text-[10px] uppercase tracking-[0.2em] text-[color:var(--px-accent)]/80">
+                            Objectifs du joueur
+                          </p>
+                          <p className="mt-1 text-xs text-white/80 line-clamp-2">
+                            {player.objectives}
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-white">{session.title}</p>
-                      <p className="text-xs text-white/70">{formatLongDate(new Date(`${session.date}T12:00`))} · {session.time}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        className="rounded-lg border border-[color:var(--px-success)]/25 bg-[color:var(--px-success)]/12 px-2.5 py-1 text-[10px] font-semibold uppercase text-[color:var(--px-success)]"
-                        type="button"
-                        onClick={() => handleSessionStatusChange(session.id, "completed")}
-                      >
-                        Terminée
-                      </button>
-                      <button
-                        className="rounded-lg border border-[color:var(--px-danger)]/30 bg-[color:var(--px-danger)]/10 px-2.5 py-1 text-[10px] font-semibold uppercase text-[color:var(--px-danger)]"
-                        type="button"
-                        onClick={() => handleSessionStatusChange(session.id, "cancelled")}
-                      >
-                        Annuler
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {sessionNotice && (
                   <div
                     className={`rounded-xl border px-3 py-2 text-xs ${

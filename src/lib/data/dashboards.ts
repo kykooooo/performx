@@ -75,6 +75,19 @@ export type PlayerDashboardData = {
   progressionData: PlayerProgressionPoint[];
 };
 
+export type CoachSessionPlayerInfo = {
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  birthDate: string | null;
+  level: string | null;
+  position: string | null;
+  dominantFoot: string | null;
+  currentClub: string | null;
+  objectives: string | null;
+  ageCategory: string | null;
+};
+
 export type CoachDashboardData = {
   coach: CoachDashboardCoachRecord | null;
   sessions: SessionRecord[];
@@ -82,6 +95,9 @@ export type CoachDashboardData = {
   monthRevenue: number;
   activityData: typeof coachMonthlyActivity;
   dayData: typeof coachDayDistribution;
+  /** Map playerId → infos profil joueur pour les séances du coach.
+   *  Permet au coach de préparer chaque séance sans cliquer. */
+  playersInfo: Record<string, CoachSessionPlayerInfo>;
 };
 
 export type ParentDashboardHomeData = {
@@ -237,6 +253,7 @@ function buildDemoCoachDashboardData(): CoachDashboardData {
     monthRevenue: Math.round(demoTotal * 0.3),
     activityData: coachMonthlyActivity,
     dayData: coachDayDistribution,
+    playersInfo: {},
   };
 }
 
@@ -264,6 +281,7 @@ export async function getCoachDashboardData(): Promise<DataResult<CoachDashboard
         monthRevenue: 0,
         activityData: [],
         dayData: [],
+        playersInfo: {},
       });
     }
 
@@ -307,6 +325,42 @@ export async function getCoachDashboardData(): Promise<DataResult<CoachDashboard
       fetchCoachDayDistribution(coachData.id),
     ]);
 
+    // Récupère les profils des joueurs inscrits aux séances du coach
+    // (utile pour le coach qui veut préparer sans cliquer sur chaque séance).
+    const playerIds = Array.from(
+      new Set(
+        ((sessionData as SessionRow[] | null) ?? [])
+          .map((s) => s.player_id)
+          .filter(Boolean),
+      ),
+    );
+
+    const playersInfo: Record<string, CoachSessionPlayerInfo> = {};
+    if (playerIds.length > 0) {
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select(
+          "user_id, first_name, last_name, birth_date, level, position, dominant_foot, current_club, objectives, age_category",
+        )
+        .in("user_id", playerIds);
+
+      for (const row of profilesData ?? []) {
+        const uid = row.user_id as string;
+        playersInfo[uid] = {
+          userId: uid,
+          firstName: (row.first_name as string | null) ?? null,
+          lastName: (row.last_name as string | null) ?? null,
+          birthDate: (row.birth_date as string | null) ?? null,
+          level: (row.level as string | null) ?? null,
+          position: (row.position as string | null) ?? null,
+          dominantFoot: (row.dominant_foot as string | null) ?? null,
+          currentClub: (row.current_club as string | null) ?? null,
+          objectives: (row.objectives as string | null) ?? null,
+          ageCategory: (row.age_category as string | null) ?? null,
+        };
+      }
+    }
+
     return liveResult({
       coach: {
         id: coachData.id,
@@ -321,6 +375,7 @@ export async function getCoachDashboardData(): Promise<DataResult<CoachDashboard
       monthRevenue,
       activityData,
       dayData,
+      playersInfo,
     });
   } catch (error) {
     console.error("[PerformX] getCoachDashboardData failed:", error);
@@ -331,6 +386,7 @@ export async function getCoachDashboardData(): Promise<DataResult<CoachDashboard
       monthRevenue: 0,
       activityData: [],
       dayData: [],
+      playersInfo: {},
     });
   }
 }

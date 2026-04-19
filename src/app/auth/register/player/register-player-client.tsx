@@ -5,16 +5,10 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AuthShell from "@/components/auth-shell";
 import { FieldError, Notice, type NoticeData } from "@/components/notice";
-import { DEPARTMENTS } from "@/lib/constants";
 import {
-  AGE_CATEGORIES,
-  DOMINANT_FEET,
   PLAYER_LEVELS,
   PLAYER_POSITIONS,
-  TRAINING_FREQUENCY_OPTIONS,
-  getPlayerAgeCategory,
   getPositionFamily,
-  getPositionObjectives,
 } from "@/lib/football";
 import { syncProfile } from "@/lib/profile-sync";
 import { supabase } from "@/lib/supabase";
@@ -28,7 +22,7 @@ import {
 } from "@/lib/validation";
 import { buildPlayerProfileMetadata } from "@/lib/player-profile";
 
-const stepLabels = ["Compte", "Profil", "Football"];
+const stepLabels = ["Compte", "Football"];
 
 export default function RegisterPlayerPage() {
   const router = useRouter();
@@ -36,23 +30,12 @@ export default function RegisterPlayerPage() {
   const redirectParam = searchParams.get("redirect");
   const safeRedirect = redirectParam && redirectParam.startsWith("/") ? redirectParam : null;
   const loginQs = safeRedirect ? `?redirect=${encodeURIComponent(safeRedirect)}` : "";
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2>(1);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [gender, setGender] = useState("");
-  const [birthDate, setBirthDate] = useState("");
-  const [department, setDepartment] = useState("");
   const [level, setLevel] = useState("");
   const [position, setPosition] = useState("");
-  const [dominantFoot, setDominantFoot] = useState("");
-  const [trainingFrequency, setTrainingFrequency] = useState<number | "">("");
-  const [currentClub, setCurrentClub] = useState("");
-  const [ageCategory, setAgeCategory] = useState("");
-  const [objectives, setObjectives] = useState("");
-  const [selectedPositionObjectives, setSelectedPositionObjectives] = useState<string[]>([]);
-  const [injuryHistory, setInjuryHistory] = useState("");
-  const [loadConstraints, setLoadConstraints] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -61,18 +44,8 @@ export default function RegisterPlayerPage() {
   const [errors, setErrors] = useState<FieldErrors>({});
 
   const positionFamily = useMemo(() => getPositionFamily(position), [position]);
-  const positionObjectives = useMemo(
-    () => getPositionObjectives(positionFamily),
-    [positionFamily],
-  );
 
   const clearField = (field: string) => setErrors((prev) => ({ ...prev, [field]: "" }));
-
-  const togglePositionObjective = (objective: string) => {
-    setSelectedPositionObjectives((prev) =>
-      prev.includes(objective) ? prev.filter((item) => item !== objective) : [...prev, objective],
-    );
-  };
 
   const validateStep1 = () => {
     const next: FieldErrors = {};
@@ -101,37 +74,31 @@ export default function RegisterPlayerPage() {
     return Object.keys(next).length === 0;
   };
 
-  const validateStep3 = () => {
-    // Toute l'étape 3 est optionnelle — on ne bloque plus la création de compte.
-    setErrors({});
-    return true;
-  };
-
   const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setNotice(null);
 
-    if (!validateStep3()) return;
+    // L'étape 2 (Football) est la dernière — on valide juste celle-ci avant submit
+    if (!validateStep2()) return;
 
     setLoading(true);
-    const resolvedAgeCategory = ageCategory || getPlayerAgeCategory(birthDate) || "U19";
     const metadata = buildPlayerProfileMetadata(
       {
         firstName: sanitizeInput(firstName),
         lastName: sanitizeInput(lastName),
-        gender,
-        birthDate,
-        department,
+        gender: "",
+        birthDate: "",
+        department: "",
         level,
         position,
-        dominantFoot,
-        trainingFrequency,
-        currentClub: sanitizeInput(currentClub),
-        ageCategory: resolvedAgeCategory,
-        positionObjectives: selectedPositionObjectives,
-        objectives: sanitizeInput(objectives),
-        injuryHistory: sanitizeInput(injuryHistory),
-        loadConstraints: sanitizeInput(loadConstraints),
+        dominantFoot: "",
+        trainingFrequency: "",
+        currentClub: "",
+        ageCategory: "",
+        positionObjectives: [],
+        objectives: "",
+        injuryHistory: "",
+        loadConstraints: "",
       },
       {},
     );
@@ -166,12 +133,8 @@ export default function RegisterPlayerPage() {
     setLoading(false);
   };
 
-  const handleNext = (nextStep: 2 | 3) => {
-    const isValid = nextStep === 2 ? validateStep1() : validateStep2();
-    if (!isValid) return;
-    if (nextStep === 3 && !ageCategory && birthDate) {
-      setAgeCategory(getPlayerAgeCategory(birthDate) ?? "");
-    }
+  const handleNext = (nextStep: 2) => {
+    if (!validateStep1()) return;
     setNotice(null);
     setStep(nextStep);
   };
@@ -179,7 +142,7 @@ export default function RegisterPlayerPage() {
   return (
     <AuthShell
       title="Inscription joueur"
-      subtitle={`Étape ${step}/3 : ${stepLabels[step - 1].toLowerCase()}.`}
+      subtitle={`Étape ${step}/2 : ${stepLabels[step - 1].toLowerCase()}.`}
     >
       <form className="space-y-4" onSubmit={handleRegister} noValidate>
         <div className="flex items-center justify-between">
@@ -251,37 +214,16 @@ export default function RegisterPlayerPage() {
         {step === 2 && (
           <>
             <p className="mb-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
-              Seuls ton niveau et ton poste sont requis. Les autres champs aident à affiner les recommandations mais restent optionnels.
+              Dis-nous juste ton niveau et ton poste pour qu&apos;on te propose les bons coachs.
+              Tu pourras compléter ton profil (pied fort, club, objectifs, historique...) après
+              l&apos;inscription depuis ton dashboard.
             </p>
-            <div className="grid gap-3 md:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs text-white/70">Genre</label>
-                <select className="px-select" value={gender} onChange={(e) => setGender(e.target.value)}>
-                  <option value="">Sélectionner</option>
-                  <option value="Homme">Homme</option>
-                  <option value="Femme">Femme</option>
-                  <option value="Autre">Autre</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs text-white/70">Date de naissance</label>
-                <input className="px-input" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
-              </div>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-white/70">Département</label>
-              <select className="px-select" value={department} onChange={(e) => setDepartment(e.target.value)}>
-                <option value="">Sélectionner un département</option>
-                {DEPARTMENTS.map((department) => (
-                  <option key={department} value={department}>{department}</option>
-                ))}
-              </select>
-            </div>
+
             <div className="grid gap-3 md:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs text-white/70">Niveau <span className="text-[color:var(--px-danger)]">*</span></label>
                 <select className={`px-select ${errors.level ? "border-[color:var(--px-danger)]" : ""}`} value={level} onChange={(e) => { setLevel(e.target.value); clearField("level"); }}>
-                  <option value="">Selectionner</option>
+                  <option value="">Sélectionner</option>
                   {PLAYER_LEVELS.map((playerLevel) => (
                     <option key={playerLevel} value={playerLevel}>{playerLevel}</option>
                   ))}
@@ -291,7 +233,7 @@ export default function RegisterPlayerPage() {
               <div>
                 <label className="mb-1 block text-xs text-white/70">Poste <span className="text-[color:var(--px-danger)]">*</span></label>
                 <select className={`px-select ${errors.position ? "border-[color:var(--px-danger)]" : ""}`} value={position} onChange={(e) => { setPosition(e.target.value); clearField("position"); }}>
-                  <option value="">Selectionner</option>
+                  <option value="">Sélectionner</option>
                   {PLAYER_POSITIONS.map((playerPosition) => (
                     <option key={playerPosition} value={playerPosition}>{playerPosition}</option>
                   ))}
@@ -299,116 +241,14 @@ export default function RegisterPlayerPage() {
                 <FieldError error={errors.position} />
               </div>
             </div>
+
+            <Notice notice={notice} />
             <div className="flex gap-3">
               <button className="px-button-ghost w-full" type="button" onClick={() => setStep(1)}>
                 Retour
               </button>
-              <button className="px-button w-full" type="button" onClick={() => handleNext(3)}>
-                Continuer
-              </button>
-            </div>
-          </>
-        )}
-
-        {step === 3 && (
-          <>
-            <p className="mb-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
-              Tous les champs ci-dessous sont facultatifs. Tu pourras compléter ton profil plus tard depuis ton dashboard.
-            </p>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs text-white/70">Pied fort</label>
-                <select className="px-select" value={dominantFoot} onChange={(e) => setDominantFoot(e.target.value)}>
-                  <option value="">Sélectionner</option>
-                  {DOMINANT_FEET.map((foot) => (
-                    <option key={foot} value={foot}>{foot}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs text-white/70">Fréquence d&apos;entraînement</label>
-                <select className="px-select" value={trainingFrequency} onChange={(e) => setTrainingFrequency(e.target.value === "" ? "" : Number(e.target.value))}>
-                  <option value="">Sélectionner</option>
-                  {TRAINING_FREQUENCY_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs text-white/70">Club actuel</label>
-                <input className="px-input" value={currentClub} onChange={(e) => setCurrentClub(e.target.value)} placeholder="Club actuel" />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs text-white/70">Catégorie d&apos;âge</label>
-                <select className="px-select" value={ageCategory} onChange={(e) => setAgeCategory(e.target.value)}>
-                  <option value="">Sélectionner</option>
-                  {AGE_CATEGORIES.map((category) => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {positionObjectives.length > 0 && (
-              <div>
-                <p className="mb-2 text-xs text-white/70">Objectifs lies au poste</p>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {positionObjectives.map((objective) => (
-                    <label key={objective} className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2.5 text-xs transition ${
-                      selectedPositionObjectives.includes(objective)
-                        ? "border-[color:var(--px-accent)]/50 bg-[color:var(--px-accent)]/10 text-white"
-                        : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
-                    }`}>
-                      <input type="checkbox" className="h-3.5 w-3.5" checked={selectedPositionObjectives.includes(objective)} onChange={() => togglePositionObjective(objective)} />
-                      {objective}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div>
-              <label className="mb-1 block text-xs text-white/70">Objectifs personnels</label>
-              <textarea
-                className="min-h-[100px] w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30"
-                value={objectives}
-                onChange={(e) => setObjectives(e.target.value)}
-                placeholder="Ex: gagner en vitesse de decision, mieux finir mes actions..."
-              />
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs text-white/70">Historique de blessure</label>
-                <textarea
-                  className="min-h-[110px] w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30"
-                  value={injuryHistory}
-                  onChange={(e) => setInjuryHistory(e.target.value)}
-                  placeholder="Visible par tes parents lies et tes coachs."
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs text-white/70">Contraintes de charge</label>
-                <textarea
-                  className="min-h-[110px] w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm text-white/90 outline-none transition focus:border-[color:var(--px-accent)] focus:ring-2 focus:ring-[color:var(--px-accent)]/30"
-                  value={loadConstraints}
-                  onChange={(e) => setLoadConstraints(e.target.value)}
-                  placeholder="Ex: eviter doubles séances explosives sur 48h."
-                />
-              </div>
-            </div>
-
-            <Notice notice={notice} />
-            <div className="flex gap-3">
-              <button className="px-button-ghost w-full" type="button" onClick={() => setStep(2)}>
-                Retour
-              </button>
               <button className="px-button w-full" type="submit" disabled={loading}>
-                {loading ? <><span className="px-spinner mr-2" /> Creation...</> : "Créer le compte joueur"}
+                {loading ? <><span className="px-spinner mr-2" /> Création...</> : "Créer mon compte"}
               </button>
             </div>
           </>

@@ -27,6 +27,14 @@ export type CoachRecord = {
   userId: string | null;
   name: string;
   speciality: string;
+  /** Nouveau : plusieurs spécialités (remplace speciality à terme) */
+  specialities: string[];
+  /** Tranches d'âge acceptées (U10, U13, ..., Senior) */
+  acceptedAgeCategories: string[];
+  /** Rayon d'action en km autour de location/department */
+  serviceRadiusKm: number | null;
+  /** Lieux d'intervention (domicile, terrain, salle) */
+  interventionLocations: string[];
   bio: string | null;
   location: string | null;
   department: string | null;

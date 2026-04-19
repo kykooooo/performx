@@ -21,6 +21,10 @@ type CoachRow = {
   id: string;
   name: string;
   speciality: string;
+  specialities: string[] | null;
+  accepted_age_categories: string[] | null;
+  service_radius_km: number | null;
+  intervention_locations: string[] | null;
   bio: string | null;
   location: string | null;
   department: string | null;
@@ -89,7 +93,7 @@ export default function CoachProfileClient() {
       setLoading(true);
       const { data: coachData } = await supabase
         .from("public_coaches")
-        .select("id, name, speciality, bio, location, department, diplomas, experience_years, certifications, focus_areas, session_formats, pedagogy, price_per_session, rating, reviews_count, availability, avatar_url")
+        .select("id, name, speciality, specialities, accepted_age_categories, service_radius_km, intervention_locations, bio, location, department, diplomas, experience_years, certifications, focus_areas, session_formats, pedagogy, price_per_session, rating, reviews_count, availability, avatar_url")
         .eq("id", coachId)
         .single();
 
@@ -147,6 +151,13 @@ export default function CoachProfileClient() {
         setCoach({
           ...coachData,
           expérience: coachData.experience_years ?? null,
+          specialities: parseTextArray(coachData.specialities as string[] | string | null),
+          accepted_age_categories: parseTextArray(
+            coachData.accepted_age_categories as string[] | string | null,
+          ),
+          intervention_locations: parseTextArray(
+            coachData.intervention_locations as string[] | string | null,
+          ),
           diplomas: parseTextArray(coachData.diplomas as string[] | string | null),
           certifications: parseTextArray(coachData.certifications as string[] | string | null),
           focus_areas: parseTextArray(coachData.focus_areas as string[] | string | null),
@@ -160,6 +171,10 @@ export default function CoachProfileClient() {
             id: mock.id,
             name: mock.name,
             speciality: mock.speciality,
+            specialities: [mock.speciality].filter(Boolean),
+            accepted_age_categories: [],
+            service_radius_km: null,
+            intervention_locations: [],
             bio: mock.bio,
             location: mock.location,
             department: mock.department ?? null,
@@ -357,7 +372,64 @@ export default function CoachProfileClient() {
                 {coach.expérience} ans d&apos;expérience
               </span>
             )}
+            {coach.service_radius_km != null && coach.service_radius_km > 0 && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
+                Rayon {coach.service_radius_km} km
+              </span>
+            )}
           </div>
+
+          {coach.specialities && coach.specialities.length > 1 && (
+            <div>
+              <p className="mb-2 text-xs uppercase tracking-[0.3em] text-white/70">Spécialités</p>
+              <div className="flex flex-wrap gap-2">
+                {coach.specialities.map((item) => (
+                  <span
+                    key={item}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--px-accent)]/25 bg-[color:var(--px-accent)]/10 px-3 py-1 text-xs text-[color:var(--px-accent)]"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {((coach.accepted_age_categories && coach.accepted_age_categories.length > 0) ||
+            (coach.intervention_locations && coach.intervention_locations.length > 0)) && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {coach.accepted_age_categories && coach.accepted_age_categories.length > 0 && (
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.3em] text-white/70">Public encadré</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {coach.accepted_age_categories.map((age) => (
+                      <span
+                        key={age}
+                        className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/70"
+                      >
+                        {age}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {coach.intervention_locations && coach.intervention_locations.length > 0 && (
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.3em] text-white/70">Lieux d&apos;intervention</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {coach.intervention_locations.map((loc) => (
+                      <span
+                        key={loc}
+                        className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/70"
+                      >
+                        {loc}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {coach.diplomas && coach.diplomas.length > 0 && (
             <div>

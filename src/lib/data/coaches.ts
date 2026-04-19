@@ -6,7 +6,7 @@ import { mapCoachLikeToCoachRecord, mapMockCoachToCoachRecord } from "./mappers"
 import type { CoachRecord, DataResult } from "./types";
 
 export const PUBLIC_COACH_SELECT =
-  "id, user_id, name, speciality, bio, location, department, price_per_session, rating, reviews_count, availability, avatar_url, diplomas, experience_years, certifications, focus_areas, session_formats, pedagogy";
+  "id, user_id, name, speciality, specialities, accepted_age_categories, service_radius_km, intervention_locations, bio, location, department, price_per_session, rating, reviews_count, availability, avatar_url, diplomas, experience_years, certifications, focus_areas, session_formats, pedagogy";
 
 export const COACH_PAGE_SIZE = 12;
 

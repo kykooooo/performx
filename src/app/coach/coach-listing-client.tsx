@@ -21,6 +21,7 @@ import { buildCoachAvatarMap } from "@/lib/coach-avatars";
 import { SEINE_MARITIME_CITIES } from "@/lib/constants";
 import { getCoachDirectoryPaginated } from "@/lib/data/coaches";
 import type { CoachRecord } from "@/lib/data/types";
+import { AGE_CATEGORIES } from "@/lib/football";
 
 const SPECIALITY_CHIPS = [
   "Tous",
@@ -32,6 +33,14 @@ const SPECIALITY_CHIPS = [
   "Dribbles",
   "Endurance",
   "Jeu défensif",
+] as const;
+
+const LOCATION_FILTERS = [
+  { value: "", label: "Tous lieux" },
+  { value: "Domicile joueur", label: "À domicile" },
+  { value: "Terrain extérieur", label: "Terrain" },
+  { value: "Salle / gymnase", label: "Salle" },
+  { value: "Club partenaire", label: "Club partenaire" },
 ] as const;
 
 export default function CoachPage() {
@@ -51,6 +60,8 @@ export default function CoachPage() {
   const [priceMax, setPriceMax] = useState<number | "">("");
   const [minRating, setMinRating] = useState<number>(0);
   const [onlyThisWeek, setOnlyThisWeek] = useState<boolean>(false);
+  const [activeAgeCategory, setActiveAgeCategory] = useState<string>("");
+  const [activeLocation, setActiveLocation] = useState<string>("");
 
   const fetchPage = useCallback(async (pageNum: number, append: boolean) => {
     if (append) setLoadingMore(true);
@@ -84,13 +95,17 @@ export default function CoachPage() {
 
     const filtered = coaches.filter((coach) => {
       const location = `${coach.location ?? ""} ${coach.department ?? ""}`.toLowerCase();
+      const specialityHaystack = [coach.speciality, ...(coach.specialities ?? [])]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
       const matchesQuery =
         !normalized ||
         coach.name.toLowerCase().includes(normalized) ||
-        coach.speciality.toLowerCase().includes(normalized) ||
+        specialityHaystack.includes(normalized) ||
         location.includes(normalized);
       const matchesChip =
-        activeChip === "Tous" || coach.speciality.toLowerCase().includes(activeChip.toLowerCase());
+        activeChip === "Tous" || specialityHaystack.includes(activeChip.toLowerCase());
       const matchesCity =
         !activeCity || (coach.location ?? "").toLowerCase() === activeCity.toLowerCase();
       const price = coach.pricePerSession ?? 0;
@@ -103,6 +118,12 @@ export default function CoachPage() {
           const slotDate = new Date(`${slot.date}T${slot.time}:00`);
           return slotDate >= now && slotDate <= endOfWeek;
         });
+      const matchesAgeCategory =
+        !activeAgeCategory ||
+        (coach.acceptedAgeCategories ?? []).includes(activeAgeCategory);
+      const matchesLocation =
+        !activeLocation ||
+        (coach.interventionLocations ?? []).includes(activeLocation);
 
       return (
         matchesQuery &&
@@ -111,7 +132,9 @@ export default function CoachPage() {
         matchesPriceMin &&
         matchesPriceMax &&
         matchesRating &&
-        matchesThisWeek
+        matchesThisWeek &&
+        matchesAgeCategory &&
+        matchesLocation
       );
     });
 
@@ -132,7 +155,19 @@ export default function CoachPage() {
     }
 
     return sorted;
-  }, [activeChip, activeCity, coaches, query, sortBy, priceMin, priceMax, minRating, onlyThisWeek]);
+  }, [
+    activeChip,
+    activeCity,
+    coaches,
+    query,
+    sortBy,
+    priceMin,
+    priceMax,
+    minRating,
+    onlyThisWeek,
+    activeAgeCategory,
+    activeLocation,
+  ]);
 
   const avgRating = useMemo(() => {
     const ratings = coaches.map((coach) => coach.rating ?? 0).filter((rating) => rating > 0);
@@ -340,12 +375,47 @@ export default function CoachPage() {
                 Dispo cette semaine
               </label>
 
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">Âge</span>
+                <select
+                  className="px-select max-w-[150px] text-xs"
+                  value={activeAgeCategory}
+                  onChange={(event) => setActiveAgeCategory(event.target.value)}
+                  aria-label="Filtrer par tranche d'âge"
+                >
+                  <option value="">Toutes</option>
+                  {AGE_CATEGORIES.map((age) => (
+                    <option key={age} value={age}>
+                      {age}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">Lieu</span>
+                <select
+                  className="px-select max-w-[200px] text-xs"
+                  value={activeLocation}
+                  onChange={(event) => setActiveLocation(event.target.value)}
+                  aria-label="Filtrer par lieu d'intervention"
+                >
+                  {LOCATION_FILTERS.map((loc) => (
+                    <option key={loc.value} value={loc.value}>
+                      {loc.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {(priceMin !== "" ||
                 priceMax !== "" ||
                 minRating !== 0 ||
                 onlyThisWeek ||
                 activeCity ||
                 activeChip !== "Tous" ||
+                activeAgeCategory ||
+                activeLocation ||
                 query) && (
                 <button
                   type="button"
@@ -356,6 +426,8 @@ export default function CoachPage() {
                     setOnlyThisWeek(false);
                     setActiveCity("");
                     setActiveChip("Tous");
+                    setActiveAgeCategory("");
+                    setActiveLocation("");
                     setQuery("");
                   }}
                   className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60 transition hover:border-white/20 hover:text-white"
@@ -417,6 +489,12 @@ export default function CoachPage() {
             setQuery("");
             setActiveChip("Tous");
             setActiveCity("");
+            setActiveAgeCategory("");
+            setActiveLocation("");
+            setPriceMin("");
+            setPriceMax("");
+            setMinRating(0);
+            setOnlyThisWeek(false);
           }}
         />
       )}

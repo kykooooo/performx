@@ -41,6 +41,10 @@ type CoachLike = {
   user_id?: string | null;
   name?: string | null;
   speciality?: string | null;
+  specialities?: string[] | string | null;
+  accepted_age_categories?: string[] | string | null;
+  service_radius_km?: number | null;
+  intervention_locations?: string[] | string | null;
   bio?: string | null;
   location?: string | null;
   department?: string | null;
@@ -132,11 +136,17 @@ type ParentChildLike = {
 };
 
 export function mapCoachLikeToCoachRecord(source: CoachLike): CoachRecord {
+  const specialitiesList = parseTextArray(source.specialities ?? []);
+  const speciality = source.speciality ?? specialitiesList[0] ?? "Coach";
   return {
     id: source.id,
     userId: source.user_id ?? null,
     name: source.name ?? "Coach",
-    speciality: source.speciality ?? "Coach",
+    speciality,
+    specialities: specialitiesList.length > 0 ? specialitiesList : [speciality],
+    acceptedAgeCategories: parseTextArray(source.accepted_age_categories ?? []),
+    serviceRadiusKm: source.service_radius_km ?? null,
+    interventionLocations: parseTextArray(source.intervention_locations ?? []),
     bio: source.bio ?? null,
     location: source.location ?? null,
     department: source.department ?? source.location ?? null,
@@ -160,6 +170,10 @@ export function mapMockCoachToCoachRecord(source: Coach): CoachRecord {
     userId: source.userId,
     name: source.name,
     speciality: source.speciality,
+    specialities: [source.speciality].filter(Boolean),
+    acceptedAgeCategories: [],
+    serviceRadiusKm: null,
+    interventionLocations: [],
     bio: source.bio,
     location: source.location,
     department: source.department ?? source.location,

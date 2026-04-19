@@ -13,13 +13,13 @@ import {
   BoltIcon,
   UserIcon,
 } from "@/components/icons";
-import { parseTextArray } from "@/lib/football";
+import { AGE_CATEGORIES, parseTextArray } from "@/lib/football";
 import { supabase } from "@/lib/supabase";
 
 const SPECIALITIES = [
   "Coach technique",
   "Préparation physique",
-  "Gardienne",
+  "Gardien",
   "Vision de jeu",
   "Frappe",
   "Dribbles",
@@ -27,11 +27,22 @@ const SPECIALITIES = [
   "Jeu défensif",
 ];
 
+const INTERVENTION_LOCATIONS = [
+  "Domicile joueur",
+  "Terrain extérieur",
+  "Salle / gymnase",
+  "Club partenaire",
+] as const;
+
 export default function CoachProfileEditPage() {
   const [coachId, setCoachId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [speciality, setSpeciality] = useState("");
+  const [specialities, setSpecialities] = useState<string[]>([]);
+  const [acceptedAgeCategories, setAcceptedAgeCategories] = useState<string[]>([]);
+  const [serviceRadiusKm, setServiceRadiusKm] = useState<number>(0);
+  const [interventionLocations, setInterventionLocations] = useState<string[]>([]);
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [department, setDepartment] = useState("");
@@ -59,6 +70,10 @@ export default function CoachProfileEditPage() {
       first_name: firstName ?? "",
       last_name: lastNameParts.join(" "),
       speciality,
+      specialities,
+      accepted_age_categories: acceptedAgeCategories,
+      service_radius_km: serviceRadiusKm || null,
+      intervention_locations: interventionLocations,
       bio,
       location,
       department,
@@ -92,7 +107,7 @@ export default function CoachProfileEditPage() {
 
       const { data: coachData } = await supabase
         .from("coaches")
-        .select("id, name, speciality, bio, location, department, diplomas, experience_years, certifications, focus_areas, session_formats, pedagogy, price_per_session, rating, reviews_count")
+        .select("id, name, speciality, specialities, accepted_age_categories, service_radius_km, intervention_locations, bio, location, department, diplomas, experience_years, certifications, focus_areas, session_formats, pedagogy, price_per_session, rating, reviews_count")
         .eq("user_id", userData.user.id)
         .maybeSingle();
 
@@ -119,6 +134,23 @@ export default function CoachProfileEditPage() {
       setCoachId(coachData.id);
       setName(coachData.name ?? "");
       setSpeciality(coachData.speciality ?? "");
+      const loadedSpecialities = parseTextArray(
+        coachData.specialities as string[] | string | null,
+      );
+      setSpecialities(
+        loadedSpecialities.length > 0
+          ? loadedSpecialities
+          : coachData.speciality
+            ? [coachData.speciality]
+            : [],
+      );
+      setAcceptedAgeCategories(
+        parseTextArray(coachData.accepted_age_categories as string[] | string | null),
+      );
+      setServiceRadiusKm(Number(coachData.service_radius_km ?? 0));
+      setInterventionLocations(
+        parseTextArray(coachData.intervention_locations as string[] | string | null),
+      );
       setBio(coachData.bio ?? "");
       setLocation(coachData.location ?? "");
       setDepartment(coachData.department ?? "");
@@ -160,7 +192,11 @@ export default function CoachProfileEditPage() {
       .from("coaches")
       .update({
         name,
-        speciality,
+        speciality: specialities[0] ?? speciality,
+        specialities,
+        accepted_age_categories: acceptedAgeCategories,
+        service_radius_km: serviceRadiusKm || null,
+        intervention_locations: interventionLocations,
         bio,
         location,
         department,
@@ -356,13 +392,48 @@ export default function CoachProfileEditPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="coach-edit-speciality" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Spécialité</label>
-                    <select id="coach-edit-speciality" className="px-select mt-2" value={speciality} onChange={(e) => setSpeciality(e.target.value)} required>
-                      <option value="">Sélectionner</option>
-                      {SPECIALITIES.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
+                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Spécialités</label>
+                    <p className="mt-1 text-[11px] text-white/60">
+                      Sélectionne toutes tes spécialités (au moins une). Les joueurs filtreront les coachs grâce à ces tags.
+                    </p>
+                    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {SPECIALITIES.map((option) => {
+                        const checked = specialities.includes(option);
+                        return (
+                          <label
+                            key={option}
+                            className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-xs transition ${
+                              checked
+                                ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]"
+                                : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="sr-only"
+                              checked={checked}
+                              onChange={() => {
+                                setSpecialities((prev) => {
+                                  const next = checked
+                                    ? prev.filter((entry) => entry !== option)
+                                    : [...prev, option];
+                                  if (!speciality || !next.includes(speciality)) {
+                                    setSpeciality(next[0] ?? "");
+                                  }
+                                  return next;
+                                });
+                              }}
+                            />
+                            <span className="flex h-4 w-4 items-center justify-center rounded border border-current">
+                              {checked ? (
+                                <span className="h-2 w-2 rounded-sm bg-current" />
+                              ) : null}
+                            </span>
+                            <span>{option}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   <div className="mt-4">
@@ -377,6 +448,137 @@ export default function CoachProfileEditPage() {
                     <p className="mt-1 text-[11px] text-white/70">
                       Visible sur ton profil public. Sois précis pour attirer les bons joueurs.
                     </p>
+                  </div>
+                </div>
+              </ScrollReveal>
+
+              {/* Zone & public accepté */}
+              <ScrollReveal>
+                <div className="px-card p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]">
+                      <MapPinIcon className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg text-white">Zone &amp; public</h3>
+                      <p className="text-xs text-white/70">
+                        Tranches d&apos;âge encadrées, rayon d&apos;action et lieux d&apos;intervention
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Tranches d&apos;âge acceptées</label>
+                    <p className="mt-1 text-[11px] text-white/60">
+                      Sélectionne toutes les catégories que tu peux encadrer. Tu pourras toujours refuser au cas par cas.
+                    </p>
+                    <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+                      {AGE_CATEGORIES.map((age) => {
+                        const checked = acceptedAgeCategories.includes(age);
+                        return (
+                          <label
+                            key={age}
+                            className={`flex cursor-pointer items-center justify-center rounded-xl border px-3 py-2 text-xs transition ${
+                              checked
+                                ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]"
+                                : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="sr-only"
+                              checked={checked}
+                              onChange={() => {
+                                setAcceptedAgeCategories((prev) =>
+                                  checked
+                                    ? prev.filter((entry) => entry !== age)
+                                    : [...prev, age],
+                                );
+                              }}
+                            />
+                            {age}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <label htmlFor="coach-edit-radius" className="text-[11px] uppercase tracking-[0.2em] text-white/70">
+                      Rayon d&apos;action (km)
+                    </label>
+                    <p className="mt-1 text-[11px] text-white/60">
+                      Distance maximum depuis ta localisation pour les séances à domicile ou sur terrain partenaire.
+                    </p>
+                    <div className="relative mt-2">
+                      <input
+                        id="coach-edit-radius"
+                        className="px-input pr-16"
+                        type="number"
+                        min={0}
+                        step={5}
+                        value={serviceRadiusKm}
+                        onChange={(event) => setServiceRadiusKm(Number(event.target.value) || 0)}
+                      />
+                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-white/70">km</span>
+                    </div>
+                    <div className="mt-3 flex items-center gap-3">
+                      {[5, 10, 20, 40].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setServiceRadiusKm(preset)}
+                          className={`rounded-full border px-3 py-1 text-xs transition ${
+                            serviceRadiusKm === preset
+                              ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]"
+                              : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
+                          }`}
+                        >
+                          {preset} km
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Lieux d&apos;intervention</label>
+                    <p className="mt-1 text-[11px] text-white/60">
+                      Choisis les lieux où tu peux donner une séance.
+                    </p>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      {INTERVENTION_LOCATIONS.map((loc) => {
+                        const checked = interventionLocations.includes(loc);
+                        return (
+                          <label
+                            key={loc}
+                            className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-xs transition ${
+                              checked
+                                ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]"
+                                : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="sr-only"
+                              checked={checked}
+                              onChange={() => {
+                                setInterventionLocations((prev) =>
+                                  checked
+                                    ? prev.filter((entry) => entry !== loc)
+                                    : [...prev, loc],
+                                );
+                              }}
+                            />
+                            <span className="flex h-4 w-4 items-center justify-center rounded border border-current">
+                              {checked ? (
+                                <span className="h-2 w-2 rounded-sm bg-current" />
+                              ) : null}
+                            </span>
+                            <span>{loc}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </ScrollReveal>
