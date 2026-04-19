@@ -52,6 +52,11 @@ export default function ParentDashboardPage() {
   const [linkCode, setLinkCode] = useState("");
   const [linkNotice, setLinkNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [legacyChildHint, setLegacyChildHint] = useState<ParentLegacyHint | null>(null);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [inviteExpiresAt, setInviteExpiresAt] = useState<string | null>(null);
+  const [generatingInvite, setGeneratingInvite] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const [inviteNotice, setInviteNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const activeChild = useMemo(
     () => children.find((child) => child.userId === activeChildId) ?? null,
@@ -139,6 +144,53 @@ export default function ParentDashboardPage() {
     setLinkCode("");
     setLinkNotice({ type: "success", text: "Compte joueur lié avec succès." });
     window.location.reload();
+  };
+
+  const handleGenerateInvite = async () => {
+    setInviteNotice(null);
+    setGeneratingInvite(true);
+    const { data, error: rpcError } = await supabase.rpc("generate_parent_invite_code", {
+      p_label: null,
+    });
+    setGeneratingInvite(false);
+
+    if (rpcError) {
+      setInviteNotice({ type: "error", text: rpcError.message });
+      return;
+    }
+
+    const payload = Array.isArray(data) ? data[0] : data;
+    if (!payload || typeof payload.code !== "string") {
+      setInviteNotice({ type: "error", text: "Impossible de générer le lien pour le moment." });
+      return;
+    }
+
+    setInviteCode(payload.code);
+    setInviteExpiresAt(payload.expires_at ?? null);
+    setInviteCopied(false);
+    setInviteNotice({
+      type: "success",
+      text: "Lien d'invitation prêt. Envoie-le à ton enfant.",
+    });
+  };
+
+  const inviteUrl = useMemo(() => {
+    if (!inviteCode) return null;
+    if (typeof window === "undefined") return `/auth/invite/${inviteCode}`;
+    return `${window.location.origin}/auth/invite/${inviteCode}`;
+  }, [inviteCode]);
+
+  const handleCopyInvite = async () => {
+    if (!inviteUrl) return;
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(inviteUrl);
+        setInviteCopied(true);
+        setTimeout(() => setInviteCopied(false), 2400);
+      }
+    } catch {
+      setInviteNotice({ type: "error", text: "Copie impossible. Sélectionne le lien manuellement." });
+    }
   };
 
   return (
@@ -239,34 +291,98 @@ export default function ParentDashboardPage() {
                   <ShieldIcon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg text-white">Lier un compte joueur</h3>
+                  <h3 className="text-lg text-white">Inviter ton enfant</h3>
                   <p className="text-xs text-white/70">
-                    Demande le code temporaire généré depuis le profil du joueur.
+                    Génère un lien unique à envoyer à ton enfant. Il sera lié automatiquement à ton compte.
                   </p>
                 </div>
               </div>
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <input
-                  className="px-input"
-                  placeholder="Code de liaison"
-                  value={linkCode}
-                  onChange={(event) => setLinkCode(event.target.value.toUpperCase())}
-                />
-                <button className="px-button" type="button" onClick={handleLinkChild}>
-                  Lier le joueur
+
+              {!inviteCode ? (
+                <button
+                  type="button"
+                  className="px-button mt-5 text-sm"
+                  onClick={handleGenerateInvite}
+                  disabled={generatingInvite}
+                >
+                  <BoltIcon className="h-4 w-4" />
+                  {generatingInvite ? "Génération..." : "Générer un lien d'invitation"}
                 </button>
-              </div>
-              {linkNotice && (
+              ) : (
+                <div className="mt-5 space-y-3 rounded-2xl border border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/10 p-4">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-white/60">
+                      Lien d&apos;invitation
+                    </p>
+                    <p className="mt-1 break-all text-xs text-white/80">{inviteUrl}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopyInvite}
+                      className="px-button-ghost text-xs"
+                    >
+                      {inviteCopied ? "Lien copié" : "Copier le lien"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleGenerateInvite}
+                      disabled={generatingInvite}
+                      className="px-button-ghost text-xs"
+                    >
+                      Régénérer
+                    </button>
+                    <span className="text-[11px] text-white/60">
+                      Code : <span className="font-semibold text-white">{inviteCode}</span>
+                    </span>
+                  </div>
+                  {inviteExpiresAt && (
+                    <p className="text-[11px] text-white/50">
+                      Expire le {formatLongDate(new Date(inviteExpiresAt))}.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {inviteNotice && (
                 <div
                   className={`mt-4 rounded-xl border px-4 py-2 text-xs ${
-                    linkNotice.type === "success"
+                    inviteNotice.type === "success"
                       ? "border-[color:var(--px-success)]/40 bg-[color:var(--px-success)]/15 text-[color:var(--px-success)]"
                       : "border-[color:var(--px-danger)]/40 bg-[color:var(--px-danger)]/15 text-[color:var(--px-danger)]"
                   }`}
                 >
-                  {linkNotice.text}
+                  {inviteNotice.text}
                 </div>
               )}
+
+              <div className="mt-6 border-t border-white/10 pt-5">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-white/50">
+                  J&apos;ai déjà un code généré par mon enfant
+                </p>
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                  <input
+                    className="px-input"
+                    placeholder="Code de liaison"
+                    value={linkCode}
+                    onChange={(event) => setLinkCode(event.target.value.toUpperCase())}
+                  />
+                  <button className="px-button-ghost" type="button" onClick={handleLinkChild}>
+                    Lier le joueur
+                  </button>
+                </div>
+                {linkNotice && (
+                  <div
+                    className={`mt-4 rounded-xl border px-4 py-2 text-xs ${
+                      linkNotice.type === "success"
+                        ? "border-[color:var(--px-success)]/40 bg-[color:var(--px-success)]/15 text-[color:var(--px-success)]"
+                        : "border-[color:var(--px-danger)]/40 bg-[color:var(--px-danger)]/15 text-[color:var(--px-danger)]"
+                    }`}
+                  >
+                    {linkNotice.text}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="px-card p-6">

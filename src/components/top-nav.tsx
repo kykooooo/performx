@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Logo from "./logo";
+import NotificationBell from "./notification-bell";
 import ThemeToggle from "./theme-toggle";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { normalizeUserRole } from "@/lib/roles";
@@ -214,6 +215,7 @@ export default function TopNav({ active }: { active?: string }) {
           </nav>
 
           <div className="flex items-center gap-3">
+            {loggedIn && <NotificationBell />}
             <ThemeToggle />
             {loggedIn ? (
               <button

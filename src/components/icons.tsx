@@ -188,3 +188,12 @@ export function AlertIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function BellIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" {...props}>
+      <path d="M6 9a6 6 0 0 1 12 0v4l1.8 2.7a.8.8 0 0 1-.7 1.3H4.9a.8.8 0 0 1-.7-1.3L6 13V9z" />
+      <path d="M10 18a2 2 0 0 0 4 0" />
+    </svg>
+  );
+}

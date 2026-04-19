@@ -29,7 +29,12 @@ export default function RegisterPlayerPage() {
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get("redirect");
   const safeRedirect = redirectParam && redirectParam.startsWith("/") ? redirectParam : null;
-  const loginQs = safeRedirect ? `?redirect=${encodeURIComponent(safeRedirect)}` : "";
+  const inviteParam = searchParams.get("invite");
+  const safeInvite = inviteParam ? inviteParam.toUpperCase().slice(0, 16) : null;
+  const loginRedirect = safeInvite
+    ? `/auth/invite/${safeInvite}`
+    : safeRedirect;
+  const loginQs = loginRedirect ? `?redirect=${encodeURIComponent(loginRedirect)}` : "";
   const [step, setStep] = useState<1 | 2>(1);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -122,13 +127,29 @@ export default function RegisterPlayerPage() {
 
     if (data.user && data.session) {
       syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
+
+      if (safeInvite) {
+        const { error: claimError } = await supabase.rpc("claim_parent_invite", {
+          p_code: safeInvite,
+        });
+        if (claimError) {
+          console.warn("[PerformX] claim invite failed", claimError.message);
+          router.push(`/auth/invite/${safeInvite}`);
+          return;
+        }
+        router.push("/dashboard/player?invite=ok");
+        return;
+      }
+
       router.push(safeRedirect ?? "/dashboard");
       return;
     }
 
     setNotice({
       type: "success",
-      text: `Compte créé ! Un email de confirmation a été envoyé à ${email}. Clique sur le lien dans l'email pour activer ton compte.`,
+      text: safeInvite
+        ? `Compte créé ! Après avoir confirmé ton email, clique sur le lien d'invitation reçu de ton parent pour lier vos comptes.`
+        : `Compte créé ! Un email de confirmation a été envoyé à ${email}. Clique sur le lien dans l'email pour activer ton compte.`,
     });
     setLoading(false);
   };
