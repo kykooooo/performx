@@ -9,7 +9,7 @@ import Breadcrumbs from "@/components/breadcrumbs";
 import { MapPinIcon, StarIcon } from "@/components/icons";
 import { Notice, type NoticeData } from "@/components/notice";
 import { normalizeTime } from "@/lib/booking";
-import { formatLongDate } from "@/lib/date";
+import { formatLongDate, toISODate } from "@/lib/date";
 import { mockPlayers, mockPlayerReviews } from "@/lib/mock-data";
 import { getAverageRating, getReviewTotal } from "@/lib/reviews";
 import { supabase } from "@/lib/supabase";
@@ -217,7 +217,7 @@ export default function PlayerProfileClient() {
         coach_name: "Coach",
         rating: reviewRating,
         comment: reviewComment,
-        date: new Date().toISOString().slice(0, 10),
+        date: toISODate(new Date()),
       },
       ...prev,
     ]);

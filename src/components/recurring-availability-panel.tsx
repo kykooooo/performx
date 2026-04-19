@@ -13,7 +13,7 @@ import {
   fetchCoachExceptions,
   fetchCoachPatterns,
 } from "@/lib/data/coach-availability";
-import { formatLongDate } from "@/lib/date";
+import { formatLongDate, toISODate } from "@/lib/date";
 import { AlertIcon, CalendarIcon, CheckCircleIcon } from "./icons";
 
 type Props = {
@@ -38,13 +38,11 @@ export default function RecurringAvailabilityPanel({ coachId, onPatternsChanged 
   const [timeStart, setTimeStart] = useState("18:00");
   const [timeEnd, setTimeEnd] = useState("20:00");
   const [duration, setDuration] = useState(60);
-  const [patternStartDate, setPatternStartDate] = useState(() =>
-    new Date().toISOString().slice(0, 10),
-  );
+  const [patternStartDate, setPatternStartDate] = useState(() => toISODate(new Date()));
   const [patternEndDate, setPatternEndDate] = useState(() => {
     const d = new Date();
     d.setMonth(d.getMonth() + 3);
-    return d.toISOString().slice(0, 10);
+    return toISODate(d);
   });
   const [label, setLabel] = useState("");
   const [creatingPattern, setCreatingPattern] = useState(false);

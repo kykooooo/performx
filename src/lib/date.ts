@@ -14,7 +14,16 @@ export function addDays(date: Date, days: number) {
 }
 
 export function toISODate(date: Date) {
-  return date.toISOString().split("T")[0];
+  // IMPORTANT : on reste en heure locale pour éviter le shift UTC qui,
+  // aux fuseaux +01/+02, faisait régulièrement "glisser" un lundi
+  // local sur un dimanche UTC (décalage visible de +1 jour sur les
+  // agendas). date.toISOString() passe par UTC et cause ce bug ; ici
+  // on construit la chaîne YYYY-MM-DD directement avec les getters
+  // locaux.
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function formatDayLabel(date: Date) {

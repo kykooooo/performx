@@ -10,7 +10,7 @@ import { CheckCircleIcon, MapPinIcon, StarIcon } from "@/components/icons";
 import { Notice, type NoticeData } from "@/components/notice";
 import { getAvailableSlots, normalizeTime } from "@/lib/booking";
 import { getCoachAvatarUrl } from "@/lib/coach-avatars";
-import { formatLongDate } from "@/lib/date";
+import { formatLongDate, toISODate } from "@/lib/date";
 import { parseTextArray } from "@/lib/football";
 import { getAverageRating, getReviewTotal } from "@/lib/reviews";
 import { supabase } from "@/lib/supabase";
@@ -585,7 +585,7 @@ export default function CoachProfileClient() {
                   player_name: playerName,
                   rating: reviewRating,
                   comment: reviewComment,
-                  date: new Date().toISOString().split("T")[0],
+                  date: toISODate(new Date()),
                 },
                 ...prev,
               ]);

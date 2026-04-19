@@ -1,3 +1,4 @@
+import { toISODate } from "@/lib/date";
 import { supabase } from "@/lib/supabase";
 
 /**
@@ -134,7 +135,7 @@ export async function fetchCoachExceptions(coachId: string): Promise<CoachAvaila
     .from("coach_availability_exceptions")
     .select("*")
     .eq("coach_id", coachId)
-    .gte("blocked_date", new Date().toISOString().slice(0, 10))
+    .gte("blocked_date", toISODate(new Date()))
     .order("blocked_date", { ascending: true });
 
   if (error) throw error;
