@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { MapPinIcon, StarIcon, BoltIcon } from "./icons";
 import {
-  getCoachAccentGradient,
   getCoachAudienceLabel,
   getCoachBestForLabel,
   getCoachStyleLabel,
@@ -55,7 +54,6 @@ export default function CoachCard({
     .join("")
     .toUpperCase();
   const hasRealPhoto = Boolean(avatarUrl && avatarUrl.trim().length > 0);
-  const accentGradient = getCoachAccentGradient(`${name}-${speciality}`);
   const specialityEmoji = getSpecialityEmoji(speciality);
   const styleLabel = getCoachStyleLabel(speciality, pedagogy);
   const audienceLabel = getCoachAudienceLabel(sessionFormats, experienceYears);
@@ -90,54 +88,29 @@ export default function CoachCard({
           </>
         ) : (
           <>
-            {/* Fond gradient accent déterministe par coach */}
+            {/* Fond neutre, cohérent avec la card */}
             <div
-              className={`absolute inset-0 bg-gradient-to-br ${accentGradient}`}
+              className="absolute inset-0 bg-gradient-to-br from-white/8 via-white/4 to-transparent"
               aria-hidden="true"
             />
-            {/* Tramage diagonal subtil pour la texture */}
+            {/* Touche d'accent discrète en haut à droite */}
             <div
-              className="absolute inset-0 opacity-25 mix-blend-overlay"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(45deg, rgba(255,255,255,0.12) 0 1px, transparent 1px 9px)",
-              }}
+              className="absolute inset-0 bg-[radial-gradient(circle_at_85%_20%,rgba(255,106,0,0.18),transparent_55%)] transition duration-500 group-hover:bg-[radial-gradient(circle_at_85%_20%,rgba(255,106,0,0.28),transparent_60%)]"
               aria-hidden="true"
             />
-            {/* Motif terrain : rond central + ligne médiane */}
-            <svg
-              viewBox="0 0 200 120"
-              preserveAspectRatio="none"
-              className="absolute inset-0 h-full w-full opacity-20"
-              aria-hidden="true"
-            >
-              <circle cx="100" cy="60" r="22" fill="none" stroke="white" strokeWidth="1.2" />
-              <line x1="100" y1="0" x2="100" y2="120" stroke="white" strokeWidth="1.2" />
-            </svg>
-            {/* Emoji spécialité géant en fond */}
+            {/* Emoji spécialité : petit, coin bas-droit, discret */}
             <span
-              className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-5 text-[90px] leading-none opacity-30 drop-shadow-[0_4px_16px_rgba(0,0,0,0.45)] transition duration-500 group-hover:scale-110 group-hover:opacity-40"
+              className="pointer-events-none absolute bottom-2 right-12 text-3xl leading-none opacity-40 transition duration-500 group-hover:opacity-60"
               aria-hidden="true"
             >
               {specialityEmoji}
             </span>
-            {/* Overlay sombre en bas pour lisibilité des tags */}
-            <div
-              className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent"
-              aria-hidden="true"
-            />
           </>
         )}
 
         {/* Avatar + nom (reste lisible dans les 2 modes) */}
         <div className="absolute left-4 top-4 flex items-center gap-3">
-          <div
-            className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 text-sm font-bold text-white shadow-[0_8px_24px_-6px_rgba(0,0,0,0.6)] transition duration-500 group-hover:scale-105 group-hover:border-[color:var(--px-accent)]/70 ${
-              hasRealPhoto
-                ? "border-white/30 bg-black/60"
-                : "border-white/40 bg-gradient-to-br from-black/70 to-black/30"
-            }`}
-          >
+          <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-white/20 bg-black/60 text-sm font-semibold text-white shadow-lg transition duration-500 group-hover:scale-105 group-hover:border-[color:var(--px-accent)]/60">
             {hasRealPhoto ? (
               <Image
                 src={avatarUrl as string}
@@ -147,7 +120,7 @@ export default function CoachCard({
                 className="object-cover"
               />
             ) : (
-              <span className="relative tracking-wider">{initials}</span>
+              <span className="tracking-wider">{initials}</span>
             )}
           </div>
           <div>
