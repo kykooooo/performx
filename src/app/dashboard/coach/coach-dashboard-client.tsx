@@ -6,6 +6,10 @@ import AppShell from "@/components/app-shell";
 import ConfirmModal from "@/components/confirm-modal";
 import ScrollReveal from "@/components/scroll-reveal";
 import RecurringAvailabilityPanel from "@/components/recurring-availability-panel";
+import {
+  expandCoachAvailability,
+  type ExpandedSlot,
+} from "@/lib/data/coach-availability";
 import { getCoachDashboardData, type CoachSessionPlayerInfo } from "@/lib/data/dashboards";
 import type { CoachDashboardCoachRecord, SessionRecord } from "@/lib/data/types";
 
@@ -63,6 +67,7 @@ export default function CoachDashboardPage() {
   const [dayData, setDayData] = useState<{ day: string; count: number }[]>([]);
   const [monthRevenue, setMonthRevenue] = useState(0);
   const [playersInfo, setPlayersInfo] = useState<Record<string, CoachSessionPlayerInfo>>({});
+  const [recurringSlots, setRecurringSlots] = useState<ExpandedSlot[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -83,6 +88,18 @@ export default function CoachDashboardPage() {
       setDayData(result.data.dayData);
       setMonthRevenue(result.data.monthRevenue ?? 0);
       setPlayersInfo(result.data.playersInfo ?? {});
+
+      // Expand les récurrences (patterns) en créneaux concrets pour les
+      // afficher dans l'agenda comme les dispos ponctuelles.
+      if (result.data.coach && result.mode === "live") {
+        try {
+          const expanded = await expandCoachAvailability(result.data.coach.id);
+          if (mounted) setRecurringSlots(expanded);
+        } catch (err) {
+          console.warn("[coach-dashboard] expandCoachAvailability failed", err);
+        }
+      }
+
       setLoading(false);
     };
 
@@ -91,6 +108,16 @@ export default function CoachDashboardPage() {
       mounted = false;
     };
   }, []);
+
+  const refreshRecurringSlots = useCallback(async () => {
+    if (!coach || isDemo) return;
+    try {
+      const expanded = await expandCoachAvailability(coach.id);
+      setRecurringSlots(expanded);
+    } catch (err) {
+      console.warn("[coach-dashboard] refresh recurring slots failed", err);
+    }
+  }, [coach, isDemo]);
 
   const upcoming = useMemo(
     () => sessions.filter((session) => session.status === "upcoming"),
@@ -107,14 +134,29 @@ export default function CoachDashboardPage() {
 
 
   const availableSlots = useMemo(() => {
-    if (!coach?.availability) return [] as AvailabilitySlot[];
-    return coach.availability.filter((slot) => {
+    const ponctual = coach?.availability ?? [];
+    // On fusionne les dispos ponctuelles (JSON coaches.availability) avec les
+    // créneaux issus des patterns de récurrence (expand_coach_availability).
+    const combined: AvailabilitySlot[] = [
+      ...ponctual,
+      ...recurringSlots.map((slot) => ({
+        date: slot.date,
+        time: slot.time,
+        durationMinutes: slot.durationMinutes,
+      })),
+    ];
+    // Dedup par date+time et filtre les slots déjà réservés (sessions).
+    const seen = new Set<string>();
+    return combined.filter((slot) => {
       const normalized = normalizeTime(slot.time);
+      const key = `${slot.date}-${normalized}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
       return !sessions.some(
         (session) => session.date === slot.date && normalizeTime(session.time) === normalized,
       );
     });
-  }, [coach, sessions]);
+  }, [coach, sessions, recurringSlots]);
 
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }, (_, index) => {
@@ -151,9 +193,10 @@ export default function CoachDashboardPage() {
     for (let hour = 7; hour <= 21; hour += 1) {
       base.push(`${String(hour).padStart(2, "0")}:00`);
     }
-    const extra = (coach?.availability ?? []).map((slot) => normalizeTime(slot.time));
-    return Array.from(new Set([...base, ...extra])).sort();
-  }, [coach?.availability]);
+    const fromPonctual = (coach?.availability ?? []).map((slot) => normalizeTime(slot.time));
+    const fromRecurring = recurringSlots.map((slot) => normalizeTime(slot.time));
+    return Array.from(new Set([...base, ...fromPonctual, ...fromRecurring])).sort();
+  }, [coach?.availability, recurringSlots]);
 
   const availabilityMap = useMemo(() => {
     const map = new Map<string, AvailabilitySlot>();
@@ -762,7 +805,10 @@ export default function CoachDashboardPage() {
                 </div>
               </div>
 
-              <RecurringAvailabilityPanel coachId={coach?.id ?? null} />
+              <RecurringAvailabilityPanel
+                coachId={coach?.id ?? null}
+                onPatternsChanged={refreshRecurringSlots}
+              />
 
               {/* Créneaux ponctuels (ancien flow) en repli discret */}
               <details className="px-card p-5">

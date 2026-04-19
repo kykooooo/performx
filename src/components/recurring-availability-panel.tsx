@@ -18,11 +18,17 @@ import { AlertIcon, CalendarIcon, CheckCircleIcon } from "./icons";
 
 type Props = {
   coachId: string | null;
+  /**
+   * Callback invoqué après tout changement (création ou suppression de
+   * pattern / exception) pour que le parent puisse rafraîchir sa propre
+   * vue des créneaux expanded.
+   */
+  onPatternsChanged?: () => void;
 };
 
 type Notice = { type: "success" | "error"; text: string } | null;
 
-export default function RecurringAvailabilityPanel({ coachId }: Props) {
+export default function RecurringAvailabilityPanel({ coachId, onPatternsChanged }: Props) {
   const [patterns, setPatterns] = useState<CoachAvailabilityPattern[]>([]);
   const [exceptions, setExceptions] = useState<CoachAvailabilityException[]>([]);
   const [loading, setLoading] = useState(true);
@@ -113,6 +119,7 @@ export default function RecurringAvailabilityPanel({ coachId }: Props) {
       setPatterns((current) => [...current, created]);
       setLabel("");
       setNotice({ type: "success", text: "Récurrence ajoutée. Les créneaux apparaissent déjà sur ton annuaire." });
+      onPatternsChanged?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erreur création.";
       setNotice({ type: "error", text: message });
@@ -126,6 +133,7 @@ export default function RecurringAvailabilityPanel({ coachId }: Props) {
       await deleteCoachPattern(patternId);
       setPatterns((current) => current.filter((p) => p.id !== patternId));
       setNotice({ type: "success", text: "Récurrence supprimée." });
+      onPatternsChanged?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erreur suppression.";
       setNotice({ type: "error", text: message });
@@ -148,6 +156,7 @@ export default function RecurringAvailabilityPanel({ coachId }: Props) {
       setBlockDate("");
       setBlockReason("");
       setNotice({ type: "success", text: "Jour bloqué. Les créneaux de ce jour sont masqués." });
+      onPatternsChanged?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erreur.";
       setNotice({ type: "error", text: message });
@@ -161,6 +170,7 @@ export default function RecurringAvailabilityPanel({ coachId }: Props) {
       await deleteCoachException(exceptionId);
       setExceptions((current) => current.filter((e) => e.id !== exceptionId));
       setNotice({ type: "success", text: "Blocage levé." });
+      onPatternsChanged?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erreur.";
       setNotice({ type: "error", text: message });
