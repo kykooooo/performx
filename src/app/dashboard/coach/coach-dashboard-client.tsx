@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
-import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/app-shell";
 import ConfirmModal from "@/components/confirm-modal";
 import ScrollReveal from "@/components/scroll-reveal";
-import StripeConnectPanel from "@/components/stripe-connect-panel";
 import RecurringAvailabilityPanel from "@/components/recurring-availability-panel";
 import { getCoachDashboardData, type CoachSessionPlayerInfo } from "@/lib/data/dashboards";
 import type { CoachDashboardCoachRecord, SessionRecord } from "@/lib/data/types";
@@ -38,8 +36,6 @@ import type { AvailabilitySlot, SessionFeedback } from "@/lib/types";
 const normalizeTime = (value: string) => (value.length >= 5 ? value.slice(0, 5) : value);
 
 export default function CoachDashboardPage() {
-  const searchParams = useSearchParams();
-  const stripeReturn = searchParams.get("stripe");
   const [coach, setCoach] = useState<CoachDashboardCoachRecord | null>(null);
   const [sessions, setSessions] = useState<SessionRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -376,26 +372,6 @@ export default function CoachDashboardPage() {
           </div>
         </div>
       </section>
-
-      {/* Panel Stripe Connect : affiché uniquement si la feature est activée
-          globalement (NEXT_PUBLIC_STRIPE_CONNECT_ENABLED=true). Pour la phase
-          de test initiale, on le masque : l'argent reste sur le compte
-          plateforme, les coachs n'ont pas d'onboarding Stripe à faire. */}
-      {!isDemo && process.env.NEXT_PUBLIC_STRIPE_CONNECT_ENABLED === "true" && (
-        <section className="mb-6">
-          {stripeReturn === "done" && (
-            <div className="mb-3 rounded-xl border border-[color:var(--px-success)]/30 bg-[color:var(--px-success)]/10 px-4 py-2 text-xs text-[color:var(--px-success)]">
-              Retour depuis Stripe — on vérifie le statut de ton compte...
-            </div>
-          )}
-          {stripeReturn === "refresh" && (
-            <div className="mb-3 rounded-xl border border-[color:var(--px-warning)]/30 bg-[color:var(--px-warning)]/10 px-4 py-2 text-xs text-[color:var(--px-warning)]">
-              Le lien d&apos;onboarding a expiré. Clique sur &quot;Activer mes paiements&quot; pour générer un nouveau lien.
-            </div>
-          )}
-          <StripeConnectPanel refetchOnMount={stripeReturn === "done"} />
-        </section>
-      )}
 
       <ScrollReveal>
         <section className="px-role-band mb-6 p-5">

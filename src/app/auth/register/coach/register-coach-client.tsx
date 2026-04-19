@@ -33,7 +33,6 @@ export default function RegisterCoachPage() {
   const [price, setPrice] = useState<number | "">("");
   const [bio, setBio] = useState("");
   const [selectedDiplomas, setSelectedDiplomas] = useState<string[]>([]);
-  const [diplomaFile, setDiplomaFile] = useState<File | null>(null);
   const [experienceYears, setExperienceYears] = useState<number | "">("");
   const [certifications, setCertifications] = useState<string[]>([]);
   const [password, setPassword] = useState("");
@@ -93,15 +92,10 @@ export default function RegisterCoachPage() {
   };
 
   const validateStep3 = (): boolean => {
-    const next: FieldErrors = {};
-    // Diplôme et justificatif sont optionnels à l'inscription.
-    // Le coach pourra les ajouter depuis son dashboard — un statut "non vérifié"
-    // apparaîtra sur son profil jusqu'à validation.
-    if (diplomaFile && diplomaFile.size > 10 * 1024 * 1024) {
-      next.diplomaFile = "Le fichier ne doit pas dépasser 10 Mo.";
-    }
-    setErrors(next);
-    return Object.keys(next).length === 0;
+    // Les diplômes sont optionnels et sans justificatif pour la phase de test.
+    // L'admin pourra demander les justificatifs plus tard via la messagerie.
+    setErrors({});
+    return true;
   };
 
   const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
@@ -111,20 +105,6 @@ export default function RegisterCoachPage() {
     if (!validateStep3()) return;
 
     setLoading(true);
-
-    // Upload diploma file if provided
-    let diplomaFileUrl: string | null = null;
-    if (diplomaFile) {
-      const fileExt = diplomaFile.name.split(".").pop();
-      const filePath = `diplomas/${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage
-        .from("documents")
-        .upload(filePath, diplomaFile);
-
-      if (!uploadError) {
-        diplomaFileUrl = filePath;
-      }
-    }
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -139,8 +119,6 @@ export default function RegisterCoachPage() {
           price_per_session: price === "" ? 0 : price,
           bio: sanitizeInput(bio),
           diplomas: selectedDiplomas.join(", "),
-          diploma_file: diplomaFileUrl,
-          diploma_verified: false,
           experience_years: experienceYears === "" ? null : experienceYears,
           certifications: certifications.join(", "),
         },
@@ -161,7 +139,7 @@ export default function RegisterCoachPage() {
 
     setNotice({
       type: "success",
-      text: `Compte coach créé ! Un email de confirmation a été envoyé à ${email}. Clique sur le lien pour activer ton compte. Tes diplômes seront vérifiés sous 48h.`,
+      text: `Compte coach créé ! Un email de confirmation a été envoyé à ${email}. Clique sur le lien pour activer ton compte.`,
     });
     setLoading(false);
   };
@@ -382,39 +360,10 @@ export default function RegisterCoachPage() {
               </div>
             </div>
 
-            <div>
-              <p className="mb-2 text-sm text-white/70">Justificatif (PDF ou image)</p>
-              <label
-                className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition ${
-                  errors.diplomaFile
-                    ? "border-[color:var(--px-danger)]/50 bg-[color:var(--px-danger)]/5"
-                    : diplomaFile
-                      ? "border-[color:var(--px-success)]/50 bg-[color:var(--px-success)]/5"
-                      : "border-white/15 bg-white/[0.02] hover:border-white/30"
-                }`}
-              >
-                <input
-                  type="file"
-                  className="hidden"
-                  accept=".pdf,.jpg,.jpeg,.png,.webp"
-                  onChange={(e) => {
-                    setDiplomaFile(e.target.files?.[0] ?? null);
-                    clearField("diplomaFile");
-                  }}
-                />
-                {diplomaFile ? (
-                  <>
-                    <span className="text-sm text-[color:var(--px-success)]">{diplomaFile.name}</span>
-                    <span className="text-[10px] text-white/70">Clique pour changer de fichier</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-sm text-white/70">Clique ou dépose ton fichier ici</span>
-                    <span className="text-[10px] text-white/30">PDF, JPG, PNG — max 10 Mo</span>
-                  </>
-                )}
-              </label>
-              <FieldError error={errors.diplomaFile} />
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-xs text-white/60">
+              Tu n&apos;as pas besoin d&apos;uploader de justificatif pour cette phase de test.
+              L&apos;équipe PerformX te contactera directement via la messagerie si des documents
+              sont demandés avant d&apos;activer ton profil public.
             </div>
 
             <Notice notice={notice} />
