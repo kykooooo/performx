@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { MapPinIcon, StarIcon, BoltIcon } from "./icons";
+import { ChatIcon, MapPinIcon, StarIcon, BoltIcon } from "./icons";
 import {
   getCoachAudienceLabel,
   getCoachBestForLabel,
@@ -13,6 +13,7 @@ import type { AvailabilitySlot } from "@/lib/types";
 type CoachCardProps = {
   reserveHref: string;
   profileHref: string;
+  messageHref?: string;
   avatarUrl?: string | null;
   name: string;
   speciality: string;
@@ -32,6 +33,7 @@ type CoachCardProps = {
 export default function CoachCard({
   reserveHref,
   profileHref,
+  messageHref,
   avatarUrl,
   name,
   speciality,
@@ -224,11 +226,25 @@ export default function CoachCard({
       </div>
 
       {/* Actions */}
-      <div className="grid gap-2 sm:grid-cols-2">
-        <Link href={profileHref} className="px-button-ghost text-center text-xs">
-          Voir profil
+      <div className="grid grid-cols-3 gap-2">
+        <Link
+          href={profileHref}
+          className="px-button-ghost flex items-center justify-center text-center text-xs"
+        >
+          Profil
         </Link>
-        <Link href={reserveHref} className="px-button text-center text-xs">
+        <Link
+          href={messageHref ?? profileHref}
+          className="px-button-ghost flex items-center justify-center gap-1 text-center text-xs"
+          aria-label={`Contacter ${name}`}
+        >
+          <ChatIcon className="h-3.5 w-3.5" />
+          Message
+        </Link>
+        <Link
+          href={reserveHref}
+          className="px-button flex items-center justify-center text-center text-xs"
+        >
           Réserver
         </Link>
       </div>

@@ -707,6 +707,7 @@ export default function CoachPage() {
                 <CoachCard
                   reserveHref={`/booking?coach=${coach.id}`}
                   profileHref={`/coach/${coach.id}`}
+                  messageHref={`/messages?coach=${coach.id}`}
                   avatarUrl={coachAvatarMap.get(coach.id) ?? coach.avatarUrl}
                   name={coach.name}
                   speciality={coach.speciality}
