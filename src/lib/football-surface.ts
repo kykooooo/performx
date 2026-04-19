@@ -143,3 +143,47 @@ export function getPositionZoneLabel(positionFamily: PositionFamily | null | und
       return "Terrain complet";
   }
 }
+
+/**
+ * Emoji d'ambiance selon la spécialité du coach. Utilisé pour habiller
+ * les cards quand aucune photo réelle n'est disponible.
+ */
+export function getSpecialityEmoji(speciality: string | null | undefined): string {
+  if (!speciality) return "⚽";
+  const normalized = normalizeSignal(speciality);
+  if (normalized.includes("gardien")) return "🧤";
+  if (normalized.includes("physique") || normalized.includes("prepa")) return "💪";
+  if (normalized.includes("endurance") || normalized.includes("cardio")) return "🏃";
+  if (normalized.includes("vision")) return "🎯";
+  if (normalized.includes("frappe") || normalized.includes("tir")) return "⚡";
+  if (normalized.includes("dribble")) return "🔥";
+  if (normalized.includes("defens")) return "🛡️";
+  if (normalized.includes("technique")) return "⚽";
+  if (normalized.includes("mental") || normalized.includes("confiance")) return "🧠";
+  if (normalized.includes("video") || normalized.includes("vidéo")) return "🎥";
+  if (normalized.includes("jeu") && normalized.includes("pied")) return "🦶";
+  return "⚽";
+}
+
+/**
+ * Palette de gradients accent-compatibles, déterministe à partir d'une clé
+ * (id coach par exemple) pour que chaque card ait une teinte unique.
+ */
+const COACH_AVATAR_GRADIENTS: readonly string[] = [
+  "from-[#ff6a00] via-[#ff8a33] to-[#b34600]",
+  "from-[#ff8a33] via-[#ff6a00] to-[#3d1f00]",
+  "from-[#ffb347] via-[#ff6a00] to-[#5c2a00]",
+  "from-[#ff5722] via-[#ff8a33] to-[#2a1400]",
+  "from-[#ff6a00] via-[#ff4500] to-[#1a0a00]",
+];
+
+export function getCoachAccentGradient(seed: string | null | undefined): string {
+  if (!seed) return COACH_AVATAR_GRADIENTS[0];
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash << 5) - hash + seed.charCodeAt(i);
+    hash |= 0;
+  }
+  const index = Math.abs(hash) % COACH_AVATAR_GRADIENTS.length;
+  return COACH_AVATAR_GRADIENTS[index];
+}

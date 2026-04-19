@@ -1,12 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { MapPinIcon, StarIcon, BoltIcon } from "./icons";
-import { getCoachAvatarUrl } from "@/lib/coach-avatars";
 import {
+  getCoachAccentGradient,
   getCoachAudienceLabel,
   getCoachBestForLabel,
   getCoachStyleLabel,
   getNextAvailabilityLabel,
+  getSpecialityEmoji,
 } from "@/lib/football-surface";
 import type { AvailabilitySlot } from "@/lib/types";
 
@@ -53,7 +54,9 @@ export default function CoachCard({
     .slice(0, 2)
     .join("")
     .toUpperCase();
-  const resolvedAvatar = getCoachAvatarUrl(avatarUrl, `${name}-${speciality}`);
+  const hasRealPhoto = Boolean(avatarUrl && avatarUrl.trim().length > 0);
+  const accentGradient = getCoachAccentGradient(`${name}-${speciality}`);
+  const specialityEmoji = getSpecialityEmoji(speciality);
   const styleLabel = getCoachStyleLabel(speciality, pedagogy);
   const audienceLabel = getCoachAudienceLabel(sessionFormats, experienceYears);
   const bestForLabel = getCoachBestForLabel(speciality, focusAreas);
@@ -71,28 +74,90 @@ export default function CoachCard({
         }}
         aria-hidden="true"
       />
-      {/* Header banner */}
-      <div className="relative h-36 overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent transition duration-500 group-hover:border-[color:var(--px-accent)]/30">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,106,0,0.25),transparent_55%)] transition duration-500 group-hover:bg-[radial-gradient(circle_at_20%_20%,rgba(255,106,0,0.38),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,rgba(255,138,0,0.1),transparent_50%)]" />
+      {/* Header banner : photo si fournie, sinon gradient accent + emoji géant */}
+      <div className="relative h-36 overflow-hidden rounded-xl border border-white/10 transition duration-500 group-hover:border-[color:var(--px-accent)]/30">
+        {hasRealPhoto ? (
+          <>
+            <Image
+              src={avatarUrl as string}
+              alt={name}
+              fill
+              sizes="(min-width: 1280px) 22vw, (min-width: 768px) 45vw, 90vw"
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,106,0,0.25),transparent_55%)]" />
+          </>
+        ) : (
+          <>
+            {/* Fond gradient accent déterministe par coach */}
+            <div
+              className={`absolute inset-0 bg-gradient-to-br ${accentGradient}`}
+              aria-hidden="true"
+            />
+            {/* Tramage diagonal subtil pour la texture */}
+            <div
+              className="absolute inset-0 opacity-25 mix-blend-overlay"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(45deg, rgba(255,255,255,0.12) 0 1px, transparent 1px 9px)",
+              }}
+              aria-hidden="true"
+            />
+            {/* Motif terrain : rond central + ligne médiane */}
+            <svg
+              viewBox="0 0 200 120"
+              preserveAspectRatio="none"
+              className="absolute inset-0 h-full w-full opacity-20"
+              aria-hidden="true"
+            >
+              <circle cx="100" cy="60" r="22" fill="none" stroke="white" strokeWidth="1.2" />
+              <line x1="100" y1="0" x2="100" y2="120" stroke="white" strokeWidth="1.2" />
+            </svg>
+            {/* Emoji spécialité géant en fond */}
+            <span
+              className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-5 text-[90px] leading-none opacity-30 drop-shadow-[0_4px_16px_rgba(0,0,0,0.45)] transition duration-500 group-hover:scale-110 group-hover:opacity-40"
+              aria-hidden="true"
+            >
+              {specialityEmoji}
+            </span>
+            {/* Overlay sombre en bas pour lisibilité des tags */}
+            <div
+              className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent"
+              aria-hidden="true"
+            />
+          </>
+        )}
 
-        {/* Avatar + info */}
+        {/* Avatar + nom (reste lisible dans les 2 modes) */}
         <div className="absolute left-4 top-4 flex items-center gap-3">
-          <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-white/20 bg-black/60 text-sm font-semibold text-white shadow-lg transition duration-500 group-hover:scale-105 group-hover:border-[color:var(--px-accent)]/60">
-            {resolvedAvatar ? (
-              <Image src={resolvedAvatar} alt={name} fill sizes="48px" className="object-cover" />
+          <div
+            className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 text-sm font-bold text-white shadow-[0_8px_24px_-6px_rgba(0,0,0,0.6)] transition duration-500 group-hover:scale-105 group-hover:border-[color:var(--px-accent)]/70 ${
+              hasRealPhoto
+                ? "border-white/30 bg-black/60"
+                : "border-white/40 bg-gradient-to-br from-black/70 to-black/30"
+            }`}
+          >
+            {hasRealPhoto ? (
+              <Image
+                src={avatarUrl as string}
+                alt={name}
+                fill
+                sizes="48px"
+                className="object-cover"
+              />
             ) : (
-              initials
+              <span className="relative tracking-wider">{initials}</span>
             )}
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">{name}</p>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-white/70">{speciality}</p>
+            <p className="text-sm font-semibold text-white drop-shadow">{name}</p>
+            <p className="text-[11px] uppercase tracking-[0.2em] text-white/80">{speciality}</p>
           </div>
         </div>
 
         {/* Speciality tag */}
-        <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full border border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[color:var(--px-accent)]">
+        <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full border border-[color:var(--px-accent)]/40 bg-black/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[color:var(--px-accent)] backdrop-blur-sm">
           <BoltIcon className="h-3 w-3" />
           Coach
         </span>
