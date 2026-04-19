@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/app-shell";
+import { LoadingState } from "@/components/feedback-state";
 import ScrollReveal from "@/components/scroll-reveal";
+import { useRoleGuard } from "@/lib/use-role-guard";
 import {
   ArrowRightIcon,
   BoltIcon,
@@ -37,6 +39,7 @@ const getAge = (birthDate: string | null) => {
 };
 
 export default function ParentDashboardPage() {
+  const { status: guardStatus } = useRoleGuard("parent");
   const [coachCount, setCoachCount] = useState(0);
   const [children, setChildren] = useState<ParentChildRecord[]>([]);
   const [activeChildId, setActiveChildId] = useState<string | null>(null);
@@ -198,6 +201,14 @@ export default function ParentDashboardPage() {
       setInviteNotice({ type: "error", text: "Copie impossible. Sélectionne le lien manuellement." });
     }
   };
+
+  if (guardStatus !== "ok") {
+    return (
+      <AppShell active="/dashboard" hideTitle>
+        <LoadingState title="Chargement" description="Vérification de ton espace parent..." />
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell active="/dashboard" hideTitle>

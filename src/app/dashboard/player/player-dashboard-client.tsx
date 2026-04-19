@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/app-shell";
+import { LoadingState } from "@/components/feedback-state";
 import ScrollReveal from "@/components/scroll-reveal";
 import { getPlayerDashboardData } from "@/lib/data/dashboards";
+import { useRoleGuard } from "@/lib/use-role-guard";
 import type {
   CoachRecord,
   PlayerSnapshotRecord,
@@ -25,6 +27,7 @@ import { ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, Pola
 import type { PlayerProgressionPoint, PlayerRadarPoint } from "@/lib/types";
 
 export default function PlayerDashboardPage() {
+  const { status: guardStatus } = useRoleGuard("player");
   const [upcoming, setUpcoming] = useState<SessionRecord[]>([]);
   const [completed, setCompleted] = useState<SessionRecord[]>([]);
   const [coaches, setCoaches] = useState<CoachRecord[]>([]);
@@ -91,6 +94,14 @@ export default function PlayerDashboardPage() {
       color: "text-[color:var(--px-warning)]",
     },
   ];
+
+  if (guardStatus !== "ok") {
+    return (
+      <AppShell active="/dashboard" hideTitle>
+        <LoadingState title="Chargement" description="Vérification de ton espace personnel..." />
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell active="/dashboard" hideTitle>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import AppShell from "@/components/app-shell";
+import { LoadingState } from "@/components/feedback-state";
 import { Notice, type NoticeData } from "@/components/notice";
 import PlayerProfileFormSections from "@/components/player-profile-form-sections";
 import ScrollReveal from "@/components/scroll-reveal";
@@ -17,6 +18,7 @@ import {
   type PlayerProfileValues,
 } from "@/lib/player-profile";
 import { supabase } from "@/lib/supabase";
+import { useRoleGuard } from "@/lib/use-role-guard";
 
 type ProfileRow = {
   first_name: string | null;
@@ -44,6 +46,7 @@ type LinkCodeRow = {
 };
 
 export default function PlayerProfileEditPage() {
+  const { status: guardStatus } = useRoleGuard("player");
   const [userId, setUserId] = useState<string | null>(null);
   const [values, setValues] = useState<PlayerProfileValues>(createEmptyPlayerProfileValues());
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -249,7 +252,13 @@ export default function PlayerProfileEditPage() {
     setGeneratingLinkCode(false);
 
     if (error) {
-      setNotice({ type: "error", text: error.message });
+      const raw = error.message.toUpperCase();
+      const human = raw.includes("PLAYER_ONLY")
+        ? "Seuls les comptes joueur peuvent générer ce code."
+        : raw.includes("AUTH_REQUIRED")
+          ? "Connecte-toi pour générer un code."
+          : error.message;
+      setNotice({ type: "error", text: human });
       return;
     }
 
@@ -258,6 +267,14 @@ export default function PlayerProfileEditPage() {
     setParentLinkExpiresAt(payload?.expires_at ?? null);
     setNotice({ type: "success", text: "Code parent généré avec succès." });
   };
+
+  if (guardStatus !== "ok") {
+    return (
+      <AppShell active="/dashboard" hideTitle>
+        <LoadingState title="Chargement" description="Vérification de ton espace personnel..." />
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell active="/dashboard" hideTitle>

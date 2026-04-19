@@ -4,7 +4,9 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import AppShell from "@/components/app-shell";
+import { LoadingState } from "@/components/feedback-state";
 import ScrollReveal from "@/components/scroll-reveal";
+import { useRoleGuard } from "@/lib/use-role-guard";
 import {
   WhistleIcon,
   ArrowRightIcon,
@@ -35,6 +37,7 @@ const INTERVENTION_LOCATIONS = [
 ] as const;
 
 export default function CoachProfileEditPage() {
+  const { status: guardStatus } = useRoleGuard("coach");
   const [coachId, setCoachId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -259,6 +262,14 @@ export default function CoachProfileEditPage() {
     setNotice({ type: "success", text: "Photo mise à jour." });
     setUploading(false);
   };
+
+  if (guardStatus !== "ok") {
+    return (
+      <AppShell active="/dashboard" hideTitle>
+        <LoadingState title="Chargement" description="Vérification de ton espace coach..." />
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell active="/dashboard" hideTitle>

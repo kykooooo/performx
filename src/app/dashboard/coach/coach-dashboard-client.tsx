@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import AppShell from "@/components/app-shell";
 import ConfirmModal from "@/components/confirm-modal";
+import { LoadingState } from "@/components/feedback-state";
 import ScrollReveal from "@/components/scroll-reveal";
 import RecurringAvailabilityPanel from "@/components/recurring-availability-panel";
+import { useRoleGuard } from "@/lib/use-role-guard";
 import {
   expandCoachAvailability,
   type ExpandedSlot,
@@ -40,6 +42,7 @@ import type { AvailabilitySlot, SessionFeedback } from "@/lib/types";
 const normalizeTime = (value: string) => (value.length >= 5 ? value.slice(0, 5) : value);
 
 export default function CoachDashboardPage() {
+  const { status: guardStatus } = useRoleGuard("coach");
   const [coach, setCoach] = useState<CoachDashboardCoachRecord | null>(null);
   const [sessions, setSessions] = useState<SessionRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -381,6 +384,14 @@ export default function CoachDashboardPage() {
     { id: "section-actions", label: "Actions" },
     { id: "section-calendrier", label: "Calendrier" },
   ];
+
+  if (guardStatus !== "ok") {
+    return (
+      <AppShell active="/dashboard" hideTitle>
+        <LoadingState title="Chargement" description="Vérification de ton espace coach..." />
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell active="/dashboard" hideTitle>
