@@ -72,6 +72,9 @@ export async function syncProfile(user: User) {
           (meta.session_formats as string[] | string | undefined) ?? [],
         ),
         pedagogy: (meta.pedagogy as string) || "",
+        diploma_file: (meta.diploma_file as string) || null,
+        diploma_verified:
+          typeof meta.diploma_verified === "boolean" ? meta.diploma_verified : false,
       },
       { onConflict: "user_id" },
     );

@@ -16,6 +16,7 @@ import {
   checkIsAdmin,
   getAdminDashboardStats,
   getCoachesForReview,
+  getDiplomaSignedUrl,
   verifyCoach,
   type AdminCoachRecord,
   type AdminStats,
@@ -65,13 +66,19 @@ function CoachCard({
   coach,
   onApprove,
   onReject,
+  onViewDiploma,
   busy,
+  diplomaBusy,
 }: {
   coach: AdminCoachRecord;
   onApprove: () => void;
   onReject: () => void;
+  onViewDiploma: () => void;
   busy: boolean;
+  diplomaBusy: boolean;
 }) {
+  const hasDiplomaFile = Boolean(coach.diplomaFile && coach.diplomaFile.trim().length > 0);
+
   return (
     <div className="px-card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-4">
@@ -80,12 +87,21 @@ function CoachCard({
           <WhistleIcon className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <p className="truncate text-sm font-semibold text-white">{coach.name}</p>
             {coach.verified && (
               <span className="px-badge flex items-center gap-1 text-[10px]">
                 <CheckCircleIcon className="h-3 w-3" />
-                Vérifie
+                Vérifié
+              </span>
+            )}
+            {hasDiplomaFile ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/10 px-2 py-0.5 text-[10px] font-semibold text-[color:var(--px-accent)]">
+                📄 Justificatif fourni
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-white/50">
+                Aucun justificatif
               </span>
             )}
           </div>
@@ -106,7 +122,18 @@ function CoachCard({
       </div>
 
       {/* Actions */}
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
+        {hasDiplomaFile && (
+          <button
+            className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-white transition hover:border-[color:var(--px-accent)]/40 hover:bg-white/10 disabled:opacity-50"
+            onClick={onViewDiploma}
+            disabled={diplomaBusy}
+            type="button"
+            aria-label={`Ouvrir le justificatif de ${coach.name}`}
+          >
+            {diplomaBusy ? "Chargement..." : "Voir justificatif"}
+          </button>
+        )}
         {!coach.verified ? (
           <>
             <button
@@ -133,7 +160,7 @@ function CoachCard({
             disabled={busy}
             type="button"
           >
-            Revoquer
+            Révoquer
           </button>
         )}
       </div>
@@ -150,6 +177,7 @@ export default function AdminClient() {
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<NoticeData>(null);
   const [busy, setBusy] = useState(false);
+  const [diplomaBusyId, setDiplomaBusyId] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<{
     title: string;
     description: string;
@@ -186,6 +214,31 @@ export default function AdminClient() {
   useEffect(() => {
     if (isAdmin) fetchData();
   }, [isAdmin, fetchData]);
+
+  const handleViewDiploma = useCallback(
+    async (coach: AdminCoachRecord) => {
+      if (!coach.diplomaFile) return;
+      setDiplomaBusyId(coach.id);
+      try {
+        const signedUrl = await getDiplomaSignedUrl(coach.diplomaFile);
+        if (!signedUrl) {
+          setNotice({
+            type: "error",
+            text: "Impossible d'ouvrir le fichier. Vérifie que le bucket Storage est bien accessible.",
+          });
+          return;
+        }
+        if (typeof window !== "undefined") {
+          window.open(signedUrl, "_blank", "noopener,noreferrer");
+        }
+      } catch {
+        setNotice({ type: "error", text: "Erreur à l'ouverture du fichier." });
+      } finally {
+        setDiplomaBusyId(null);
+      }
+    },
+    [],
+  );
 
   const handleVerify = useCallback(
     (coachId: string, verified: boolean) => {
@@ -314,7 +367,9 @@ export default function AdminClient() {
                         coach={coach}
                         onApprove={() => handleVerify(coach.id, true)}
                         onReject={() => handleVerify(coach.id, false)}
+                        onViewDiploma={() => handleViewDiploma(coach)}
                         busy={busy}
+                        diplomaBusy={diplomaBusyId === coach.id}
                       />
                     ))}
                   </div>
@@ -334,7 +389,9 @@ export default function AdminClient() {
                         coach={coach}
                         onApprove={() => handleVerify(coach.id, true)}
                         onReject={() => handleVerify(coach.id, false)}
+                        onViewDiploma={() => handleViewDiploma(coach)}
                         busy={busy}
+                        diplomaBusy={diplomaBusyId === coach.id}
                       />
                     ))}
                   </div>

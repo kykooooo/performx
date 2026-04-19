@@ -14,6 +14,8 @@ export type AdminCoachRecord = {
   verified: boolean;
   createdAt: string;
   avatarUrl: string | null;
+  diplomaFile: string | null;
+  diplomaVerified: boolean;
 };
 
 export type AdminStats = {
@@ -69,7 +71,9 @@ export async function getAdminDashboardStats(): Promise<AdminStats> {
 export async function getCoachesForReview(): Promise<AdminCoachRecord[]> {
   const { data, error } = await supabase
     .from("coaches")
-    .select("id, user_id, name, speciality, diplomas, verified, created_at, avatar_url")
+    .select(
+      "id, user_id, name, speciality, diplomas, verified, created_at, avatar_url, diploma_file, diploma_verified",
+    )
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -87,7 +91,24 @@ export async function getCoachesForReview(): Promise<AdminCoachRecord[]> {
     verified: row.verified ?? false,
     createdAt: row.created_at,
     avatarUrl: row.avatar_url ?? null,
+    diplomaFile: row.diploma_file ?? null,
+    diplomaVerified: row.diploma_verified ?? false,
   }));
+}
+
+/**
+ * Génère une URL signée (60 min) vers le fichier diplôme stocké dans le
+ * bucket privé Supabase Storage "documents". À n'appeler que côté admin :
+ * le lien expose le fichier à toute personne qui l'a en main pendant la
+ * durée de validité.
+ */
+export async function getDiplomaSignedUrl(path: string): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from("documents")
+    .createSignedUrl(path, 60 * 60);
+
+  if (error || !data?.signedUrl) return null;
+  return data.signedUrl;
 }
 
 /**
