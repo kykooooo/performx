@@ -24,16 +24,26 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold text-white">Une erreur est survenue</h2>
           <p className="text-sm text-white/70">
-            L&apos;incident a ete remonte automatiquement. Tu peux réessayer ou retourner a
+            L&apos;incident a été remonté automatiquement. Tu peux réessayer ou retourner à
             l&apos;accueil.
           </p>
+          {error.digest && (
+            <p className="text-[11px] font-mono text-white/40">
+              Code : {error.digest}
+            </p>
+          )}
+          {process.env.NODE_ENV !== "production" && error.message && (
+            <p className="mt-2 rounded-lg bg-black/60 p-3 text-left text-[11px] font-mono text-[color:var(--px-danger)]/90">
+              {error.message}
+            </p>
+          )}
         </div>
         <div className="grid w-full gap-3 sm:grid-cols-2">
           <button type="button" onClick={reset} className="px-button">
-            Reessayer
+            Réessayer
           </button>
           <Link href="/" className="px-button-ghost text-center">
-            Retour a l&apos;accueil
+            Retour à l&apos;accueil
           </Link>
         </div>
       </section>
