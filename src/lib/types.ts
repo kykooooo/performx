@@ -84,8 +84,13 @@ export type SessionFeedback = {
     engagement?: number;
     progression?: number;
   };
-  summary?: string;
-  next_focus?: string;
+  /** Ratings par axe dynamique (selon la spécialité du coach). Clé = slug de
+   * l'axe (ex: "vitesse", "prise_de_balle"). Permet de stocker des notes
+   * au-delà des 5 axes standards ci-dessus. */
+  speciality_ratings?: Record<string, number>;
+  summary?: string; // Point fort du joueur
+  next_focus?: string; // Axe d'amélioration
+  advice?: string; // Conseil concret
   load_recommendation?: LoadRecommendation;
   comment?: string;
 };

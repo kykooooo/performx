@@ -269,7 +269,7 @@ export default function ParentDashboardPage() {
                     </p>
                   </div>
                   <div className="px-role-stat min-w-[180px]">
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Prochain focus</p>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Axe d&apos;amélioration</p>
                     <p className="mt-2 text-sm text-white">{overview.nextFocus}</p>
                   </div>
                   <div className="px-role-stat min-w-[180px]">
@@ -677,7 +677,7 @@ export default function ParentDashboardPage() {
                       <p className="mt-2 text-lg text-white">
                         {LOAD_RECOMMENDATION_LABELS[overview.lastLoadRecommendation]}
                       </p>
-                      <p className="mt-4 text-xs uppercase tracking-[0.2em] text-white/50">Prochain focus</p>
+                      <p className="mt-4 text-xs uppercase tracking-[0.2em] text-white/50">Axe d&apos;amélioration</p>
                       <p className="mt-2 text-sm leading-relaxed text-white/70">{overview.nextFocus}</p>
                     </div>
                   </div>

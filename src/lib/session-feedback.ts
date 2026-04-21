@@ -20,8 +20,10 @@ export function createEmptyFeedbackDraft(): SessionFeedback {
       intensite: DEFAULT_RATING,
       mental: DEFAULT_RATING,
     },
+    speciality_ratings: {},
     summary: "",
     next_focus: "",
+    advice: "",
     load_recommendation: "normal",
   };
 }
@@ -77,6 +79,8 @@ export function getLoadRecommendationTone(load: LoadRecommendation): string {
       return "text-[color:var(--px-danger)]";
     case "lighten":
       return "text-[color:var(--px-warning)]";
+    case "increase":
+      return "text-[color:var(--px-accent)]";
     default:
       return "text-[color:var(--px-success)]";
   }

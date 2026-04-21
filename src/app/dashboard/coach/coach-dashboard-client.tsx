@@ -708,7 +708,7 @@ export default function CoachDashboardPage() {
                             )}
                             {normalizeSessionFeedback(session.feedback)?.next_focus && (
                               <p className="text-[11px] text-white/60">
-                                Prochain focus: {normalizeSessionFeedback(session.feedback)?.next_focus}
+                                Axe d&apos;amélioration : {normalizeSessionFeedback(session.feedback)?.next_focus}
                               </p>
                             )}
                             <button
@@ -748,37 +748,67 @@ export default function CoachDashboardPage() {
                                 </div>
                               </div>
                             ))}
-                            <textarea
-                              className="px-input w-full text-sm"
-                              rows={2}
-                              placeholder="Synthese pour le joueur..."
-                              value={feedbackDraft.summary ?? ""}
-                              onChange={(e) =>
-                                setFeedbackDraft((prev) => ({ ...prev, summary: e.target.value }))
-                              }
-                            />
-                            <input
-                              className="px-input"
-                              placeholder="Prochain focus"
-                              value={feedbackDraft.next_focus ?? ""}
-                              onChange={(e) =>
-                                setFeedbackDraft((prev) => ({ ...prev, next_focus: e.target.value }))
-                              }
-                            />
-                            <select
-                              className="px-select"
-                              value={feedbackDraft.load_recommendation ?? "normal"}
-                              onChange={(e) =>
-                                setFeedbackDraft((prev) => ({
-                                  ...prev,
-                                  load_recommendation: e.target.value as SessionFeedback["load_recommendation"],
-                                }))
-                              }
-                            >
-                              <option value="normal">Charge normale</option>
-                              <option value="lighten">Alleger la charge</option>
-                              <option value="recover">Recuperation</option>
-                            </select>
+                            <div>
+                              <label className="mb-1 block text-[11px] uppercase tracking-[0.2em] text-white/60">
+                                Point fort du joueur
+                              </label>
+                              <textarea
+                                className="px-input w-full text-sm"
+                                rows={2}
+                                placeholder="Ce qu'il a bien fait cette séance..."
+                                value={feedbackDraft.summary ?? ""}
+                                onChange={(e) =>
+                                  setFeedbackDraft((prev) => ({ ...prev, summary: e.target.value }))
+                                }
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-[11px] uppercase tracking-[0.2em] text-white/60">
+                                Axe d&apos;amélioration
+                              </label>
+                              <input
+                                className="px-input"
+                                placeholder="Ce sur quoi on travaille la prochaine fois..."
+                                value={feedbackDraft.next_focus ?? ""}
+                                onChange={(e) =>
+                                  setFeedbackDraft((prev) => ({ ...prev, next_focus: e.target.value }))
+                                }
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-[11px] uppercase tracking-[0.2em] text-white/60">
+                                Conseil concret
+                              </label>
+                              <textarea
+                                className="px-input w-full text-sm"
+                                rows={2}
+                                placeholder="Un exercice / une habitude à appliquer d'ici la prochaine séance..."
+                                value={feedbackDraft.advice ?? ""}
+                                onChange={(e) =>
+                                  setFeedbackDraft((prev) => ({ ...prev, advice: e.target.value }))
+                                }
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-[11px] uppercase tracking-[0.2em] text-white/60">
+                                Charge recommandée
+                              </label>
+                              <select
+                                className="px-select"
+                                value={feedbackDraft.load_recommendation ?? "normal"}
+                                onChange={(e) =>
+                                  setFeedbackDraft((prev) => ({
+                                    ...prev,
+                                    load_recommendation: e.target.value as SessionFeedback["load_recommendation"],
+                                  }))
+                                }
+                              >
+                                <option value="normal">Charge normale</option>
+                                <option value="increase">Augmenter la charge</option>
+                                <option value="lighten">Alléger la charge</option>
+                                <option value="recover">Récupération</option>
+                              </select>
+                            </div>
                             <button
                               type="button"
                               className="px-button text-xs"

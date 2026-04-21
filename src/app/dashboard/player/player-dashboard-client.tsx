@@ -196,7 +196,7 @@ export default function PlayerDashboardPage() {
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="px-role-stat min-w-[180px]">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Prochain focus</p>
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">Axe d&apos;amélioration</p>
                   <p className="mt-2 text-sm text-white">
                     {latestFeedback?.next_focus || "Séance complétée pour débloquer le suivi"}
                   </p>
@@ -451,7 +451,7 @@ export default function PlayerDashboardPage() {
 
                       {latestFeedback.summary && (
                         <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                          <p className="text-xs uppercase tracking-[0.2em] text-white/50">Synthèse</p>
+                          <p className="text-xs uppercase tracking-[0.2em] text-white/50">Point fort</p>
                           <p className="mt-2 text-sm leading-relaxed text-white/80">
                             {latestFeedback.summary}
                           </p>
@@ -461,7 +461,7 @@ export default function PlayerDashboardPage() {
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div className="rounded-xl border border-[color:var(--px-accent)]/25 bg-[color:var(--px-accent)]/8 p-4">
                           <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--px-accent)]">
-                            Prochain focus
+                            Axe d&apos;amélioration
                           </p>
                           <p className="mt-2 text-sm leading-relaxed text-white/90">
                             {latestFeedback.next_focus || "En cours de structuration."}
@@ -478,6 +478,17 @@ export default function PlayerDashboardPage() {
                           </p>
                         </div>
                       </div>
+
+                      {latestFeedback.advice && (
+                        <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-4">
+                          <p className="text-xs uppercase tracking-[0.2em] text-white/50">
+                            Conseil concret du coach
+                          </p>
+                          <p className="mt-2 text-sm leading-relaxed text-white/80">
+                            {latestFeedback.advice}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="mt-4 rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
