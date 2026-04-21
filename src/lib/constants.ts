@@ -9,19 +9,12 @@ export const PLAYER_POSITIONS = FOOTBALL_PLAYER_POSITIONS;
 
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://performx.fr";
 
-// ── Spécialités coach ──
-export const COACH_SPECIALITIES = [
-  "Technique individuelle",
-  "Préparation physique",
-  "Tactique & stratégie",
-  "Gardien de but",
-  "Attaque & finition",
-  "Défense",
-  "Développement des jeunes",
-  "Préparation mentale",
-  "Analyse vidéo",
-  "Remise en forme",
-] as const;
+// NOTE: COACH_SPECIALITIES était défini ici avec 10 libellés d'origine
+// ("Technique individuelle", "Préparation physique", …). Il a été
+// remplacé par la nouvelle liste officielle exportée depuis
+// `@/lib/football.ts` (Spé gardien, Spé défenseur, Coach mental, …).
+// Ne pas réintroduire ici : toute importation doit désormais pointer
+// vers `@/lib/football`.
 
 // ── Postes joueur ──
 export const PLAYER_POSITIONS_LEGACY = [

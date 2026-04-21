@@ -189,7 +189,15 @@ export default function PlayerInfoClient() {
     }
 
     setNotice({ type: "success", text: "Profil joueur complète. Redirection en cours..." });
-    window.setTimeout(() => router.push("/dashboard/player"), 700);
+    // Hard navigation (Safari iOS) : cookies auth à propager avant le
+    // middleware SSR. Cohérent avec login/registers.
+    window.setTimeout(() => {
+      if (typeof window !== "undefined") {
+        window.location.assign("/dashboard/player");
+      } else {
+        router.push("/dashboard/player");
+      }
+    }, 700);
   };
 
   return (

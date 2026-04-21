@@ -69,8 +69,14 @@ export default function ResetPasswordClient() {
     }
 
     setSuccess(true);
+    // Hard navigation (Safari iOS) : cookies auth à propager avant le
+    // middleware SSR, sinon boucle /auth/login.
     setTimeout(() => {
-      router.push("/dashboard");
+      if (typeof window !== "undefined") {
+        window.location.assign("/dashboard");
+      } else {
+        router.push("/dashboard");
+      }
     }, 2000);
   };
 

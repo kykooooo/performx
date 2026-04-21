@@ -102,8 +102,14 @@ export default function VerifyClient() {
     }
 
     setSuccess(true);
+    // Hard navigation (Safari iOS) : cookies auth à propager avant le
+    // middleware SSR. router.push partait parfois avant la propagation.
     setTimeout(() => {
-      router.push("/dashboard");
+      if (typeof window !== "undefined") {
+        window.location.assign("/dashboard");
+      } else {
+        router.push("/dashboard");
+      }
     }, 1500);
   };
 
