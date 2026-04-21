@@ -133,7 +133,15 @@ export default function RegisterCoachPage() {
 
     if (data.user && data.session) {
       syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
-      router.push(safeRedirect ?? "/dashboard");
+      // Hard reload : les cookies auth tout juste posés doivent être
+      // propagés au middleware avant le check d'auth du /dashboard.
+      // Sur Safari iOS, router.push() partait avant la propagation.
+      const target = safeRedirect ?? "/dashboard";
+      if (typeof window !== "undefined") {
+        window.location.assign(target);
+      } else {
+        router.push(target);
+      }
       return;
     }
 

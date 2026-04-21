@@ -125,6 +125,16 @@ export default function RegisterPlayerPage() {
       return;
     }
 
+    // Helper Safari-safe : hard reload pour garantir la propagation des
+    // cookies auth avant le check du middleware sur la route protégée.
+    const goTo = (href: string) => {
+      if (typeof window !== "undefined") {
+        window.location.assign(href);
+      } else {
+        router.push(href);
+      }
+    };
+
     if (data.user && data.session) {
       syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
 
@@ -134,14 +144,14 @@ export default function RegisterPlayerPage() {
         });
         if (claimError) {
           console.warn("[PerformX] claim invite failed", claimError.message);
-          router.push(`/auth/invite/${safeInvite}`);
+          goTo(`/auth/invite/${safeInvite}`);
           return;
         }
-        router.push("/dashboard/player?invite=ok");
+        goTo("/dashboard/player?invite=ok");
         return;
       }
 
-      router.push(safeRedirect ?? "/dashboard");
+      goTo(safeRedirect ?? "/dashboard");
       return;
     }
 

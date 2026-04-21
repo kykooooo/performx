@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import AppShell from "@/components/app-shell";
+import DeleteAccountButton from "@/components/delete-account-button";
 import { LoadingState } from "@/components/feedback-state";
 import ScrollReveal from "@/components/scroll-reveal";
 import { useRoleGuard } from "@/lib/use-role-guard";
@@ -715,6 +716,11 @@ export default function CoachProfileEditPage() {
                     </div>
                   )}
                 </div>
+              </ScrollReveal>
+
+              {/* Zone danger */}
+              <ScrollReveal>
+                <DeleteAccountButton />
               </ScrollReveal>
             </div>
 

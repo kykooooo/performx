@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import AppShell from "@/components/app-shell";
+import DeleteAccountButton from "@/components/delete-account-button";
 import { LoadingState } from "@/components/feedback-state";
 import { Notice, type NoticeData } from "@/components/notice";
 import PlayerProfileFormSections from "@/components/player-profile-form-sections";
@@ -438,6 +439,11 @@ export default function PlayerProfileEditPage() {
                   </button>
                   <Notice notice={notice} />
                 </div>
+              </ScrollReveal>
+
+              {/* Zone danger */}
+              <ScrollReveal>
+                <DeleteAccountButton />
               </ScrollReveal>
             </div>
 

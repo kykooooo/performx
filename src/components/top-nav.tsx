@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Logo from "./logo";
 import NotificationBell from "./notification-bell";
@@ -39,6 +39,7 @@ function UnreadBadge({ count }: { count: number }) {
 
 export default function TopNav({ active }: { active?: string }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
@@ -89,6 +90,7 @@ export default function TopNav({ active }: { active?: string }) {
   }, [fetchUnread, fetchUserRole]);
 
   // Refresh unread count when new messages arrive via Realtime
+  // ET quand un thread est marqué comme lu (UPDATE de conversation_participants.last_read_at)
   useEffect(() => {
     if (!loggedIn || !isSupabaseConfigured) return;
     const channel = supabase
@@ -96,9 +98,21 @@ export default function TopNav({ active }: { active?: string }) {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
         fetchUnread();
       })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "conversation_participants" }, () => {
+        fetchUnread();
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [loggedIn, fetchUnread]);
+
+  // Refresh unread count à chaque changement de route : après avoir lu un
+  // thread dans /messages puis navigué vers une autre page, on re-syncro
+  // le badge avec la valeur DB à jour (cas où Realtime a raté l'event,
+  // ou si le user arrive de l'extérieur).
+  useEffect(() => {
+    if (!loggedIn) return;
+    fetchUnread();
+  }, [pathname, loggedIn, fetchUnread]);
 
   const navItems: NavItem[] = useMemo(() => {
     const base: NavItem[] = [

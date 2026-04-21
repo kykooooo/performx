@@ -52,17 +52,27 @@ export default function LoginPage() {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setNotice({ type: "error", text: error.message });
-    } else {
-      if (data.user) {
-        syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
-      }
-      setNotice({ type: "success", text: "Connexion réussie." });
-      // Redirect to the page the user was trying to access, or let AuthListener handle default
-      if (redirectTo && redirectTo.startsWith("/")) {
-        router.replace(redirectTo);
-      }
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    if (data.user) {
+      syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
+    }
+    setNotice({ type: "success", text: "Connexion réussie." });
+
+    // IMPORTANT Safari iOS : on fait un hard navigation (window.location)
+    // plutôt que router.replace. Sinon les cookies auth tout juste posés
+    // ne sont pas toujours propagés à temps au middleware SSR et l'user
+    // est renvoyé vers /auth/login en boucle. Le hard reload garantit
+    // que la requête suivante part avec les cookies.
+    const target =
+      redirectTo && redirectTo.startsWith("/") ? redirectTo : "/dashboard";
+    if (typeof window !== "undefined") {
+      window.location.assign(target);
+    } else {
+      router.replace(target);
+    }
   };
 
   const applyDemoCredentials = (role: "coach" | "player" | "parent") => {

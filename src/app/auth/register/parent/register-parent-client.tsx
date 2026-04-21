@@ -92,7 +92,13 @@ export default function RegisterParentPage() {
 
     if (data.user && data.session) {
       syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
-      router.push(safeRedirect ?? "/dashboard");
+      // Hard reload : cookies auth à propager avant check middleware.
+      const target = safeRedirect ?? "/dashboard";
+      if (typeof window !== "undefined") {
+        window.location.assign(target);
+      } else {
+        router.push(target);
+      }
       return;
     }
 
