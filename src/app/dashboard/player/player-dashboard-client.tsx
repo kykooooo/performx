@@ -20,7 +20,7 @@ import {
   WhistleIcon,
 } from "@/components/icons";
 import { formatLongDate } from "@/lib/date";
-import { FOOTBALL_SKILL_AXES, LOAD_RECOMMENDATION_LABELS } from "@/lib/football";
+import { FOOTBALL_SKILL_AXES, LOAD_RECOMMENDATION_LABELS, getAxisLabel } from "@/lib/football";
 import { CHART_COLORS } from "@/lib/chart-data";
 import { normalizeSessionFeedback } from "@/lib/session-feedback";
 import { ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
@@ -73,6 +73,33 @@ export default function PlayerDashboardPage() {
     [completed],
   );
   const nextSession = upcoming[0] ?? null;
+
+  /**
+   * Radar adapté à la spécialité du coach : si le dernier feedback
+   * contient des `speciality_ratings` (nouveau format, 7-9 axes
+   * spécifiques), on affiche ces axes. Sinon, on retombe sur les 5
+   * axes génériques agrégés par la RPC `get_player_skills`.
+   */
+  const specialityRadarData = useMemo(() => {
+    for (const session of completed) {
+      const fb = normalizeSessionFeedback(session.feedback);
+      const sr = fb?.speciality_ratings;
+      if (sr && Object.keys(sr).length > 0) {
+        return Object.entries(sr).map(([key, score]) => ({
+          skill: getAxisLabel(key),
+          // Échelle radar 0-100, notes en 1-5 → x20.
+          value: Math.max(0, Math.min(100, (score ?? 0) * 20)),
+        }));
+      }
+    }
+    return null;
+  }, [completed]);
+
+  const radarData = specialityRadarData ?? skillsData;
+  const radarAxesCount = radarData.length;
+  const radarSourceLabel = specialityRadarData
+    ? "Axes de ton coach"
+    : "5 axes";
 
   const statCards = [
     {
@@ -253,10 +280,10 @@ export default function PlayerDashboardPage() {
                 <div className="mb-2 flex items-center gap-2">
                   <h3 className="text-base font-semibold text-[color:var(--px-text)]">Profil de progression</h3>
                   <span className="rounded-full bg-[color:var(--px-accent)]/15 px-2 py-0.5 text-[10px] font-medium text-[color:var(--px-accent)]">
-                    5 axes
+                    {radarSourceLabel} · {radarAxesCount}
                   </span>
                 </div>
-                {skillsData.length === 0 ? (
+                {radarData.length === 0 ? (
                   <div className="flex h-[260px] flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
                     <TrophyIcon className="h-8 w-8 text-white/20" />
                     <p className="mt-2 text-sm text-white/70">Ton profil de progression se débloque</p>
@@ -264,13 +291,18 @@ export default function PlayerDashboardPage() {
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height={260}>
-                    <RadarChart data={skillsData} cx="50%" cy="50%" outerRadius="75%">
+                    <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="75%">
                       <PolarGrid stroke={CHART_COLORS.grid} />
-                      <PolarAngleAxis dataKey="skill" tick={{ fill: CHART_COLORS.tick, fontSize: 12 }} />
+                      <PolarAngleAxis dataKey="skill" tick={{ fill: CHART_COLORS.tick, fontSize: 11 }} />
                       <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
                       <Radar dataKey="value" stroke={CHART_COLORS.accent} fill={CHART_COLORS.accent} fillOpacity={0.25} strokeWidth={2} name="Score" />
                     </RadarChart>
                   </ResponsiveContainer>
+                )}
+                {specialityRadarData && (
+                  <p className="mt-2 text-[11px] text-white/50">
+                    Basé sur le dernier feedback coach — {radarAxesCount} critères spécifiques.
+                  </p>
                 )}
               </div>
 
@@ -417,37 +449,53 @@ export default function PlayerDashboardPage() {
 
                   {latestFeedback ? (
                     <div className="mt-4 space-y-4">
-                      {/* Notes sur les 5 axes foot */}
-                      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="mb-3 text-xs uppercase tracking-[0.2em] text-white/50">
-                          Ton score sur les 5 axes
-                        </p>
-                        <div className="space-y-2">
-                          {FOOTBALL_SKILL_AXES.map((axis) => {
-                            const value = latestFeedback.ratings[axis.key] ?? 0;
-                            return (
-                              <div key={axis.key} className="flex items-center gap-3">
-                                <span className="w-20 text-xs text-white/60">{axis.label}</span>
-                                <div className="flex flex-1 gap-1">
-                                  {[1, 2, 3, 4, 5].map((n) => (
-                                    <span
-                                      key={n}
-                                      className={`h-1.5 flex-1 rounded-full transition ${
-                                        n <= value
-                                          ? "bg-[color:var(--px-accent)]"
-                                          : "bg-white/10"
-                                      }`}
-                                    />
-                                  ))}
+                      {/* Notes : axes de la spécialité du coach si dispo, sinon 5 axes génériques */}
+                      {(() => {
+                        const sr = latestFeedback.speciality_ratings;
+                        const hasSpeciality = sr && Object.keys(sr).length > 0;
+                        const axes = hasSpeciality
+                          ? Object.keys(sr).map((key) => ({
+                              key,
+                              label: getAxisLabel(key),
+                              value: sr[key] ?? 0,
+                            }))
+                          : FOOTBALL_SKILL_AXES.map((axis) => ({
+                              key: axis.key,
+                              label: axis.label,
+                              value: (latestFeedback.ratings as Record<string, number>)[axis.key] ?? 0,
+                            }));
+                        return (
+                          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                            <p className="mb-3 text-xs uppercase tracking-[0.2em] text-white/50">
+                              {hasSpeciality
+                                ? `Notes détaillées (${axes.length} critères)`
+                                : "Ton score sur les 5 axes"}
+                            </p>
+                            <div className="space-y-2">
+                              {axes.map((axis) => (
+                                <div key={axis.key} className="flex items-center gap-3">
+                                  <span className="w-36 text-xs text-white/60">{axis.label}</span>
+                                  <div className="flex flex-1 gap-1">
+                                    {[1, 2, 3, 4, 5].map((n) => (
+                                      <span
+                                        key={n}
+                                        className={`h-1.5 flex-1 rounded-full transition ${
+                                          n <= axis.value
+                                            ? "bg-[color:var(--px-accent)]"
+                                            : "bg-white/10"
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                  <span className="w-6 text-right text-xs font-medium text-white/80">
+                                    {axis.value}/5
+                                  </span>
                                 </div>
-                                <span className="w-6 text-right text-xs font-medium text-white/80">
-                                  {value}/5
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       {latestFeedback.summary && (
                         <div className="rounded-xl border border-white/10 bg-white/5 p-4">

@@ -7,7 +7,6 @@ import AuthShell from "@/components/auth-shell";
 import { FieldError, Notice, type NoticeData } from "@/components/notice";
 import { syncProfile } from "@/lib/profile-sync";
 import { supabase } from "@/lib/supabase";
-import { DEPARTMENTS } from "@/lib/constants";
 import {
   sanitizeInput,
   validateEmail,
@@ -29,7 +28,7 @@ export default function RegisterParentPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [department, setDepartment] = useState("");
+  const [city, setCity] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -58,7 +57,8 @@ export default function RegisterParentPage() {
 
   const validateStep2 = (): boolean => {
     const next: FieldErrors = {};
-    if (!department) next.department = "Le departement est requis.";
+    const cityErr = validateRequired(city, "La ville");
+    if (cityErr) next.city = cityErr;
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -78,8 +78,8 @@ export default function RegisterParentPage() {
           role: "parent",
           first_name: sanitizeInput(firstName),
           last_name: sanitizeInput(lastName),
-          city: department,
-          department,
+          city: sanitizeInput(city),
+          department: sanitizeInput(city),
         },
       },
     });
@@ -231,19 +231,19 @@ export default function RegisterParentPage() {
               Le compte parent n&apos;embarque plus une fiche enfant statique. Une fois inscrit, tu lieras un vrai compte joueur depuis ton dashboard avec un code temporaire généré cote joueur.
             </div>
             <div>
-              <label htmlFor="reg-parent-department" className="mb-1 block text-xs text-white/70">Departement <span className="text-[color:var(--px-danger)]">*</span></label>
-              <select
-                id="reg-parent-department"
-                className={`px-select ${errors.department ? "border-[color:var(--px-danger)]" : ""}`}
-                value={department}
-                onChange={(e) => { setDepartment(e.target.value); clearField("department"); }}
-              >
-                <option value="">Selectionner un departement</option>
-                {DEPARTMENTS.map((department) => (
-                  <option key={department} value={department}>{department}</option>
-                ))}
-              </select>
-              <FieldError error={errors.department} />
+              <label htmlFor="reg-parent-city" className="mb-1 block text-xs text-white/70">
+                Ville <span className="text-[color:var(--px-danger)]">*</span>
+              </label>
+              <input
+                id="reg-parent-city"
+                type="text"
+                className={`px-input ${errors.city ? "border-[color:var(--px-danger)]" : ""}`}
+                placeholder="Rouen, Le Havre, ..."
+                value={city}
+                onChange={(e) => { setCity(e.target.value); clearField("city"); }}
+                autoComplete="address-level2"
+              />
+              <FieldError error={errors.city} />
             </div>
             <Notice notice={notice} />
             <div className="flex gap-3">

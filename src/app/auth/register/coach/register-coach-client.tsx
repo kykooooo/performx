@@ -7,7 +7,8 @@ import AuthShell from "@/components/auth-shell";
 import { FieldError, Notice, type NoticeData } from "@/components/notice";
 import { syncProfile } from "@/lib/profile-sync";
 import { supabase } from "@/lib/supabase";
-import { COACH_DIPLOMAS, COACH_SPECIALITIES, DEPARTMENTS } from "@/lib/constants";
+import { COACH_DIPLOMAS } from "@/lib/constants";
+import { COACH_SPECIALITIES } from "@/lib/football";
 import {
   sanitizeInput,
   validateEmail,
@@ -80,7 +81,7 @@ export default function RegisterCoachPage() {
     const next: FieldErrors = {};
     const spErr = validateRequired(speciality, "La spécialité");
     if (spErr) next.speciality = spErr;
-    const locErr = validateRequired(location, "Le département");
+    const locErr = validateRequired(location, "La ville");
     if (locErr) next.location = locErr;
     if (price === "" || price <= 0) next.price = "Le prix par séance est requis.";
     else {
@@ -260,19 +261,19 @@ export default function RegisterCoachPage() {
                 <FieldError error={errors.speciality} />
               </div>
               <div>
-                <label htmlFor="reg-coach-location" className="mb-1 block text-xs text-white/70">Département <span className="text-[color:var(--px-danger)]">*</span></label>
-                <select
+                <label htmlFor="reg-coach-location" className="mb-1 block text-xs text-white/70">
+                  Ville <span className="text-[color:var(--px-danger)]">*</span>
+                </label>
+                <input
                   id="reg-coach-location"
-                  className={`px-select ${errors.location ? "border-[color:var(--px-danger)]" : ""}`}
+                  type="text"
+                  className={`px-input ${errors.location ? "border-[color:var(--px-danger)]" : ""}`}
+                  placeholder="Rouen, Le Havre, ..."
                   value={location}
                   onChange={(e) => { setLocation(e.target.value); clearField("location"); }}
                   aria-invalid={!!errors.location}
-                >
-                  <option value="">Sélectionner un département</option>
-                  {DEPARTMENTS.map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
+                  autoComplete="address-level2"
+                />
                 <FieldError error={errors.location} />
               </div>
             </div>

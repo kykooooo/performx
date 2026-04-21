@@ -225,6 +225,31 @@ export const SPECIALITY_AXES: Record<string, readonly SpecialityAxis[]> = {
 };
 
 /**
+ * Lookup "clé d'axe → label humain", construit à partir de toutes les
+ * spécialités. Permet d'afficher proprement un axe stocké en DB (ex:
+ * "prise_de_balle" → "Prise de balle") sans savoir de quelle spé il
+ * vient. En cas de collision (ex: "concentration" existe chez plusieurs
+ * spés avec le même label), le dernier gagne — sans impact car le label
+ * est par convention identique pour une clé donnée.
+ */
+const AXIS_LABEL_LOOKUP: Record<string, string> = (() => {
+  const lookup: Record<string, string> = {};
+  for (const axes of Object.values(SPECIALITY_AXES)) {
+    for (const axis of axes) {
+      lookup[axis.key] = axis.label;
+    }
+  }
+  for (const axis of FOOTBALL_SKILL_AXES) {
+    if (!lookup[axis.key]) lookup[axis.key] = axis.label;
+  }
+  return lookup;
+})();
+
+export function getAxisLabel(key: string): string {
+  return AXIS_LABEL_LOOKUP[key] ?? key.replace(/_/g, " ");
+}
+
+/**
  * Renvoie les axes de notation à afficher dans le formulaire de retour
  * post-séance pour un coach donné. Fallback sur les 5 axes génériques
  * si la spécialité n'est pas reconnue (anciens coachs inscrits avec

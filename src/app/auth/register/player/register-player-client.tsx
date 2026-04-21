@@ -39,6 +39,7 @@ export default function RegisterPlayerPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [city, setCity] = useState("");
   const [level, setLevel] = useState("");
   const [position, setPosition] = useState("");
   const [password, setPassword] = useState("");
@@ -71,8 +72,10 @@ export default function RegisterPlayerPage() {
 
   const validateStep2 = () => {
     const next: FieldErrors = {};
-    // Seul le niveau et le poste sont requis pour activer le matching coach pertinent.
+    // Ville + niveau + poste requis pour activer le matching coach pertinent.
     // Le reste est renseignable plus tard dans le profil.
+    const cityErr = validateRequired(city, "La ville");
+    if (cityErr) next.city = cityErr;
     if (!level) next.level = "Le niveau est requis.";
     if (!position) next.position = "Le poste est requis.";
     setErrors(next);
@@ -93,7 +96,7 @@ export default function RegisterPlayerPage() {
         lastName: sanitizeInput(lastName),
         gender: "",
         birthDate: "",
-        department: "",
+        department: sanitizeInput(city),
         level,
         position,
         dominantFoot: "",
@@ -245,10 +248,25 @@ export default function RegisterPlayerPage() {
         {step === 2 && (
           <>
             <p className="mb-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
-              Dis-nous juste ton niveau et ton poste pour qu&apos;on te propose les bons coachs.
-              Tu pourras compléter ton profil (pied fort, club, objectifs, historique...) après
+              Dis-nous ta ville, ton niveau et ton poste pour qu&apos;on te propose les bons
+              coachs. Tu pourras compléter ton profil (pied fort, club, objectifs...) après
               l&apos;inscription depuis ton dashboard.
             </p>
+
+            <div>
+              <label className="mb-1 block text-xs text-white/70">
+                Ville <span className="text-[color:var(--px-danger)]">*</span>
+              </label>
+              <input
+                type="text"
+                className={`px-input ${errors.city ? "border-[color:var(--px-danger)]" : ""}`}
+                placeholder="Rouen, Le Havre, ..."
+                value={city}
+                onChange={(e) => { setCity(e.target.value); clearField("city"); }}
+                autoComplete="address-level2"
+              />
+              <FieldError error={errors.city} />
+            </div>
 
             <div className="grid gap-3 md:grid-cols-2">
               <div>
