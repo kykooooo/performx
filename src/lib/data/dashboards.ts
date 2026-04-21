@@ -247,6 +247,7 @@ function buildDemoCoachDashboardData(): CoachDashboardData {
       rating: mockCoaches[0].rating,
       pricePerSession: mockCoaches[0].pricePerSession,
       availability: mockCoaches[0].availability,
+      speciality: mockCoaches[0].speciality,
     },
     sessions: demoSessions,
     totalRevenue: demoTotal,
@@ -268,7 +269,7 @@ export async function getCoachDashboardData(): Promise<DataResult<CoachDashboard
   try {
     const { data: coachData, error: coachError } = await supabase
       .from("coaches")
-      .select("id, user_id, name, rating, price_per_session, availability")
+      .select("id, user_id, name, rating, price_per_session, availability, speciality")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -369,6 +370,7 @@ export async function getCoachDashboardData(): Promise<DataResult<CoachDashboard
         rating: coachData.rating,
         pricePerSession: coachData.price_per_session,
         availability: coachData.availability ?? [],
+        speciality: coachData.speciality ?? "Coach",
       },
       sessions: ((sessionData as SessionRow[] | null) ?? []).map(mapSessionLikeToSessionRecord),
       totalRevenue,

@@ -32,7 +32,7 @@ import {
   CheckCircleIcon,
 } from "@/components/icons";
 import { addDays, formatDayLabel, formatLongDate, formatShortDate, startOfWeek, toISODate } from "@/lib/date";
-import { FOOTBALL_SKILL_AXES } from "@/lib/football";
+import { FOOTBALL_SKILL_AXES, getSpecialityAxes } from "@/lib/football";
 import { supabase } from "@/lib/supabase";
 import { createEmptyFeedbackDraft, normalizeSessionFeedback } from "@/lib/session-feedback";
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
@@ -121,6 +121,14 @@ export default function CoachDashboardPage() {
       console.warn("[coach-dashboard] refresh recurring slots failed", err);
     }
   }, [coach, isDemo]);
+
+  // Axes de notation dynamiques : dépendent de la spécialité du coach
+  // (ex: Spé gardien → 7 axes gardien, Préparateur physique → 7 axes physiques).
+  // Fallback sur les 5 axes génériques si la spé n'est pas connue.
+  const specialityAxes = useMemo(
+    () => getSpecialityAxes(coach?.speciality ?? null),
+    [coach?.speciality],
+  );
 
   const upcoming = useMemo(
     () => sessions.filter((session) => session.status === "upcoming"),
@@ -691,24 +699,58 @@ export default function CoachDashboardPage() {
                             </button>
                           )}
                         </div>
-                        {session.feedback && (
+                        {session.feedback && (() => {
+                          const fb = normalizeSessionFeedback(session.feedback);
+                          // Axes à afficher : si le feedback contient des
+                          // notes spécialité, on les prend (les labels viennent
+                          // des axes de la spécialité actuelle du coach, avec
+                          // fallback sur un label humanisé depuis la clé).
+                          const sr = fb?.speciality_ratings;
+                          const hasSpecialityRatings = sr && Object.keys(sr).length > 0;
+                          const displayAxes = hasSpecialityRatings
+                            ? Object.keys(sr).map((key) => {
+                                const known = specialityAxes.find((a) => a.key === key);
+                                return {
+                                  key,
+                                  label: known?.label ?? key.replace(/_/g, " "),
+                                  score: sr[key] ?? 0,
+                                };
+                              })
+                            : FOOTBALL_SKILL_AXES.map((axis) => ({
+                                key: axis.key,
+                                label: axis.label,
+                                score: (fb?.ratings as Record<string, number> | undefined)?.[axis.key] ?? 0,
+                              }));
+                          return (
                           <div className="mt-2 ml-8 space-y-3">
-                            {FOOTBALL_SKILL_AXES.map((axis) => (
+                            {displayAxes.map((axis) => (
                               <div key={axis.key} className="flex items-center gap-2">
-                                <span className="w-24 text-[10px] text-white/50">{axis.label}</span>
+                                <span className="w-32 text-[10px] text-white/50">{axis.label}</span>
                                 <div className="flex gap-0.5">
                                   {[1, 2, 3, 4, 5].map((n) => (
-                                    <span key={n} className={`h-1.5 w-4 rounded-full ${n <= (normalizeSessionFeedback(session.feedback)?.ratings[axis.key] ?? 0) ? "bg-[color:var(--px-accent)]" : "bg-white/10"}`} />
+                                    <span
+                                      key={n}
+                                      className={`h-1.5 w-4 rounded-full ${
+                                        n <= axis.score
+                                          ? "bg-[color:var(--px-accent)]"
+                                          : "bg-white/10"
+                                      }`}
+                                    />
                                   ))}
                                 </div>
                               </div>
                             ))}
-                            {normalizeSessionFeedback(session.feedback)?.summary && (
-                              <p className="text-[11px] italic text-white/50 mt-1">&ldquo;{normalizeSessionFeedback(session.feedback)?.summary}&rdquo;</p>
+                            {fb?.summary && (
+                              <p className="text-[11px] italic text-white/50 mt-1">&ldquo;{fb.summary}&rdquo;</p>
                             )}
-                            {normalizeSessionFeedback(session.feedback)?.next_focus && (
+                            {fb?.next_focus && (
                               <p className="text-[11px] text-white/60">
-                                Axe d&apos;amélioration : {normalizeSessionFeedback(session.feedback)?.next_focus}
+                                Axe d&apos;amélioration : {fb.next_focus}
+                              </p>
+                            )}
+                            {fb?.advice && (
+                              <p className="text-[11px] text-white/60">
+                                Conseil : {fb.advice}
                               </p>
                             )}
                             <button
@@ -716,38 +758,54 @@ export default function CoachDashboardPage() {
                               className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase text-white/70 transition hover:border-[color:var(--px-accent)]/30 hover:text-[color:var(--px-accent)]"
                               onClick={() => openFeedbackEditor(session)}
                             >
-                              {feedbackOpen === session.id ? "Fermer l'edition" : "Modifier le retour"}
+                              {feedbackOpen === session.id ? "Fermer l'édition" : "Modifier le retour"}
                             </button>
                           </div>
-                        )}
+                          );
+                        })()}
                         {feedbackOpen === session.id && (
                           <div className="mt-3 ml-8 space-y-3 rounded-xl border border-[color:var(--px-accent)]/20 bg-[color:var(--px-accent)]/5 p-4">
-                            {FOOTBALL_SKILL_AXES.map((axis) => (
-                              <div key={axis.key} className="flex items-center gap-3">
-                                <span className="w-24 text-xs text-white/70">{axis.label}</span>
-                                <div className="flex gap-1">
-                                  {[1, 2, 3, 4, 5].map((n) => (
-                                    <button
-                                      key={n}
-                                      type="button"
-                                      onClick={() =>
-                                        setFeedbackDraft((prev) => ({
-                                          ...prev,
-                                          ratings: { ...prev.ratings, [axis.key]: n },
-                                        }))
-                                      }
-                                      className={`h-6 w-6 rounded-md text-xs font-medium transition ${
-                                        n <= (feedbackDraft.ratings[axis.key] ?? 0)
-                                          ? "bg-[color:var(--px-accent)] text-black"
-                                          : "border border-white/15 bg-white/5 text-white/50 hover:bg-white/10"
-                                      }`}
-                                    >
-                                      {n}
-                                    </button>
-                                  ))}
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">
+                              Critères — {coach?.speciality ?? "standard"}
+                            </p>
+                            {specialityAxes.map((axis) => {
+                              // Lecture du score : d'abord speciality_ratings
+                              // (nouveau), fallback ratings (legacy / 5 axes
+                              // génériques).
+                              const score =
+                                feedbackDraft.speciality_ratings?.[axis.key] ??
+                                (feedbackDraft.ratings as Record<string, number>)[axis.key] ??
+                                0;
+                              return (
+                                <div key={axis.key} className="flex items-center gap-3">
+                                  <span className="w-40 text-xs text-white/70">{axis.label}</span>
+                                  <div className="flex gap-1">
+                                    {[1, 2, 3, 4, 5].map((n) => (
+                                      <button
+                                        key={n}
+                                        type="button"
+                                        onClick={() =>
+                                          setFeedbackDraft((prev) => ({
+                                            ...prev,
+                                            speciality_ratings: {
+                                              ...(prev.speciality_ratings ?? {}),
+                                              [axis.key]: n,
+                                            },
+                                          }))
+                                        }
+                                        className={`h-6 w-6 rounded-md text-xs font-medium transition ${
+                                          n <= score
+                                            ? "bg-[color:var(--px-accent)] text-black"
+                                            : "border border-white/15 bg-white/5 text-white/50 hover:bg-white/10"
+                                        }`}
+                                      >
+                                        {n}
+                                      </button>
+                                    ))}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                             <div>
                               <label className="mb-1 block text-[11px] uppercase tracking-[0.2em] text-white/60">
                                 Point fort du joueur

@@ -53,7 +53,7 @@ export type CoachRecord = {
 
 export type CoachDashboardCoachRecord = Pick<
   CoachRecord,
-  "id" | "userId" | "name" | "rating" | "pricePerSession" | "availability"
+  "id" | "userId" | "name" | "rating" | "pricePerSession" | "availability" | "speciality"
 >;
 
 export type PlayerRecord = {

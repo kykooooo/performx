@@ -116,6 +116,134 @@ export const FOOTBALL_SKILL_AXES = [
   { key: "mental", label: "Mental" },
 ] as const;
 
+/**
+ * Axes de notation spécifiques à chaque spécialité coach, utilisés
+ * dans le formulaire de retour post-séance.
+ *
+ * La clé (slug) sert à stocker la note dans session_feedback.
+ * speciality_ratings (JSONB) sans collision entre axes similaires
+ * (ex: "passe" apparaît chez gardien, défenseur, milieu — c'est ok,
+ * chaque coach a ses propres axes dans son formulaire).
+ */
+export type SpecialityAxis = { key: string; label: string };
+
+export const SPECIALITY_AXES: Record<string, readonly SpecialityAxis[]> = {
+  "Préparateur physique": [
+    { key: "vitesse", label: "Vitesse" },
+    { key: "endurance", label: "Endurance" },
+    { key: "coordination", label: "Coordination" },
+    { key: "acceleration", label: "Accélération" },
+    { key: "detente_verticale", label: "Détente verticale" },
+    { key: "equilibre", label: "Équilibre" },
+    { key: "puissance", label: "Puissance" },
+  ],
+  "Spé gardien": [
+    { key: "detente", label: "Détente" },
+    { key: "passe", label: "Passe" },
+    { key: "prise_de_balle", label: "Prise de balle" },
+    { key: "reflexe", label: "Réflexe" },
+    { key: "relance_main", label: "Relance à la main" },
+    { key: "sortie_surface", label: "Sortie dans la surface" },
+    { key: "sortie_pieds", label: "Sortie dans les pieds" },
+  ],
+  "Spé défenseur": [
+    { key: "duel", label: "Duel" },
+    { key: "anticipation", label: "Anticipation" },
+    { key: "alignement", label: "Alignement" },
+    { key: "relance", label: "Relance" },
+    { key: "couverture", label: "Couverture" },
+    { key: "jeu_aerien", label: "Jeu aérien" },
+    { key: "concentration", label: "Concentration" },
+  ],
+  "Spé milieu": [
+    { key: "orientation", label: "Orientation" },
+    { key: "vision_de_jeu", label: "Vision de jeu" },
+    { key: "disponibilite", label: "Disponibilité" },
+    { key: "gestion_tempo", label: "Gestion du tempo" },
+    { key: "pressing", label: "Pressing" },
+    { key: "qualite_passe", label: "Qualité de passe" },
+    { key: "intelligence_tactique", label: "Intelligence tactique" },
+  ],
+  "Spé attaquant": [
+    { key: "appel", label: "Appel" },
+    { key: "finition", label: "Finition" },
+    { key: "timing", label: "Timing" },
+    { key: "sang_froid", label: "Sang-froid" },
+    { key: "deplacement_surface", label: "Déplacement surface" },
+    { key: "pressing_offensif", label: "Pressing offensif" },
+    { key: "jeu_dos_but", label: "Jeu dos au but" },
+  ],
+  "Analyste vidéo": [
+    { key: "positionnement", label: "Positionnement" },
+    { key: "prise_information", label: "Prise d'information" },
+    { key: "prise_decision", label: "Prise de décision" },
+    { key: "qualite_technique_situation", label: "Qualité technique en situation" },
+    { key: "deplacement_sans_ballon", label: "Déplacement sans ballon" },
+    { key: "impact_defensif", label: "Impact défensif" },
+    { key: "efficacite_zones_cles", label: "Efficacité zones clés" },
+  ],
+  "Coach tactique au poste": [
+    { key: "positionnement_offensif", label: "Positionnement offensif" },
+    { key: "positionnement_defensif", label: "Positionnement défensif" },
+    { key: "lecture_du_jeu", label: "Lecture du jeu" },
+    { key: "prise_decision", label: "Prise de décision" },
+    { key: "comprehension_poste", label: "Compréhension du poste" },
+    { key: "transitions", label: "Transitions" },
+    { key: "deplacement_tactique", label: "Déplacement tactique" },
+  ],
+  "Coach technique au poste": [
+    { key: "passe", label: "Passe" },
+    { key: "tir", label: "Tir" },
+    { key: "dribble", label: "Dribble" },
+    { key: "marquage", label: "Marquage" },
+    { key: "tacle", label: "Tacle" },
+    { key: "jeu_de_tete", label: "Jeu de tête" },
+    { key: "conduite", label: "Conduite" },
+    { key: "pied_faible", label: "Pied faible" },
+    { key: "coups_de_pied_arretes", label: "Coups de pied arrêtés" },
+  ],
+  "Coach mental": [
+    { key: "confiance_en_soi", label: "Confiance en soi" },
+    { key: "concentration", label: "Concentration" },
+    { key: "gestion_stress", label: "Gestion du stress" },
+    { key: "motivation", label: "Motivation" },
+    { key: "resilience", label: "Résilience" },
+    { key: "discipline", label: "Discipline" },
+    { key: "leadership", label: "Leadership" },
+    { key: "gestion_erreurs", label: "Gestion des erreurs" },
+  ],
+  "Coach Développement des jeunes": [
+    { key: "attitude_ecoute", label: "Attitude (écoute)" },
+    { key: "concentration", label: "Concentration" },
+    { key: "coordination_motrice", label: "Coordination motrice" },
+    { key: "bases_techniques", label: "Bases techniques" },
+    { key: "comprehension_du_jeu", label: "Compréhension du jeu" },
+    { key: "confiance_expression", label: "Confiance (expression)" },
+    { key: "autonomie", label: "Autonomie" },
+    { key: "plaisir_motivation", label: "Plaisir (motivation)" },
+  ],
+};
+
+/**
+ * Renvoie les axes de notation à afficher dans le formulaire de retour
+ * post-séance pour un coach donné. Fallback sur les 5 axes génériques
+ * si la spécialité n'est pas reconnue (anciens coachs inscrits avec
+ * "Coach technique", "Gardien"... avant la refonte).
+ */
+export function getSpecialityAxes(speciality: string | null | undefined): readonly SpecialityAxis[] {
+  if (!speciality) return FOOTBALL_SKILL_AXES;
+  const direct = SPECIALITY_AXES[speciality];
+  if (direct) return direct;
+  // Rétro-compat : essayer de matcher par substring sur les anciens libellés.
+  const needle = speciality.toLowerCase();
+  for (const [key, axes] of Object.entries(SPECIALITY_AXES)) {
+    if (key.toLowerCase().includes(needle) || needle.includes(key.toLowerCase())) {
+      return axes;
+    }
+  }
+  return FOOTBALL_SKILL_AXES;
+}
+
 export const LOAD_RECOMMENDATION_LABELS: Record<LoadRecommendation, string> = {
   normal: "Charge normale",
   lighten: "Alléger la charge",
