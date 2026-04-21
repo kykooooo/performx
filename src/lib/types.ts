@@ -10,8 +10,10 @@ export type User = {
 
 export type PositionFamily = "goalkeeper" | "defender" | "midfielder" | "attacker";
 export type DominantFoot = "Droitier" | "Gaucher" | "Ambidextre";
-export type AgeCategory = "U9" | "U11" | "U13" | "U15" | "U17" | "U19" | "Senior";
-export type LoadRecommendation = "normal" | "lighten" | "recover";
+export type AgeCategory =
+  | "U9" | "U11" | "U13" | "U15" | "U17" | "U19" | "Senior"
+  | "U9F" | "U11F" | "U13F" | "U15F" | "U17F" | "U19F" | "Senior F";
+export type LoadRecommendation = "normal" | "lighten" | "recover" | "increase";
 
 export type Profile = {
   userId: string;

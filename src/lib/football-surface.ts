@@ -151,17 +151,29 @@ export function getPositionZoneLabel(positionFamily: PositionFamily | null | und
 export function getSpecialityEmoji(speciality: string | null | undefined): string {
   if (!speciality) return "⚽";
   const normalized = normalizeSignal(speciality);
+
+  // Spécialités par poste (doivent matcher AVANT "technique"/"tactique"
+  // génériques pour les distinguer).
   if (normalized.includes("gardien")) return "🧤";
+  if (normalized.includes("defenseur") || normalized.includes("defens")) return "🛡️";
+  if (normalized.includes("milieu")) return "🎯";
+  if (normalized.includes("attaquant")) return "⚡";
+
+  // Autres spécialités
+  if (normalized.includes("developpement") || normalized.includes("jeune")) return "🌱";
+  if (normalized.includes("analyste") || normalized.includes("video")) return "🎥";
+  if (normalized.includes("mental")) return "🧠";
+  if (normalized.includes("tactique")) return "🧩";
+  if (normalized.includes("technique")) return "⚽";
   if (normalized.includes("physique") || normalized.includes("prepa")) return "💪";
+
+  // Anciennes spécialités (rétro-compat)
   if (normalized.includes("endurance") || normalized.includes("cardio")) return "🏃";
   if (normalized.includes("vision")) return "🎯";
   if (normalized.includes("frappe") || normalized.includes("tir")) return "⚡";
   if (normalized.includes("dribble")) return "🔥";
-  if (normalized.includes("defens")) return "🛡️";
-  if (normalized.includes("technique")) return "⚽";
-  if (normalized.includes("mental") || normalized.includes("confiance")) return "🧠";
-  if (normalized.includes("video") || normalized.includes("vidéo")) return "🎥";
   if (normalized.includes("jeu") && normalized.includes("pied")) return "🦶";
+
   return "⚽";
 }
 

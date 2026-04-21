@@ -16,19 +16,10 @@ import {
   BoltIcon,
   UserIcon,
 } from "@/components/icons";
-import { AGE_CATEGORIES, parseTextArray } from "@/lib/football";
+import { AGE_CATEGORIES, COACH_SPECIALITIES, parseTextArray } from "@/lib/football";
 import { supabase } from "@/lib/supabase";
 
-const SPECIALITIES = [
-  "Coach technique",
-  "Préparation physique",
-  "Gardien",
-  "Vision de jeu",
-  "Frappe",
-  "Dribbles",
-  "Endurance",
-  "Jeu défensif",
-];
+const SPECIALITIES = COACH_SPECIALITIES;
 
 const INTERVENTION_LOCATIONS = [
   "Domicile joueur",

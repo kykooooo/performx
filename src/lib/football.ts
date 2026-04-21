@@ -37,7 +37,34 @@ export const AGE_CATEGORIES: readonly AgeCategory[] = [
   "U17",
   "U19",
   "Senior",
+  "U9F",
+  "U11F",
+  "U13F",
+  "U15F",
+  "U17F",
+  "U19F",
+  "Senior F",
 ];
+
+/**
+ * Liste officielle des spécialités coach proposées lors de l'inscription
+ * et de l'édition de profil. Remplace les anciennes (coach technique,
+ * prépa physique, gardien, ...) par un découpage par poste + discipline.
+ */
+export const COACH_SPECIALITIES = [
+  "Préparateur physique",
+  "Spé gardien",
+  "Spé défenseur",
+  "Spé milieu",
+  "Spé attaquant",
+  "Analyste vidéo",
+  "Coach tactique au poste",
+  "Coach technique au poste",
+  "Coach mental",
+  "Coach Développement des jeunes",
+] as const;
+
+export type CoachSpeciality = (typeof COACH_SPECIALITIES)[number];
 
 export const TRAINING_FREQUENCY_OPTIONS = [
   { label: "1 séance / semaine", value: 1 },
@@ -93,6 +120,7 @@ export const LOAD_RECOMMENDATION_LABELS: Record<LoadRecommendation, string> = {
   normal: "Charge normale",
   lighten: "Alléger la charge",
   recover: "Récupération",
+  increase: "Augmenter la charge",
 };
 
 export const COACH_FOCUS_AREAS = [

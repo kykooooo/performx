@@ -27,14 +27,16 @@ import { AGE_CATEGORIES } from "@/lib/football";
 
 const SPECIALITY_CHIPS = [
   { key: "Tous", label: "Tous", emoji: null },
-  { key: "Technique", label: "Technique", emoji: "⚽" },
-  { key: "Préparation physique", label: "Prépa physique", emoji: "💪" },
-  { key: "Gardien", label: "Gardien", emoji: "🧤" },
-  { key: "Vision de jeu", label: "Vision", emoji: "🎯" },
-  { key: "Frappe", label: "Frappe", emoji: "⚡" },
-  { key: "Dribbles", label: "Dribbles", emoji: "🔥" },
-  { key: "Endurance", label: "Endurance", emoji: "🏃" },
-  { key: "Jeu défensif", label: "Défense", emoji: "🛡️" },
+  { key: "Préparateur physique", label: "Prépa physique", emoji: "💪" },
+  { key: "Spé gardien", label: "Gardien", emoji: "🧤" },
+  { key: "Spé défenseur", label: "Défenseur", emoji: "🛡️" },
+  { key: "Spé milieu", label: "Milieu", emoji: "🎯" },
+  { key: "Spé attaquant", label: "Attaquant", emoji: "⚡" },
+  { key: "Analyste vidéo", label: "Vidéo", emoji: "🎥" },
+  { key: "Coach tactique au poste", label: "Tactique", emoji: "🧩" },
+  { key: "Coach technique au poste", label: "Technique", emoji: "⚽" },
+  { key: "Coach mental", label: "Mental", emoji: "🧠" },
+  { key: "Coach Développement des jeunes", label: "Jeunes", emoji: "🌱" },
 ] as const;
 
 type SpecialityChipKey = (typeof SPECIALITY_CHIPS)[number]["key"];
