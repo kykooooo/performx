@@ -7,6 +7,7 @@ import AppShell from "@/components/app-shell";
 import DeleteAccountButton from "@/components/delete-account-button";
 import { LoadingState } from "@/components/feedback-state";
 import ScrollReveal from "@/components/scroll-reveal";
+import SpecialityChipGroup from "@/components/speciality-chip-group";
 import { useRoleGuard } from "@/lib/use-role-guard";
 import {
   WhistleIcon,
@@ -16,10 +17,8 @@ import {
   BoltIcon,
   UserIcon,
 } from "@/components/icons";
-import { AGE_CATEGORIES, COACH_SPECIALITIES, parseTextArray } from "@/lib/football";
+import { AGE_CATEGORIES, parseTextArray } from "@/lib/football";
 import { supabase } from "@/lib/supabase";
-
-const SPECIALITIES = COACH_SPECIALITIES;
 
 const INTERVENTION_LOCATIONS = [
   "Domicile joueur",
@@ -394,50 +393,19 @@ export default function CoachProfileEditPage() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-[11px] uppercase tracking-[0.2em] text-white/70">Spécialités</label>
-                    <p className="mt-1 text-[11px] text-white/60">
-                      Sélectionne toutes tes spécialités (au moins une). Les joueurs filtreront les coachs grâce à ces tags.
-                    </p>
-                    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {SPECIALITIES.map((option) => {
-                        const checked = specialities.includes(option);
-                        return (
-                          <label
-                            key={option}
-                            className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-xs transition ${
-                              checked
-                                ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)]"
-                                : "border-white/10 bg-white/5 text-white/70 hover:border-white/20"
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              className="sr-only"
-                              checked={checked}
-                              onChange={() => {
-                                setSpecialities((prev) => {
-                                  const next = checked
-                                    ? prev.filter((entry) => entry !== option)
-                                    : [...prev, option];
-                                  if (!speciality || !next.includes(speciality)) {
-                                    setSpeciality(next[0] ?? "");
-                                  }
-                                  return next;
-                                });
-                              }}
-                            />
-                            <span className="flex h-4 w-4 items-center justify-center rounded border border-current">
-                              {checked ? (
-                                <span className="h-2 w-2 rounded-sm bg-current" />
-                              ) : null}
-                            </span>
-                            <span>{option}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
+                  <SpecialityChipGroup
+                    multiple
+                    selectedValues={specialities}
+                    onMultiChange={(next) => {
+                      setSpecialities(next);
+                      if (!speciality || !next.includes(speciality)) {
+                        setSpeciality(next[0] ?? "");
+                      }
+                    }}
+                    columns="three"
+                    label="Spécialités"
+                    helper="Sélectionne toutes tes spécialités (au moins une). Les joueurs filtreront les coachs grâce à ces tags."
+                  />
 
                   <div className="mt-4">
                     <label htmlFor="coach-edit-bio" className="text-[11px] uppercase tracking-[0.2em] text-white/70">Bio</label>

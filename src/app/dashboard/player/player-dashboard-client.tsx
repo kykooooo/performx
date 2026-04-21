@@ -20,9 +20,14 @@ import {
   WhistleIcon,
 } from "@/components/icons";
 import { formatLongDate } from "@/lib/date";
-import { FOOTBALL_SKILL_AXES, LOAD_RECOMMENDATION_LABELS, getAxisLabel } from "@/lib/football";
+import { FOOTBALL_SKILL_AXES, LOAD_RECOMMENDATION_LABELS, getAxisLabel, getAxisShortLabel } from "@/lib/football";
 import { CHART_COLORS } from "@/lib/chart-data";
-import { normalizeSessionFeedback } from "@/lib/session-feedback";
+import {
+  getNoteBarColor,
+  getNoteColor,
+  getNoteLabel,
+  normalizeSessionFeedback,
+} from "@/lib/session-feedback";
 import { ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import type { PlayerProgressionPoint, PlayerRadarPoint } from "@/lib/types";
 
@@ -72,6 +77,32 @@ export default function PlayerDashboardPage() {
     () => normalizeSessionFeedback(completed[0]?.feedback),
     [completed],
   );
+
+  /**
+   * Avant-dernier feedback exploitable, pour calculer un delta par axe
+   * et montrer au joueur s'il progresse, stagne ou régresse.
+   */
+  const previousFeedback = useMemo(() => {
+    for (let i = 1; i < completed.length; i += 1) {
+      const fb = normalizeSessionFeedback(completed[i].feedback);
+      if (fb) return fb;
+    }
+    return null;
+  }, [completed]);
+
+  /**
+   * Calcule le delta (note actuelle - note précédente) pour un axe donné.
+   * Retourne null si pas de comparaison possible.
+   */
+  const getDelta = (axisKey: string, currentValue: number): number | null => {
+    if (!previousFeedback || !currentValue) return null;
+    const prev =
+      previousFeedback.speciality_ratings?.[axisKey] ??
+      (previousFeedback.ratings as Record<string, number>)[axisKey];
+    if (typeof prev !== "number" || prev === 0) return null;
+    return currentValue - prev;
+  };
+
   const nextSession = upcoming[0] ?? null;
 
   /**
@@ -86,7 +117,8 @@ export default function PlayerDashboardPage() {
       const sr = fb?.speciality_ratings;
       if (sr && Object.keys(sr).length > 0) {
         return Object.entries(sr).map(([key, score]) => ({
-          skill: getAxisLabel(key),
+          skill: getAxisShortLabel(key), // label raccourci pour tenir sur le radar
+          fullLabel: getAxisLabel(key),  // label complet pour le tooltip
           // Échelle radar 0-100, notes en 1-5 → x20.
           value: Math.max(0, Math.min(100, (score ?? 0) * 20)),
         }));
@@ -151,7 +183,7 @@ export default function PlayerDashboardPage() {
               className="px-fade-up max-w-md text-base text-white/70"
               style={{ animationDelay: "160ms" }}
             >
-              Suis ta progression sur les 5 axes foot, retrouve tes séances et lis le dernier feedback coach.
+              Suis ta progression, retrouve tes séances et lis le dernier feedback de ton coach.
             </p>
           </div>
           <div className="px-fade-up flex gap-3" style={{ animationDelay: "200ms" }}>
@@ -290,12 +322,31 @@ export default function PlayerDashboardPage() {
                     <p className="mt-1 text-xs text-white/50">après ta première séance notée par un coach.</p>
                   </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="75%">
+                  <ResponsiveContainer width="100%" height={280}>
+                    <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="72%">
                       <PolarGrid stroke={CHART_COLORS.grid} />
-                      <PolarAngleAxis dataKey="skill" tick={{ fill: CHART_COLORS.tick, fontSize: 11 }} />
+                      <PolarAngleAxis
+                        dataKey="skill"
+                        tick={{
+                          fill: CHART_COLORS.tick,
+                          // Font size adaptatif : plus d'axes = plus petit pour éviter le chevauchement.
+                          fontSize: radarAxesCount >= 8 ? 10 : radarAxesCount >= 7 ? 11 : 12,
+                        }}
+                      />
                       <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
                       <Radar dataKey="value" stroke={CHART_COLORS.accent} fill={CHART_COLORS.accent} fillOpacity={0.25} strokeWidth={2} name="Score" />
+                      <Tooltip
+                        contentStyle={{ background: "#1a1a1f", border: "1px solid rgba(255,106,0,0.2)", borderRadius: 12, padding: "6px 10px", color: "#fff" }}
+                        itemStyle={{ color: CHART_COLORS.accent }}
+                        labelFormatter={(_, payload) => {
+                          const d = payload?.[0]?.payload as { fullLabel?: string; skill: string } | undefined;
+                          return d?.fullLabel ?? d?.skill ?? "";
+                        }}
+                        formatter={(value) => {
+                          const n = typeof value === "number" ? value : Number(value);
+                          return [`${Math.round(n / 20)}/5`, "Note"];
+                        }}
+                      />
                     </RadarChart>
                   </ResponsiveContainer>
                 )}
@@ -466,32 +517,66 @@ export default function PlayerDashboardPage() {
                             }));
                         return (
                           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                            <p className="mb-3 text-xs uppercase tracking-[0.2em] text-white/50">
-                              {hasSpeciality
-                                ? `Notes détaillées (${axes.length} critères)`
-                                : "Ton score sur les 5 axes"}
-                            </p>
-                            <div className="space-y-2">
-                              {axes.map((axis) => (
-                                <div key={axis.key} className="flex items-center gap-3">
-                                  <span className="w-36 text-xs text-white/60">{axis.label}</span>
-                                  <div className="flex flex-1 gap-1">
-                                    {[1, 2, 3, 4, 5].map((n) => (
-                                      <span
-                                        key={n}
-                                        className={`h-1.5 flex-1 rounded-full transition ${
-                                          n <= axis.value
-                                            ? "bg-[color:var(--px-accent)]"
-                                            : "bg-white/10"
-                                        }`}
-                                      />
-                                    ))}
+                            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                              <p className="text-xs uppercase tracking-[0.2em] text-white/50">
+                                {hasSpeciality
+                                  ? `Notes détaillées (${axes.length} critères)`
+                                  : "Ton score sur les 5 axes"}
+                              </p>
+                              {previousFeedback && (
+                                <p className="text-[10px] text-white/40">
+                                  ↗↘ = évolution vs séance précédente
+                                </p>
+                              )}
+                            </div>
+                            <div className="space-y-3">
+                              {axes.map((axis) => {
+                                const delta = getDelta(axis.key, axis.value);
+                                return (
+                                  <div key={axis.key} className="space-y-1">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className="text-xs text-white/75">{axis.label}</span>
+                                      <div className="flex items-center gap-2">
+                                        {delta !== null && delta !== 0 && (
+                                          <span
+                                            className={`text-[10px] font-bold ${
+                                              delta > 0
+                                                ? "text-[color:var(--px-success)]"
+                                                : "text-[color:var(--px-danger)]"
+                                            }`}
+                                            aria-label={`Évolution ${delta > 0 ? "+" : ""}${delta} par rapport à la séance précédente`}
+                                          >
+                                            {delta > 0 ? `↗ +${delta}` : `↘ ${delta}`}
+                                          </span>
+                                        )}
+                                        {delta === 0 && (
+                                          <span
+                                            className="text-[10px] text-white/40"
+                                            aria-label="Stable par rapport à la séance précédente"
+                                          >
+                                            →
+                                          </span>
+                                        )}
+                                        <span
+                                          className={`w-20 text-right text-xs font-semibold ${getNoteColor(axis.value)}`}
+                                        >
+                                          {axis.value}/5 · {getNoteLabel(axis.value)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-1">
+                                      {[1, 2, 3, 4, 5].map((n) => (
+                                        <span
+                                          key={n}
+                                          className={`h-1.5 flex-1 rounded-full transition ${
+                                            n <= axis.value ? getNoteBarColor(axis.value) : "bg-white/10"
+                                          }`}
+                                        />
+                                      ))}
+                                    </div>
                                   </div>
-                                  <span className="w-6 text-right text-xs font-medium text-white/80">
-                                    {axis.value}/5
-                                  </span>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         );

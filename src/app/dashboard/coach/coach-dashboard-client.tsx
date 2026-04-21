@@ -763,49 +763,94 @@ export default function CoachDashboardPage() {
                           </div>
                           );
                         })()}
-                        {feedbackOpen === session.id && (
-                          <div className="mt-3 ml-8 space-y-3 rounded-xl border border-[color:var(--px-accent)]/20 bg-[color:var(--px-accent)]/5 p-4">
-                            <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">
-                              Critères — {coach?.speciality ?? "standard"}
+                        {feedbackOpen === session.id && (() => {
+                          // Compteur de progression : nombre d'axes notés parmi le total.
+                          const ratedCount = specialityAxes.filter((axis) => {
+                            const val =
+                              feedbackDraft.speciality_ratings?.[axis.key] ??
+                              (feedbackDraft.ratings as Record<string, number>)[axis.key];
+                            return typeof val === "number" && val > 0;
+                          }).length;
+                          const totalAxes = specialityAxes.length;
+                          const progress = totalAxes > 0 ? (ratedCount / totalAxes) * 100 : 0;
+                          const isComplete = ratedCount === totalAxes && totalAxes > 0;
+                          return (
+                          <div className="mt-3 space-y-4 rounded-xl border border-[color:var(--px-accent)]/20 bg-[color:var(--px-accent)]/5 p-4">
+                            {/* Header sticky : spécialité + compteur progression */}
+                            <div className="sticky top-0 -mx-4 -mt-4 mb-2 rounded-t-xl border-b border-white/10 bg-[color:var(--px-bg)]/95 px-4 pb-3 pt-3 backdrop-blur-md z-10">
+                              <div className="flex items-center justify-between gap-3">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-white/60">
+                                  Critères — {coach?.speciality ?? "standard"}
+                                </p>
+                                <span className={`text-xs font-semibold ${isComplete ? "text-[color:var(--px-success)]" : "text-white/70"}`}>
+                                  {isComplete && <span className="mr-1" aria-hidden>✓</span>}
+                                  {ratedCount}/{totalAxes}
+                                </span>
+                              </div>
+                              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-300 ${isComplete ? "bg-[color:var(--px-success)]" : "bg-[color:var(--px-accent)]"}`}
+                                  style={{ width: `${progress}%` }}
+                                />
+                              </div>
+                              {isComplete && (
+                                <p className="mt-2 text-[11px] text-[color:var(--px-success)]">
+                                  Tous les critères sont notés, tu peux envoyer !
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Légende d'échelle — affichée une seule fois au-dessus de tous les axes */}
+                            <p className="text-center text-[11px] text-white/55">
+                              1 = Insuffisant &nbsp;·&nbsp; 3 = Correct &nbsp;·&nbsp; 5 = Excellent
                             </p>
-                            {specialityAxes.map((axis) => {
-                              // Lecture du score : d'abord speciality_ratings
-                              // (nouveau), fallback ratings (legacy / 5 axes
-                              // génériques).
-                              const score =
-                                feedbackDraft.speciality_ratings?.[axis.key] ??
-                                (feedbackDraft.ratings as Record<string, number>)[axis.key] ??
-                                0;
-                              return (
-                                <div key={axis.key} className="flex items-center gap-3">
-                                  <span className="w-40 text-xs text-white/70">{axis.label}</span>
-                                  <div className="flex gap-1">
-                                    {[1, 2, 3, 4, 5].map((n) => (
-                                      <button
-                                        key={n}
-                                        type="button"
-                                        onClick={() =>
-                                          setFeedbackDraft((prev) => ({
-                                            ...prev,
-                                            speciality_ratings: {
-                                              ...(prev.speciality_ratings ?? {}),
-                                              [axis.key]: n,
-                                            },
-                                          }))
-                                        }
-                                        className={`h-6 w-6 rounded-md text-xs font-medium transition ${
-                                          n <= score
-                                            ? "bg-[color:var(--px-accent)] text-black"
-                                            : "border border-white/15 bg-white/5 text-white/50 hover:bg-white/10"
-                                        }`}
-                                      >
-                                        {n}
-                                      </button>
-                                    ))}
+
+                            {/* Liste des axes avec notes tactiles (boutons 40×40) */}
+                            <div className="space-y-3">
+                              {specialityAxes.map((axis) => {
+                                const score =
+                                  feedbackDraft.speciality_ratings?.[axis.key] ??
+                                  (feedbackDraft.ratings as Record<string, number>)[axis.key] ??
+                                  0;
+                                return (
+                                  <div
+                                    key={axis.key}
+                                    className="rounded-lg border border-white/5 bg-white/[0.02] p-3"
+                                  >
+                                    <p className="mb-2 text-sm font-medium text-white/85">
+                                      {axis.label}
+                                    </p>
+                                    <div className="flex gap-2">
+                                      {[1, 2, 3, 4, 5].map((n) => (
+                                        <button
+                                          key={n}
+                                          type="button"
+                                          aria-label={`${axis.label} : note ${n} sur 5`}
+                                          onClick={() =>
+                                            setFeedbackDraft((prev) => ({
+                                              ...prev,
+                                              speciality_ratings: {
+                                                ...(prev.speciality_ratings ?? {}),
+                                                [axis.key]: n,
+                                              },
+                                            }))
+                                          }
+                                          className={`h-10 w-10 rounded-full text-sm font-semibold transition ${
+                                            n <= score
+                                              ? "bg-[color:var(--px-accent)] text-black shadow-[0_0_0_3px_rgba(255,106,0,0.15)]"
+                                              : "border border-white/15 bg-white/5 text-white/60 hover:border-white/30 hover:text-white"
+                                          }`}
+                                        >
+                                          {n}
+                                        </button>
+                                      ))}
+                                    </div>
                                   </div>
-                                </div>
-                              );
-                            })}
+                                );
+                              })}
+                            </div>
+
+                            {/* Point fort */}
                             <div>
                               <label className="mb-1 block text-[11px] uppercase tracking-[0.2em] text-white/60">
                                 Point fort du joueur
@@ -820,6 +865,8 @@ export default function CoachDashboardPage() {
                                 }
                               />
                             </div>
+
+                            {/* Axe d'amélioration */}
                             <div>
                               <label className="mb-1 block text-[11px] uppercase tracking-[0.2em] text-white/60">
                                 Axe d&apos;amélioration
@@ -833,6 +880,8 @@ export default function CoachDashboardPage() {
                                 }
                               />
                             </div>
+
+                            {/* Conseil concret */}
                             <div>
                               <label className="mb-1 block text-[11px] uppercase tracking-[0.2em] text-white/60">
                                 Conseil concret
@@ -847,6 +896,8 @@ export default function CoachDashboardPage() {
                                 }
                               />
                             </div>
+
+                            {/* Charge */}
                             <div>
                               <label className="mb-1 block text-[11px] uppercase tracking-[0.2em] text-white/60">
                                 Charge recommandée
@@ -867,15 +918,18 @@ export default function CoachDashboardPage() {
                                 <option value="recover">Récupération</option>
                               </select>
                             </div>
+
+                            {/* Submit — taille augmentée pour être visible et tactile */}
                             <button
                               type="button"
-                              className="px-button text-xs"
+                              className="px-button w-full py-3 text-sm"
                               onClick={() => handleFeedbackSubmit(session.id)}
                             >
                               Envoyer le retour
                             </button>
                           </div>
-                        )}
+                          );
+                        })()}
                       </div>
                     ))}
                   </div>

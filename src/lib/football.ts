@@ -125,7 +125,12 @@ export const FOOTBALL_SKILL_AXES = [
  * (ex: "passe" apparaît chez gardien, défenseur, milieu — c'est ok,
  * chaque coach a ses propres axes dans son formulaire).
  */
-export type SpecialityAxis = { key: string; label: string };
+export type SpecialityAxis = {
+  key: string;
+  label: string;
+  /** Libellé court pour les charts type radar où la place manque (≤ 12 car.). */
+  shortLabel?: string;
+};
 
 export const SPECIALITY_AXES: Record<string, readonly SpecialityAxis[]> = {
   "Préparateur physique": [
@@ -133,18 +138,18 @@ export const SPECIALITY_AXES: Record<string, readonly SpecialityAxis[]> = {
     { key: "endurance", label: "Endurance" },
     { key: "coordination", label: "Coordination" },
     { key: "acceleration", label: "Accélération" },
-    { key: "detente_verticale", label: "Détente verticale" },
+    { key: "detente_verticale", label: "Détente verticale", shortLabel: "Détente" },
     { key: "equilibre", label: "Équilibre" },
     { key: "puissance", label: "Puissance" },
   ],
   "Spé gardien": [
     { key: "detente", label: "Détente" },
     { key: "passe", label: "Passe" },
-    { key: "prise_de_balle", label: "Prise de balle" },
+    { key: "prise_de_balle", label: "Prise de balle", shortLabel: "Prise balle" },
     { key: "reflexe", label: "Réflexe" },
-    { key: "relance_main", label: "Relance à la main" },
-    { key: "sortie_surface", label: "Sortie dans la surface" },
-    { key: "sortie_pieds", label: "Sortie dans les pieds" },
+    { key: "relance_main", label: "Relance à la main", shortLabel: "Relance" },
+    { key: "sortie_surface", label: "Sortie dans la surface", shortLabel: "Sortie surf." },
+    { key: "sortie_pieds", label: "Sortie dans les pieds", shortLabel: "Sortie pieds" },
   ],
   "Spé défenseur": [
     { key: "duel", label: "Duel" },
@@ -157,39 +162,39 @@ export const SPECIALITY_AXES: Record<string, readonly SpecialityAxis[]> = {
   ],
   "Spé milieu": [
     { key: "orientation", label: "Orientation" },
-    { key: "vision_de_jeu", label: "Vision de jeu" },
+    { key: "vision_de_jeu", label: "Vision de jeu", shortLabel: "Vision" },
     { key: "disponibilite", label: "Disponibilité" },
-    { key: "gestion_tempo", label: "Gestion du tempo" },
+    { key: "gestion_tempo", label: "Gestion du tempo", shortLabel: "Tempo" },
     { key: "pressing", label: "Pressing" },
-    { key: "qualite_passe", label: "Qualité de passe" },
-    { key: "intelligence_tactique", label: "Intelligence tactique" },
+    { key: "qualite_passe", label: "Qualité de passe", shortLabel: "Passe" },
+    { key: "intelligence_tactique", label: "Intelligence tactique", shortLabel: "Intel. tactique" },
   ],
   "Spé attaquant": [
     { key: "appel", label: "Appel" },
     { key: "finition", label: "Finition" },
     { key: "timing", label: "Timing" },
     { key: "sang_froid", label: "Sang-froid" },
-    { key: "deplacement_surface", label: "Déplacement surface" },
-    { key: "pressing_offensif", label: "Pressing offensif" },
-    { key: "jeu_dos_but", label: "Jeu dos au but" },
+    { key: "deplacement_surface", label: "Déplacement surface", shortLabel: "Déplac. surf." },
+    { key: "pressing_offensif", label: "Pressing offensif", shortLabel: "Pressing" },
+    { key: "jeu_dos_but", label: "Jeu dos au but", shortLabel: "Dos au but" },
   ],
   "Analyste vidéo": [
     { key: "positionnement", label: "Positionnement" },
-    { key: "prise_information", label: "Prise d'information" },
-    { key: "prise_decision", label: "Prise de décision" },
-    { key: "qualite_technique_situation", label: "Qualité technique en situation" },
-    { key: "deplacement_sans_ballon", label: "Déplacement sans ballon" },
-    { key: "impact_defensif", label: "Impact défensif" },
-    { key: "efficacite_zones_cles", label: "Efficacité zones clés" },
+    { key: "prise_information", label: "Prise d'information", shortLabel: "Prise d'info" },
+    { key: "prise_decision", label: "Prise de décision", shortLabel: "Décision" },
+    { key: "qualite_technique_situation", label: "Qualité technique en situation", shortLabel: "Qualité tech." },
+    { key: "deplacement_sans_ballon", label: "Déplacement sans ballon", shortLabel: "Déplac. s. ballon" },
+    { key: "impact_defensif", label: "Impact défensif", shortLabel: "Impact déf." },
+    { key: "efficacite_zones_cles", label: "Efficacité zones clés", shortLabel: "Zones clés" },
   ],
   "Coach tactique au poste": [
-    { key: "positionnement_offensif", label: "Positionnement offensif" },
-    { key: "positionnement_defensif", label: "Positionnement défensif" },
-    { key: "lecture_du_jeu", label: "Lecture du jeu" },
-    { key: "prise_decision", label: "Prise de décision" },
-    { key: "comprehension_poste", label: "Compréhension du poste" },
+    { key: "positionnement_offensif", label: "Positionnement offensif", shortLabel: "Position. off." },
+    { key: "positionnement_defensif", label: "Positionnement défensif", shortLabel: "Position. déf." },
+    { key: "lecture_du_jeu", label: "Lecture du jeu", shortLabel: "Lecture" },
+    { key: "prise_decision", label: "Prise de décision", shortLabel: "Décision" },
+    { key: "comprehension_poste", label: "Compréhension du poste", shortLabel: "Compr. poste" },
     { key: "transitions", label: "Transitions" },
-    { key: "deplacement_tactique", label: "Déplacement tactique" },
+    { key: "deplacement_tactique", label: "Déplacement tactique", shortLabel: "Déplac. tact." },
   ],
   "Coach technique au poste": [
     { key: "passe", label: "Passe" },
@@ -200,27 +205,27 @@ export const SPECIALITY_AXES: Record<string, readonly SpecialityAxis[]> = {
     { key: "jeu_de_tete", label: "Jeu de tête" },
     { key: "conduite", label: "Conduite" },
     { key: "pied_faible", label: "Pied faible" },
-    { key: "coups_de_pied_arretes", label: "Coups de pied arrêtés" },
+    { key: "coups_de_pied_arretes", label: "Coups de pied arrêtés", shortLabel: "CPA" },
   ],
   "Coach mental": [
-    { key: "confiance_en_soi", label: "Confiance en soi" },
+    { key: "confiance_en_soi", label: "Confiance en soi", shortLabel: "Confiance" },
     { key: "concentration", label: "Concentration" },
-    { key: "gestion_stress", label: "Gestion du stress" },
+    { key: "gestion_stress", label: "Gestion du stress", shortLabel: "Stress" },
     { key: "motivation", label: "Motivation" },
     { key: "resilience", label: "Résilience" },
     { key: "discipline", label: "Discipline" },
     { key: "leadership", label: "Leadership" },
-    { key: "gestion_erreurs", label: "Gestion des erreurs" },
+    { key: "gestion_erreurs", label: "Gestion des erreurs", shortLabel: "Erreurs" },
   ],
   "Coach Développement des jeunes": [
-    { key: "attitude_ecoute", label: "Attitude (écoute)" },
+    { key: "attitude_ecoute", label: "Attitude (écoute)", shortLabel: "Écoute" },
     { key: "concentration", label: "Concentration" },
-    { key: "coordination_motrice", label: "Coordination motrice" },
-    { key: "bases_techniques", label: "Bases techniques" },
-    { key: "comprehension_du_jeu", label: "Compréhension du jeu" },
-    { key: "confiance_expression", label: "Confiance (expression)" },
+    { key: "coordination_motrice", label: "Coordination motrice", shortLabel: "Coord. motrice" },
+    { key: "bases_techniques", label: "Bases techniques", shortLabel: "Bases tech." },
+    { key: "comprehension_du_jeu", label: "Compréhension du jeu", shortLabel: "Compréhension" },
+    { key: "confiance_expression", label: "Confiance (expression)", shortLabel: "Expression" },
     { key: "autonomie", label: "Autonomie" },
-    { key: "plaisir_motivation", label: "Plaisir (motivation)" },
+    { key: "plaisir_motivation", label: "Plaisir (motivation)", shortLabel: "Plaisir" },
   ],
 };
 
@@ -245,8 +250,25 @@ const AXIS_LABEL_LOOKUP: Record<string, string> = (() => {
   return lookup;
 })();
 
+/** Lookup "clé d'axe → shortLabel" pour le radar sur petits écrans. */
+const AXIS_SHORT_LABEL_LOOKUP: Record<string, string> = (() => {
+  const lookup: Record<string, string> = {};
+  for (const axes of Object.values(SPECIALITY_AXES)) {
+    for (const axis of axes) {
+      if (axis.shortLabel) lookup[axis.key] = axis.shortLabel;
+    }
+  }
+  return lookup;
+})();
+
 export function getAxisLabel(key: string): string {
   return AXIS_LABEL_LOOKUP[key] ?? key.replace(/_/g, " ");
+}
+
+/** Renvoie shortLabel si défini, sinon label complet. Utilisé pour
+ *  les charts (radar) où la place est limitée sur mobile. */
+export function getAxisShortLabel(key: string): string {
+  return AXIS_SHORT_LABEL_LOOKUP[key] ?? AXIS_LABEL_LOOKUP[key] ?? key.replace(/_/g, " ");
 }
 
 /**

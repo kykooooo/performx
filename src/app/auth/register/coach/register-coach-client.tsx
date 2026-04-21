@@ -7,8 +7,8 @@ import AuthShell from "@/components/auth-shell";
 import { FieldError, Notice, type NoticeData } from "@/components/notice";
 import { syncProfile } from "@/lib/profile-sync";
 import { supabase } from "@/lib/supabase";
+import SpecialityChipGroup from "@/components/speciality-chip-group";
 import { COACH_DIPLOMAS } from "@/lib/constants";
-import { COACH_SPECIALITIES } from "@/lib/football";
 import {
   sanitizeInput,
   validateEmail,
@@ -243,39 +243,35 @@ export default function RegisterCoachPage() {
         {/* ── Step 2: Profile ── */}
         {step === 2 && (
           <>
-            <div className="grid gap-3 md:grid-cols-2">
-              <div>
-                <label htmlFor="reg-coach-speciality" className="mb-1 block text-xs text-white/70">Spécialité <span className="text-[color:var(--px-danger)]">*</span></label>
-                <select
-                  id="reg-coach-speciality"
-                  className={`px-select ${errors.speciality ? "border-[color:var(--px-danger)]" : ""}`}
-                  value={speciality}
-                  onChange={(e) => { setSpeciality(e.target.value); clearField("speciality"); }}
-                  aria-invalid={!!errors.speciality}
-                >
-                  <option value="">Sélectionner</option>
-                  {COACH_SPECIALITIES.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-                <FieldError error={errors.speciality} />
-              </div>
-              <div>
-                <label htmlFor="reg-coach-location" className="mb-1 block text-xs text-white/70">
-                  Ville <span className="text-[color:var(--px-danger)]">*</span>
-                </label>
-                <input
-                  id="reg-coach-location"
-                  type="text"
-                  className={`px-input ${errors.location ? "border-[color:var(--px-danger)]" : ""}`}
-                  placeholder="Rouen, Le Havre, ..."
-                  value={location}
-                  onChange={(e) => { setLocation(e.target.value); clearField("location"); }}
-                  aria-invalid={!!errors.location}
-                  autoComplete="address-level2"
-                />
-                <FieldError error={errors.location} />
-              </div>
+            <div>
+              <label className="mb-1 block text-xs text-white/70">
+                Spécialité <span className="text-[color:var(--px-danger)]">*</span>
+              </label>
+              <SpecialityChipGroup
+                value={speciality || null}
+                onChange={(next) => {
+                  setSpeciality(next);
+                  clearField("speciality");
+                }}
+              />
+              <FieldError error={errors.speciality} />
+            </div>
+
+            <div>
+              <label htmlFor="reg-coach-location" className="mb-1 block text-xs text-white/70">
+                Ville <span className="text-[color:var(--px-danger)]">*</span>
+              </label>
+              <input
+                id="reg-coach-location"
+                type="text"
+                className={`px-input ${errors.location ? "border-[color:var(--px-danger)]" : ""}`}
+                placeholder="Rouen, Le Havre, ..."
+                value={location}
+                onChange={(e) => { setLocation(e.target.value); clearField("location"); }}
+                aria-invalid={!!errors.location}
+                autoComplete="address-level2"
+              />
+              <FieldError error={errors.location} />
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>

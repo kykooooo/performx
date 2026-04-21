@@ -8,6 +8,7 @@ import CoachCard from "@/components/coach-card";
 import { FeedbackState } from "@/components/feedback-state";
 import { SkeletonCard } from "@/components/skeleton";
 import ScrollReveal from "@/components/scroll-reveal";
+import SpecialityChipGroup from "@/components/speciality-chip-group";
 import {
   SearchIcon,
   FilterIcon,
@@ -349,49 +350,18 @@ export default function CoachPage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {SPECIALITY_CHIPS.map((chip) => {
-                const count = chipCounts[chip.key] ?? 0;
-                const isActive = activeChip === chip.key;
-                const hasCoaches = coaches.length > 0;
-                const disabled = chip.key !== "Tous" && hasCoaches && count === 0;
-                const showCount = hasCoaches && count > 0;
-                return (
-                  <button
-                    key={chip.key}
-                    type="button"
-                    onClick={() => setActiveChip(chip.key)}
-                    data-active={isActive}
-                    disabled={disabled}
-                    className={`group inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                      isActive
-                        ? "border-[color:var(--px-accent)] bg-[color:var(--px-accent)]/15 text-[color:var(--px-accent)] shadow-[0_0_0_3px_rgba(255,106,0,0.08)]"
-                        : disabled
-                          ? "border-white/5 bg-white/[0.02] text-white/30 cursor-not-allowed"
-                          : "border-white/10 bg-white/5 text-white/75 hover:border-white/30 hover:text-white"
-                    }`}
-                  >
-                    {chip.emoji && (
-                      <span className="text-sm leading-none" aria-hidden="true">
-                        {chip.emoji}
-                      </span>
-                    )}
-                    <span>{chip.label}</span>
-                    {showCount && (
-                      <span
-                        className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                          isActive
-                            ? "bg-[color:var(--px-accent)]/20 text-[color:var(--px-accent)]"
-                            : "bg-white/5 text-white/50"
-                        }`}
-                      >
-                        {count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            <SpecialityChipGroup
+              specialities={SPECIALITY_CHIPS.map((chip) => ({
+                key: chip.key,
+                label: chip.label,
+                emoji: chip.emoji,
+              }))}
+              value={activeChip}
+              onChange={(next) => setActiveChip(next as SpecialityChipKey)}
+              showCount
+              counts={chipCounts}
+              hasCoaches={coaches.length > 0}
+            />
 
             <div className="flex flex-wrap items-center gap-3">
               <MapPinIcon className="h-4 w-4 text-white/70" />

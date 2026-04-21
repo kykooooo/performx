@@ -86,6 +86,39 @@ export function getLoadRecommendationTone(load: LoadRecommendation): string {
   }
 }
 
+/**
+ * Couleur d'une note sur 5 selon son niveau.
+ * Utilisé pour l'affichage côté joueur et parent.
+ */
+export function getNoteColor(note: number): string {
+  if (note >= 4) return "text-[color:var(--px-success)]";
+  if (note >= 3) return "text-[color:var(--px-warning)]";
+  if (note > 0) return "text-[color:var(--px-danger)]";
+  return "text-white/40";
+}
+
+/**
+ * Couleur de fond (barres pleines) associée à un niveau.
+ */
+export function getNoteBarColor(note: number): string {
+  if (note >= 4) return "bg-[color:var(--px-success)]";
+  if (note >= 3) return "bg-[color:var(--px-warning)]";
+  if (note > 0) return "bg-[color:var(--px-danger)]";
+  return "bg-white/10";
+}
+
+/**
+ * Libellé humain d'une note sur 5.
+ */
+export function getNoteLabel(note: number): string {
+  if (note >= 5) return "Excellent";
+  if (note >= 4) return "Bien";
+  if (note >= 3) return "Correct";
+  if (note >= 2) return "À travailler";
+  if (note > 0) return "Insuffisant";
+  return "Non noté";
+}
+
 export function getFeedbackAxisValue(
   feedback: SessionFeedback | null | undefined,
   axis: FeedbackAxisKey,
