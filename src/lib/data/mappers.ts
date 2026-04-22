@@ -94,6 +94,8 @@ type SessionLike = {
   durationMinutes?: number | null;
   status: SessionRecord["status"];
   feedback?: SessionRecord["feedback"];
+  session_type?: string | null;
+  sessionType?: string | null;
   coachName?: string | null;
 };
 
@@ -250,6 +252,7 @@ export function mapSessionLikeToSessionRecord(source: SessionLike): SessionRecor
     durationMinutes: source.duration_minutes ?? source.durationMinutes ?? 60,
     status: source.status,
     feedback: source.feedback ?? null,
+    sessionType: source.session_type ?? source.sessionType ?? null,
     coachName: source.coachName ?? null,
   };
 }

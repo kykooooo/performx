@@ -10,6 +10,7 @@ import {
   playerProgression,
   playerSkills,
 } from "@/lib/chart-data";
+import { parseTextArray } from "@/lib/football";
 import { mockBookings, mockCoaches, mockPlayer, mockSessions } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
 import type {
@@ -47,6 +48,7 @@ type SessionRow = {
   duration_minutes: number;
   status: SessionRecord["status"];
   feedback?: SessionRecord["feedback"];
+  session_type?: string | null;
   coach?: { name?: string | null } | null;
 };
 
@@ -172,7 +174,7 @@ export async function getPlayerDashboardData(): Promise<DataResult<PlayerDashboa
     const [sessionRes, bookingRes, featuredCoachesRes, profileRes] = await Promise.all([
       supabase
         .from("sessions")
-        .select("id, coach_id, player_id, title, date, time, duration_minutes, status, feedback, coach:coaches(name)")
+        .select("id, coach_id, player_id, title, date, time, duration_minutes, status, feedback, session_type, coach:coaches(name)")
         .eq("player_id", userId)
         .order("date", { ascending: true }),
       supabase
@@ -248,6 +250,7 @@ function buildDemoCoachDashboardData(): CoachDashboardData {
       pricePerSession: mockCoaches[0].pricePerSession,
       availability: mockCoaches[0].availability,
       speciality: mockCoaches[0].speciality,
+      specialities: [mockCoaches[0].speciality].filter(Boolean),
     },
     sessions: demoSessions,
     totalRevenue: demoTotal,
@@ -269,7 +272,7 @@ export async function getCoachDashboardData(): Promise<DataResult<CoachDashboard
   try {
     const { data: coachData, error: coachError } = await supabase
       .from("coaches")
-      .select("id, user_id, name, rating, price_per_session, availability, speciality")
+      .select("id, user_id, name, rating, price_per_session, availability, speciality, specialities")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -294,7 +297,7 @@ export async function getCoachDashboardData(): Promise<DataResult<CoachDashboard
     const [{ data: sessionData, error: sessionError }, bookingsTotalRes, bookingsMonthRes] = await Promise.all([
       supabase
         .from("sessions")
-        .select("id, coach_id, player_id, title, date, time, duration_minutes, status, feedback")
+        .select("id, coach_id, player_id, title, date, time, duration_minutes, status, feedback, session_type")
         .eq("coach_id", coachData.id)
         .order("date", { ascending: true }),
       supabase
@@ -371,6 +374,7 @@ export async function getCoachDashboardData(): Promise<DataResult<CoachDashboard
         pricePerSession: coachData.price_per_session,
         availability: coachData.availability ?? [],
         speciality: coachData.speciality ?? "Coach",
+        specialities: parseTextArray(coachData.specialities as string[] | string | null),
       },
       sessions: ((sessionData as SessionRow[] | null) ?? []).map(mapSessionLikeToSessionRecord),
       totalRevenue,
@@ -546,7 +550,7 @@ export async function getParentChildInsights(
 
   const { data: sessionData } = await supabase
     .from("sessions")
-    .select("id, coach_id, player_id, title, date, time, duration_minutes, status, feedback")
+    .select("id, coach_id, player_id, title, date, time, duration_minutes, status, feedback, session_type")
     .eq("player_id", childId)
     .order("date", { ascending: true });
 

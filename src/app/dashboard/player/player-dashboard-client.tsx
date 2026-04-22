@@ -493,9 +493,16 @@ export default function PlayerDashboardPage() {
                   </div>
 
                   {latestFeedback && completed[0] && (
-                    <p className="mt-1 text-xs text-white/60">
-                      Par <span className="text-white/80">{coachMap[completed[0].coachId] ?? "ton coach"}</span> · Séance « {completed[0].title} »
-                    </p>
+                    <div className="mt-1 space-y-1">
+                      <p className="text-xs text-white/60">
+                        Par <span className="text-white/80">{coachMap[completed[0].coachId] ?? "ton coach"}</span> · Séance « {completed[0].title} »
+                      </p>
+                      {completed[0].sessionType && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-[color:var(--px-accent)]">
+                          Type : {completed[0].sessionType}
+                        </span>
+                      )}
+                    </div>
                   )}
 
                   {latestFeedback ? (

@@ -122,13 +122,28 @@ export default function CoachDashboardPage() {
     }
   }, [coach, isDemo]);
 
-  // Axes de notation dynamiques : dépendent de la spécialité du coach
-  // (ex: Spé gardien → 7 axes gardien, Préparateur physique → 7 axes physiques).
-  // Fallback sur les 5 axes génériques si la spé n'est pas connue.
+  /**
+   * Type de séance choisi dans le formulaire de retour. Détermine les
+   * axes de notation (pas le profil coach). Permet à un coach multi-spé
+   * de noter une séance gardien sur les 7 axes gardien, puis une séance
+   * prépa physique sur les 7 axes physiques.
+   */
+  const [feedbackSessionType, setFeedbackSessionType] = useState<string | null>(null);
+
+  // Axes de notation = dérivés du type de séance choisi, avec fallback
+  // sur la spé du coach si aucun type n'a encore été sélectionné.
   const specialityAxes = useMemo(
-    () => getSpecialityAxes(coach?.speciality ?? null),
-    [coach?.speciality],
+    () => getSpecialityAxes(feedbackSessionType ?? coach?.speciality ?? null),
+    [feedbackSessionType, coach?.speciality],
   );
+
+  // Options proposées dans le sélecteur de type de séance : les spés
+  // déclarées par le coach. Fallback sur [speciality] si vide.
+  const sessionTypeOptions = useMemo(() => {
+    const list = coach?.specialities ?? [];
+    if (list.length > 0) return list;
+    return coach?.speciality ? [coach.speciality] : [];
+  }, [coach?.specialities, coach?.speciality]);
 
   const upcoming = useMemo(
     () => sessions.filter((session) => session.status === "upcoming"),
@@ -363,6 +378,14 @@ export default function CoachDashboardPage() {
   const openFeedbackEditor = (session: SessionRecord) => {
     const normalized = normalizeSessionFeedback(session.feedback);
     setFeedbackDraft(normalized ?? createEmptyFeedbackDraft());
+    // Pré-remplit le type de séance : d'abord celui déjà enregistré, sinon
+    // la 1ère spécialité du coach (comportement par défaut attendu).
+    setFeedbackSessionType(
+      session.sessionType ??
+        coach?.specialities?.[0] ??
+        coach?.speciality ??
+        null,
+    );
     setFeedbackOpen((current) => (current === session.id ? null : session.id));
   };
 
@@ -370,7 +393,10 @@ export default function CoachDashboardPage() {
     if (!isDemo) {
       const { error } = await supabase
         .from("sessions")
-        .update({ feedback: feedbackDraft })
+        .update({
+          feedback: feedbackDraft,
+          session_type: feedbackSessionType,
+        })
         .eq("id", sessionId);
       if (error) {
         setSessionNotice({ type: "error", text: error.message });
@@ -379,10 +405,15 @@ export default function CoachDashboardPage() {
     }
 
     setSessions((prev) =>
-      prev.map((s) => (s.id === sessionId ? { ...s, feedback: { ...feedbackDraft } } : s)),
+      prev.map((s) =>
+        s.id === sessionId
+          ? { ...s, feedback: { ...feedbackDraft }, sessionType: feedbackSessionType }
+          : s,
+      ),
     );
     setFeedbackOpen(null);
     setFeedbackDraft(createEmptyFeedbackDraft());
+    setFeedbackSessionType(null);
     setSessionNotice({ type: "success", text: "Retour envoyé au joueur." });
   };
 
@@ -776,11 +807,36 @@ export default function CoachDashboardPage() {
                           const isComplete = ratedCount === totalAxes && totalAxes > 0;
                           return (
                           <div className="mt-3 space-y-4 rounded-xl border border-[color:var(--px-accent)]/20 bg-[color:var(--px-accent)]/5 p-4">
-                            {/* Header sticky : spécialité + compteur progression */}
+                            {/* Sélecteur "Type de séance" : détermine les axes
+                                de notation. Affiché en premier pour que le
+                                coach choisisse AVANT de commencer à noter. */}
+                            {sessionTypeOptions.length > 1 && (
+                              <div>
+                                <label className="mb-1 block text-[11px] uppercase tracking-[0.2em] text-white/60">
+                                  Type de séance
+                                </label>
+                                <select
+                                  className="px-select"
+                                  value={feedbackSessionType ?? ""}
+                                  onChange={(e) => setFeedbackSessionType(e.target.value || null)}
+                                >
+                                  {sessionTypeOptions.map((opt) => (
+                                    <option key={opt} value={opt}>
+                                      {opt}
+                                    </option>
+                                  ))}
+                                </select>
+                                <p className="mt-1 text-[11px] text-white/50">
+                                  Les critères de notation s&apos;adaptent à ton choix.
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Header sticky : type de séance + compteur progression */}
                             <div className="sticky top-0 -mx-4 -mt-4 mb-2 rounded-t-xl border-b border-white/10 bg-[color:var(--px-bg)]/95 px-4 pb-3 pt-3 backdrop-blur-md z-10">
                               <div className="flex items-center justify-between gap-3">
                                 <p className="text-[11px] uppercase tracking-[0.2em] text-white/60">
-                                  Critères — {coach?.speciality ?? "standard"}
+                                  Critères — {feedbackSessionType ?? coach?.speciality ?? "standard"}
                                 </p>
                                 <span className={`text-xs font-semibold ${isComplete ? "text-[color:var(--px-success)]" : "text-white/70"}`}>
                                   {isComplete && <span className="mr-1" aria-hidden>✓</span>}

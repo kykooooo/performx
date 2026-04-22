@@ -53,7 +53,7 @@ export type CoachRecord = {
 
 export type CoachDashboardCoachRecord = Pick<
   CoachRecord,
-  "id" | "userId" | "name" | "rating" | "pricePerSession" | "availability" | "speciality"
+  "id" | "userId" | "name" | "rating" | "pricePerSession" | "availability" | "speciality" | "specialities"
 >;
 
 export type PlayerRecord = {
@@ -86,6 +86,13 @@ export type SessionRecord = {
   durationMinutes: number;
   status: SessionStatus;
   feedback: SessionFeedbackRecord | null;
+  /**
+   * Type de séance (= spécialité utilisée POUR CETTE séance).
+   * Détermine les axes de notation post-séance, indépendamment de la/des
+   * spécialité(s) du coach. Null tant que le coach ne l'a pas renseigné
+   * → l'UI retombe sur la spé du coach en fallback.
+   */
+  sessionType?: string | null;
   coachName?: string | null;
 };
 

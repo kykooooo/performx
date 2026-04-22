@@ -20,6 +20,7 @@ type SessionRow = {
   duration_minutes: number;
   status: SessionRecord["status"];
   feedback?: SessionRecord["feedback"];
+  session_type?: string | null;
   coach?: { name?: string | null } | null;
 };
 
@@ -44,7 +45,7 @@ export async function getSessionsPageData(): Promise<DataResult<SessionsPageData
   try {
     const { data, error } = await supabase
       .from("sessions")
-      .select("id, coach_id, player_id, title, date, time, duration_minutes, status, feedback, coach:coaches(name)")
+      .select("id, coach_id, player_id, title, date, time, duration_minutes, status, feedback, session_type, coach:coaches(name)")
       .eq("player_id", userId)
       .order("date", { ascending: true });
 
