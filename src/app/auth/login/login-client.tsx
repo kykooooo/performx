@@ -59,13 +59,18 @@ export default function LoginPage() {
     if (data.user) {
       syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
     }
+
+    // IMPORTANT Safari iOS : après signIn, Supabase écrit les cookies via
+    // document.cookie de façon synchrone, mais Safari ITP a un petit delay
+    // de propagation. On force une lecture de session pour :
+    //  1. s'assurer que les cookies sont matérialisés côté client
+    //  2. laisser un micro-tick au navigateur pour committer document.cookie
+    // Sans ça, le hard reload partait parfois avant que les cookies soient
+    // prêts → middleware redirige vers /auth/login → boucle.
+    await supabase.auth.getSession();
+
     setNotice({ type: "success", text: "Connexion réussie." });
 
-    // IMPORTANT Safari iOS : on fait un hard navigation (window.location)
-    // plutôt que router.replace. Sinon les cookies auth tout juste posés
-    // ne sont pas toujours propagés à temps au middleware SSR et l'user
-    // est renvoyé vers /auth/login en boucle. Le hard reload garantit
-    // que la requête suivante part avec les cookies.
     const target =
       redirectTo && redirectTo.startsWith("/") ? redirectTo : "/dashboard";
     if (typeof window !== "undefined") {

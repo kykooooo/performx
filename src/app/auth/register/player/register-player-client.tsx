@@ -141,6 +141,10 @@ export default function RegisterPlayerPage() {
     if (data.user && data.session) {
       syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
 
+      // Force la synchro des cookies (Safari iOS / ITP delay) avant le
+      // hard reload vers le dashboard / la page d'invite.
+      await supabase.auth.getSession();
+
       if (safeInvite) {
         const { error: claimError } = await supabase.rpc("claim_parent_invite", {
           p_code: safeInvite,

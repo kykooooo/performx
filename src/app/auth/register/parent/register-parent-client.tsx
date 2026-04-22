@@ -92,7 +92,8 @@ export default function RegisterParentPage() {
 
     if (data.user && data.session) {
       syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
-      // Hard reload : cookies auth à propager avant check middleware.
+      // Force la synchro des cookies (Safari iOS / ITP delay).
+      await supabase.auth.getSession();
       const target = safeRedirect ?? "/dashboard";
       if (typeof window !== "undefined") {
         window.location.assign(target);

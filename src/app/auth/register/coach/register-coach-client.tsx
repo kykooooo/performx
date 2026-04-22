@@ -134,9 +134,10 @@ export default function RegisterCoachPage() {
 
     if (data.user && data.session) {
       syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
-      // Hard reload : les cookies auth tout juste posés doivent être
-      // propagés au middleware avant le check d'auth du /dashboard.
-      // Sur Safari iOS, router.push() partait avant la propagation.
+      // Force la synchro des cookies côté Safari iOS (ITP a un delay
+      // de propagation sur document.cookie). getSession() attend que
+      // les cookies soient matérialisés avant le hard reload.
+      await supabase.auth.getSession();
       const target = safeRedirect ?? "/dashboard";
       if (typeof window !== "undefined") {
         window.location.assign(target);

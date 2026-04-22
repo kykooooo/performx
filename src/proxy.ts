@@ -3,51 +3,76 @@ import { type NextRequest, NextResponse } from "next/server";
 
 const PROTECTED_PREFIXES = ["/dashboard", "/booking", "/sessions", "/messages"];
 
-async function checkAuth(request: NextRequest): Promise<NextResponse | null> {
+/**
+ * Proxy Next.js 16 (middleware) :
+ *   1. Prépare un unique `response` qui sera enrichi par :
+ *      - les cookies refresh Supabase (si token expire pendant getUser)
+ *      - les headers de sécurité (CSP, HSTS, etc.)
+ *   2. Vérifie l'auth pour les routes protégées.
+ *   3. Retourne le même `response` à la fin (avec cookies + headers).
+ *
+ * IMPORTANT : on ne crée qu'UN SEUL NextResponse.next() par requête et on
+ * le ré-attribue dans le callback `setAll`. Bug précédent : la fonction
+ * checkAuth créait son propre response et le perdait en retournant null,
+ * écrasé par un second NextResponse.next() dans proxy(). Sur Safari iOS,
+ * cela effaçait les cookies de session refresh → boucle /auth/login.
+ */
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
-  if (!isProtected) return null;
 
+  // 1. Nonce CSP + headers de requête (le x-nonce est lu par les Server
+  //    Components via headers()).
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+
+  // 2. Response unique, re-créé par Supabase quand il refresh les cookies.
+  let response = NextResponse.next({ request: { headers: requestHeaders } });
+
+  // 3. Auth Supabase : validation + refresh éventuel des cookies dans response.
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseAnonKey) return null; // demo mode — skip
 
-  let response = NextResponse.next({ request });
+  let user: { id: string } | null = null;
 
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
+  if (supabaseUrl && supabaseAnonKey) {
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          );
+          // Ré-assigne response avec request mis à jour, puis copie les cookies.
+          response = NextResponse.next({ request: { headers: requestHeaders } });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options),
+          );
+        },
       },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options),
-        );
-      },
-    },
-  });
+    });
 
-  const { data: { user } } = await supabase.auth.getUser();
+    // getUser() déclenche setAll() si la session doit être refresh.
+    // Tourne sur TOUTES les routes (pas seulement protégées) pour garder
+    // la session à jour partout — /auth/login inclus, ce qui évite que
+    // Safari "oublie" la session entre un login et sa redirection.
+    const { data } = await supabase.auth.getUser();
+    user = data.user ? { id: data.user.id } : null;
+  }
 
-  if (!user) {
+  // 4. Auth gate pour les routes protégées.
+  if (isProtected && !user) {
     const loginUrl = new URL("/auth/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  return null; // authenticated — continue to security headers
-}
-
-export async function proxy(request: NextRequest) {
-  // --- Auth gate for protected routes ---
-  const authRedirect = await checkAuth(request);
-  if (authRedirect) return authRedirect;
-
-  // --- CSP + security headers ---
-  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
-
+  // 5. Headers de sécurité ajoutés au response final (qui a potentiellement
+  //    les cookies refresh). Si on recréait le response ici, on perdrait
+  //    les cookies → re-boucle sur Safari. D'où set direct sur response.
   const csp = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' https://*.sentry.io https://*.vercel-scripts.com https://plausible.io https://www.googletagmanager.com`,
@@ -58,30 +83,28 @@ export async function proxy(request: NextRequest) {
     "frame-ancestors 'none'",
   ].join("; ");
 
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
-
-  const response = NextResponse.next({
-    request: { headers: requestHeaders },
-  });
-
   response.headers.set("Content-Security-Policy", csp);
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=()",
+  );
   response.headers.set(
     "Strict-Transport-Security",
     "max-age=63072000; includeSubDomains; preload",
   );
 
-  const { pathname } = request.nextUrl;
-  if (PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))) {
+  if (isProtected) {
     response.headers.set("Cache-Control", "private, no-store");
   } else if (pathname.startsWith("/auth")) {
     response.headers.set("Cache-Control", "private, no-cache");
   } else {
-    response.headers.set("Cache-Control", "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400");
+    response.headers.set(
+      "Cache-Control",
+      "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400",
+    );
   }
 
   return response;
