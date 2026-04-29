@@ -286,7 +286,11 @@ export default function CoachProfileEditPage() {
               Mets à jour ton profil pour attirer plus de joueurs et remplir ton planning.
             </p>
           </div>
-          <div className="px-fade-up flex gap-3" style={{ animationDelay: "200ms" }}>
+          <div className="px-fade-up flex flex-wrap gap-3" style={{ animationDelay: "200ms" }}>
+            <Link href="/dashboard/coach#section-dispos" className="px-button text-sm">
+              Gérer mes disponibilités
+              <ArrowRightIcon className="h-4 w-4" />
+            </Link>
             <Link href="/dashboard/coach" className="px-button-ghost text-sm">
               Retour dashboard
               <ArrowRightIcon className="h-4 w-4" />

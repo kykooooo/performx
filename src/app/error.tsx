@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import * as Sentry from "@sentry/nextjs";
 import AppShell from "@/components/app-shell";
@@ -11,9 +11,36 @@ type ErrorProps = {
 };
 
 export default function ErrorPage({ error, reset }: ErrorProps) {
+  const [showDetails, setShowDetails] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   useEffect(() => {
     Sentry.captureException(error);
   }, [error]);
+
+  // Construit un texte de diagnostic copiable contenant tout ce qui peut aider
+  // à reproduire le bug : page, user-agent, message, stack et digest Sentry.
+  const diagnostic = (() => {
+    const parts: string[] = [];
+    if (typeof window !== "undefined") {
+      parts.push(`URL: ${window.location.href}`);
+      parts.push(`UA: ${navigator.userAgent}`);
+    }
+    parts.push(`Message: ${error.message || "(aucun message)"}`);
+    if (error.digest) parts.push(`Digest: ${error.digest}`);
+    if (error.stack) parts.push(`Stack:\n${error.stack}`);
+    return parts.join("\n");
+  })();
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(diagnostic);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API non supportée (Safari < 13.4 ou contexte non sécurisé)
+    }
+  };
 
   return (
     <AppShell active="" title="Erreur" description="Une erreur est survenue">
@@ -32,11 +59,6 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
               Code : {error.digest}
             </p>
           )}
-          {process.env.NODE_ENV !== "production" && error.message && (
-            <p className="mt-2 rounded-lg bg-black/60 p-3 text-left text-[11px] font-mono text-[color:var(--px-danger)]/90">
-              {error.message}
-            </p>
-          )}
         </div>
         <div className="grid w-full gap-3 sm:grid-cols-2">
           <button type="button" onClick={reset} className="px-button">
@@ -46,6 +68,30 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
             Retour à l&apos;accueil
           </Link>
         </div>
+
+        {/* Bloc diagnostic — déplié à la demande, copiable. Aide le support
+            à reproduire le bug quand un user remonte un problème. */}
+        <details
+          className="w-full rounded-xl border border-white/10 bg-white/5 text-left text-xs"
+          open={showDetails}
+          onToggle={(e) => setShowDetails((e.target as HTMLDetailsElement).open)}
+        >
+          <summary className="cursor-pointer px-4 py-3 font-medium text-white/70 hover:text-white">
+            Détails techniques (à envoyer au support)
+          </summary>
+          <div className="border-t border-white/10 px-4 py-3 space-y-3">
+            <pre className="max-h-60 overflow-auto whitespace-pre-wrap break-all rounded-lg bg-black/50 p-3 font-mono text-[10px] text-white/80">
+              {diagnostic}
+            </pre>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="px-button-ghost w-full text-xs"
+            >
+              {copied ? "✓ Copié" : "Copier les détails"}
+            </button>
+          </div>
+        </details>
       </section>
     </AppShell>
   );

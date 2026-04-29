@@ -47,8 +47,9 @@ export default function RecurringAvailabilityPanel({ coachId, onPatternsChanged 
   const [label, setLabel] = useState("");
   const [creatingPattern, setCreatingPattern] = useState(false);
 
-  // Formulaire blocage
+  // Formulaire blocage (plage de dates : blockEndDate optionnelle)
   const [blockDate, setBlockDate] = useState("");
+  const [blockEndDate, setBlockEndDate] = useState("");
   const [blockReason, setBlockReason] = useState("");
   const [creatingBlock, setCreatingBlock] = useState(false);
 
@@ -143,17 +144,62 @@ export default function RecurringAvailabilityPanel({ coachId, onPatternsChanged 
     if (!coachId || !blockDate) return;
     setNotice(null);
 
+    // Calcul de la plage : si blockEndDate est vide ou égale à blockDate -> 1 jour.
+    // Sinon on crée une exception pour chaque jour du début à la fin (inclus).
+    const endDate = blockEndDate && blockEndDate >= blockDate ? blockEndDate : blockDate;
+    const start = new Date(`${blockDate}T12:00`);
+    const end = new Date(`${endDate}T12:00`);
+    const daysToBlock: string[] = [];
+    const cursor = new Date(start);
+    while (cursor.getTime() <= end.getTime()) {
+      daysToBlock.push(toISODate(cursor));
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    if (daysToBlock.length > 90) {
+      setNotice({ type: "error", text: "Plage trop longue (max 90 jours)." });
+      return;
+    }
+
     setCreatingBlock(true);
     try {
-      const created = await createCoachException({
-        coachId,
-        blockedDate: blockDate,
-        reason: blockReason.trim() || null,
-      });
-      setExceptions((current) => [...current, created].sort((a, b) => a.blockedDate.localeCompare(b.blockedDate)));
+      const reason = blockReason.trim() || null;
+      const created: CoachAvailabilityException[] = [];
+      for (const date of daysToBlock) {
+        // Évite les doublons silencieusement (déjà bloqué = on saute).
+        const already = exceptions.some((e) => e.blockedDate === date);
+        if (already) continue;
+        try {
+          const newException = await createCoachException({
+            coachId,
+            blockedDate: date,
+            reason,
+          });
+          created.push(newException);
+        } catch (err) {
+          // 23505 = unique_violation côté Postgres : on ignore (déjà bloqué).
+          const message = err instanceof Error ? err.message : "";
+          if (!message.includes("duplicate") && !message.includes("23505")) {
+            throw err;
+          }
+        }
+      }
+      setExceptions((current) =>
+        [...current, ...created].sort((a, b) => a.blockedDate.localeCompare(b.blockedDate)),
+      );
       setBlockDate("");
+      setBlockEndDate("");
       setBlockReason("");
-      setNotice({ type: "success", text: "Jour bloqué. Les créneaux de ce jour sont masqués." });
+      const count = created.length;
+      const skipped = daysToBlock.length - count;
+      setNotice({
+        type: "success",
+        text:
+          count > 1
+            ? `${count} jours bloqués${skipped > 0 ? ` (${skipped} déjà bloqués ignorés)` : ""}.`
+            : count === 1
+              ? "Jour bloqué. Les créneaux de ce jour sont masqués."
+              : "Tous ces jours étaient déjà bloqués.",
+      });
       onPatternsChanged?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erreur.";
@@ -197,6 +243,16 @@ export default function RecurringAvailabilityPanel({ coachId, onPatternsChanged 
 
   return (
     <div className="space-y-4">
+      {/* Hint : 1 créneau = 1 joueur */}
+      <div className="rounded-xl border border-[color:var(--px-accent)]/20 bg-[color:var(--px-accent)]/5 px-4 py-3">
+        <p className="text-xs text-white/80">
+          <span className="font-semibold text-[color:var(--px-accent)]">Comment ça marche :</span>{" "}
+          chaque créneau ne peut être réservé que par <span className="font-semibold">1 seul joueur</span>.
+          Pour proposer un même horaire à plusieurs joueurs, ajoute plusieurs créneaux côte à côte (ex :
+          18h00, 19h00, 20h00).
+        </p>
+      </div>
+
       {/* Formulaire récurrence */}
       <div className="px-card-strong p-5">
         <div className="mb-3 flex items-center gap-2">
@@ -361,25 +417,49 @@ export default function RecurringAvailabilityPanel({ coachId, onPatternsChanged 
       <div className="px-card p-5">
         <div className="mb-3 flex items-center gap-2">
           <AlertIcon className="h-4 w-4 text-[color:var(--px-warning)]" />
-          <h4 className="text-base font-semibold text-white">Jours bloqués (vacances, matchs...)</h4>
+          <h4 className="text-base font-semibold text-white">Périodes d&apos;indisponibilité</h4>
         </div>
-        <form onSubmit={handleCreateBlock} className="flex flex-col gap-3 sm:flex-row">
+        <p className="mb-4 text-xs text-white/60">
+          Bloque un jour seul (laisse la 2e date vide) ou toute une période (vacances, stage, blessure).
+          Les créneaux de cette période disparaissent de l&apos;annuaire pour les joueurs.
+        </p>
+        <form onSubmit={handleCreateBlock} className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-[11px] uppercase tracking-[0.2em] text-white/55">
+                Du
+              </label>
+              <input
+                type="date"
+                className="px-input"
+                value={blockDate}
+                onChange={(e) => setBlockDate(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] uppercase tracking-[0.2em] text-white/55">
+                Au (optionnel)
+              </label>
+              <input
+                type="date"
+                className="px-input"
+                value={blockEndDate}
+                min={blockDate || undefined}
+                onChange={(e) => setBlockEndDate(e.target.value)}
+                placeholder="Laisse vide pour 1 seul jour"
+              />
+            </div>
+          </div>
           <input
-            type="date"
-            className="px-input sm:max-w-[180px]"
-            value={blockDate}
-            onChange={(e) => setBlockDate(e.target.value)}
-            required
-          />
-          <input
-            className="px-input sm:flex-1"
-            placeholder="Raison (optionnel) — ex : Vacances"
+            className="px-input"
+            placeholder="Raison (optionnel) — ex : Vacances, Stage, Match"
             value={blockReason}
             onChange={(e) => setBlockReason(e.target.value)}
             maxLength={120}
           />
           <button type="submit" className="px-button-ghost text-sm" disabled={creatingBlock}>
-            {creatingBlock ? "..." : "Bloquer ce jour"}
+            {creatingBlock ? "Blocage..." : blockEndDate && blockEndDate > blockDate ? "Bloquer la période" : "Bloquer ce jour"}
           </button>
         </form>
 

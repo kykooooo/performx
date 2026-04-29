@@ -1145,33 +1145,50 @@ export default function CoachDashboardPage() {
                     const reserved = reservedMap.get(key);
                     return { time, slot, reserved };
                   });
-                  return daySlots.map(({ time, slot, reserved }) => (
-                    <div
-                      key={time}
-                      className={`flex items-center gap-4 rounded-xl border p-4 transition ${
-                        reserved
-                          ? "border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/8"
-                          : slot
-                            ? "border-white/15 bg-white/8"
-                            : "border-white/5 bg-black/20"
-                      }`}
-                    >
-                      <span className="w-14 text-sm font-medium text-white/70">{time}</span>
-                      {slot && (
-                        <span className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-medium text-white/70">
-                          Disponible · {slot.durationMinutes} min
-                        </span>
-                      )}
-                      {!slot && reserved && (
-                        <span className="rounded-full bg-[color:var(--px-accent)]/15 px-3 py-1 text-[10px] font-medium text-[color:var(--px-accent)]">
-                          Réservé · {reserved.title}
-                        </span>
-                      )}
-                      {!slot && !reserved && (
-                        <span className="text-[10px] text-white/30">—</span>
-                      )}
-                    </div>
-                  ));
+                  return daySlots.map(({ time, slot, reserved }) => {
+                    const playerInfo = reserved ? playersInfo[reserved.playerId] : null;
+                    const playerName = playerInfo
+                      ? [playerInfo.firstName, playerInfo.lastName].filter(Boolean).join(" ").trim()
+                      : reserved?.title ?? "";
+                    return (
+                      <div
+                        key={time}
+                        className={`flex flex-wrap items-center gap-3 rounded-xl border p-4 transition ${
+                          reserved
+                            ? "border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/8"
+                            : slot
+                              ? "border-white/15 bg-white/8"
+                              : "border-white/5 bg-black/20"
+                        }`}
+                      >
+                        <span className="w-14 text-sm font-medium text-white/70">{time}</span>
+                        {slot && (
+                          <span className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-medium text-white/70">
+                            Disponible · {slot.durationMinutes} min
+                          </span>
+                        )}
+                        {!slot && reserved && (
+                          <>
+                            <span className="rounded-full bg-[color:var(--px-accent)]/15 px-3 py-1 text-[11px] font-semibold text-[color:var(--px-accent)]">
+                              {playerName || "Réservé"}
+                            </span>
+                            {playerInfo?.position && (
+                              <span className="text-[10px] text-white/60">{playerInfo.position}</span>
+                            )}
+                            <a
+                              href="#section-sessions"
+                              className="ml-auto rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-white/70 hover:border-[color:var(--px-accent)]/40 hover:text-white"
+                            >
+                              Voir détails
+                            </a>
+                          </>
+                        )}
+                        {!slot && !reserved && (
+                          <span className="text-[10px] text-white/30">—</span>
+                        )}
+                      </div>
+                    );
+                  });
                 })()}
               </div>
             ) : calendarView === "week" ? (
@@ -1194,10 +1211,22 @@ export default function CoachDashboardPage() {
                           const key = `${day.dateKey}-${time}`;
                           const slot = availabilityMap.get(key);
                           const reserved = reservedMap.get(key);
+                          const playerInfo = reserved ? playersInfo[reserved.playerId] : null;
+                          const playerName = playerInfo
+                            ? [playerInfo.firstName, playerInfo.lastName].filter(Boolean).join(" ").trim()
+                            : reserved?.title ?? "Réservé";
                           return (
                             <div key={key} className={`min-h-[44px] rounded-xl border p-1 transition ${reserved ? "border-[color:var(--px-accent)]/30 bg-[color:var(--px-accent)]/8" : "border-white/5 bg-black/20"}`}>
                               {slot && <div className="flex h-full items-center justify-center rounded-lg border border-white/15 bg-white/8 px-2 py-1 text-[10px] font-medium text-white/70">Dispo</div>}
-                              {!slot && reserved && <div className="flex h-full items-center justify-center rounded-lg bg-[color:var(--px-accent)]/15 px-2 py-1 text-[10px] font-medium text-[color:var(--px-accent)]">Réservé</div>}
+                              {!slot && reserved && (
+                                <a
+                                  href="#section-sessions"
+                                  title={playerName}
+                                  className="flex h-full items-center justify-center rounded-lg bg-[color:var(--px-accent)]/15 px-2 py-1 text-[10px] font-semibold text-[color:var(--px-accent)] hover:bg-[color:var(--px-accent)]/25"
+                                >
+                                  <span className="truncate">{playerName}</span>
+                                </a>
+                              )}
                             </div>
                           );
                         })}
@@ -1214,6 +1243,8 @@ export default function CoachDashboardPage() {
                 {monthDays.map((day) => {
                   const slotCount = slotCountByDay.get(day.dateKey) ?? 0;
                   const reservedCount = reservedCountByDay.get(day.dateKey) ?? 0;
+                  // Récupère les sessions du jour pour afficher les noms des joueurs
+                  const daySessions = sessions.filter((s) => s.date === day.dateKey);
                   return (
                     <div key={day.dateKey} className={`min-h-[80px] rounded-xl border p-2.5 text-sm transition ${day.isCurrentMonth ? "border-white/10 bg-white/5" : "border-white/5 bg-black/20 text-white/20"}`}>
                       <p className="text-xs text-white/70">{day.day}</p>
@@ -1221,6 +1252,29 @@ export default function CoachDashboardPage() {
                         {slotCount > 0 && <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-white/70">{slotCount} dispo</span>}
                         {reservedCount > 0 && <span className="rounded-full bg-[color:var(--px-accent)]/20 px-1.5 py-0.5 text-[color:var(--px-accent)]">{reservedCount} rés.</span>}
                       </div>
+                      {daySessions.length > 0 && (
+                        <div className="mt-1 space-y-0.5">
+                          {daySessions.slice(0, 2).map((s) => {
+                            const info = playersInfo[s.playerId];
+                            const name = info
+                              ? [info.firstName, info.lastName].filter(Boolean).join(" ").trim()
+                              : s.title;
+                            return (
+                              <a
+                                key={s.id}
+                                href="#section-sessions"
+                                title={`${name} · ${s.time}`}
+                                className="block truncate rounded bg-[color:var(--px-accent)]/10 px-1.5 py-0.5 text-[9px] font-medium text-[color:var(--px-accent)] hover:bg-[color:var(--px-accent)]/20"
+                              >
+                                {s.time} {name}
+                              </a>
+                            );
+                          })}
+                          {daySessions.length > 2 && (
+                            <p className="px-1.5 text-[9px] text-white/50">+{daySessions.length - 2}</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

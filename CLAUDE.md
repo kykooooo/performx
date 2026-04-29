@@ -223,6 +223,16 @@ All 13 items from the improvement plan are **completed, committed, and deployed*
 - **Database**: Supabase (project ref `ibzamtiesrdbvmbkcqri`) — all 6 migrations applied
 - **Custom domain**: NOT YET configured. User will add one later via Vercel > Settings > Domains. When added, MUST also update Supabase Auth > URL Configuration > Site URL to match.
 
+## What was done in the April 29 2026 follow-up session (5 coach feedback fixes)
+
+After the production beta soft launch, coach Gaetan reported 5 issues. 4 were fixed, 1 needs more info:
+
+1. **Player visibility on coach calendar (issue 2)** — `coach-dashboard-client.tsx`: reserved cells on day/week/month calendar views now display the player's name (from `playersInfo` populated by `getCoachDashboardData`). Anchored links to `#section-sessions` for full details.
+2. **"1 slot = 1 player" hint (issue 3)** — `recurring-availability-panel.tsx`: explicit accent banner at top of availability panel explains that each slot is for one player only. To offer the same time to multiple players, the coach must create multiple slots.
+3. **"Manage availability" button on coach profile (issue 4)** — `coach-profile-edit-client.tsx`: primary button "Gérer mes disponibilités" linking to `/dashboard/coach#section-dispos` (the section anchor exists in the dashboard).
+4. **Multi-day unavailability (issue 1)** — `recurring-availability-panel.tsx`: block form now accepts a date range (Du / Au optional). Submit creates one row per day in `coach_availability_exceptions` (max 90 days, dedupes silently). NOTE: this is a UI-only fix; the underlying schema still has one row per day. A cleaner refactor would add a `blocked_until date NULL` column and update the `expand_coach_availability` RPC to skip date ranges.
+5. **iPhone error (issue 5) — NOT FIXED** — Gaetan sent a screenshot of `error.tsx` rendering on a player's iPhone, but no specific page or reproduction steps were provided. As a workaround, `error.tsx` now displays a "Détails techniques (à envoyer au support)" expandable section with full diagnostic info (URL, user agent, error message, stack, digest) and a copy-to-clipboard button. Next step: ask the player to tap "Détails techniques" → "Copier les détails" → send to support.
+
 ## Known limitations / what's still missing
 
 - **Payment**: bookings always get `payment_status: 'paid'` automatically. No Stripe integration.
