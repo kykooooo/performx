@@ -59,8 +59,16 @@ export async function proxy(request: NextRequest) {
     // Tourne sur TOUTES les routes (pas seulement protégées) pour garder
     // la session à jour partout — /auth/login inclus, ce qui évite que
     // Safari "oublie" la session entre un login et sa redirection.
-    const { data } = await supabase.auth.getUser();
-    user = data.user ? { id: data.user.id } : null;
+    // Wrapping dans try/catch : si Supabase est down ou si un cookie est
+    // malformé, on ne plante pas la requête entière (sinon 500 → page
+    // d'erreur générique côté client). On laisse passer en non-auth.
+    try {
+      const { data } = await supabase.auth.getUser();
+      user = data.user ? { id: data.user.id } : null;
+    } catch (err) {
+      console.warn("[proxy] supabase.auth.getUser failed:", err);
+      user = null;
+    }
   }
 
   // 4. Auth gate pour les routes protégées.

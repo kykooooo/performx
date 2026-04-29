@@ -56,9 +56,15 @@ export async function requireRole(
   if (!user) {
     redirect("/auth/login");
   }
-  if (!user.role || !allowed.includes(user.role)) {
-    // Redirige vers le dashboard correspondant au rôle réel
-    redirect(getDashboardPathForRole(user.role ?? "player"));
+
+  // Si le rôle est null (legacy user, ou syncProfile pas encore committé
+  // après inscription), on retombe sur "player" qui est la valeur par
+  // défaut de syncProfile. Ça évite une boucle de redirection infinie sur
+  // /dashboard/player → /dashboard/player quand role=null et allowed=["player"].
+  const effectiveRole: UserRole = user.role ?? "player";
+
+  if (!allowed.includes(effectiveRole)) {
+    redirect(getDashboardPathForRole(effectiveRole));
   }
-  return user;
+  return { ...user, role: effectiveRole };
 }

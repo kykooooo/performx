@@ -56,8 +56,20 @@ export default function LoginPage() {
       return;
     }
 
+    // ATTENDS la synchro du profil avant le redirect, sinon le dashboard
+    // server-side peut lire profiles.role = null et tomber dans des cas
+    // limites de redirection. Si l'upsert échoue (RLS, réseau), on log
+    // mais on n'empêche pas le login : le metadata role suffit pour le
+    // dashboard. Timeout 3s au cas où.
     if (data.user) {
-      syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
+      try {
+        await Promise.race([
+          syncProfile(data.user),
+          new Promise<void>((resolve) => setTimeout(resolve, 3000)),
+        ]);
+      } catch (err) {
+        console.warn("[PerformX] syncProfile after login failed", err);
+      }
     }
 
     // IMPORTANT Safari iOS : après signIn, Supabase écrit les cookies via
