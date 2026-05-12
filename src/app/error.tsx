@@ -16,6 +16,18 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
 
   useEffect(() => {
     Sentry.captureException(error);
+    // Log très visible en console pour le debug à distance (Safari iOS,
+    // Web Inspector, etc.). Évite de devoir cliquer "Détails techniques".
+    if (typeof window !== "undefined") {
+      // eslint-disable-next-line no-console
+      console.error("[PerformX error.tsx]", {
+        message: error.message,
+        digest: error.digest,
+        stack: error.stack,
+        url: window.location.href,
+        ua: navigator.userAgent,
+      });
+    }
   }, [error]);
 
   // Construit un texte de diagnostic copiable contenant tout ce qui peut aider
