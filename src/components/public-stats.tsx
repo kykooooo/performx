@@ -104,26 +104,30 @@ export default function PublicStats() {
   useEffect(() => {
     let mounted = true;
     const fetchStats = async () => {
-      const [coachesRes, playersRes, sessionsRes] = await Promise.all([
-        supabase.from("public_coaches").select("rating"),
-        supabase.from("public_players").select("rating"),
-        supabase.from("public_sessions").select("coach_id", { count: "exact", head: true }),
-      ]);
-      const coachesData = coachesRes.data;
-      const playersData = playersRes.data;
-      const sessionsCount = sessionsRes.count;
+      try {
+        const [coachesRes, playersRes, sessionsRes] = await Promise.all([
+          supabase.from("public_coaches").select("rating"),
+          supabase.from("public_players").select("rating"),
+          supabase.from("public_sessions").select("coach_id", { count: "exact", head: true }),
+        ]);
+        const coachesData = coachesRes.data;
+        const playersData = playersRes.data;
+        const sessionsCount = sessionsRes.count;
 
-      if (!mounted) return;
-      const coachRatings = (coachesData ?? []).map((row) => row.rating ?? 0).filter((r) => r > 0);
-      const playerRatings = (playersData ?? []).map((row) => row.rating ?? 0).filter((r) => r > 0);
+        if (!mounted) return;
+        const coachRatings = (coachesData ?? []).map((row) => row.rating ?? 0).filter((r) => r > 0);
+        const playerRatings = (playersData ?? []).map((row) => row.rating ?? 0).filter((r) => r > 0);
 
-      setStats({
-        coaches: (coachesData ?? []).length,
-        players: (playersData ?? []).length,
-        sessions: sessionsCount ?? 0,
-        coachRating: average(coachRatings),
-        playerRating: average(playerRatings),
-      });
+        setStats({
+          coaches: (coachesData ?? []).length,
+          players: (playersData ?? []).length,
+          sessions: sessionsCount ?? 0,
+          coachRating: average(coachRatings),
+          playerRating: average(playerRatings),
+        });
+      } catch (err) {
+        console.warn("[PublicStats] fetch failed:", err);
+      }
     };
 
     fetchStats();

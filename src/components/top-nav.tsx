@@ -50,43 +50,69 @@ export default function TopNav({ active }: { active?: string }) {
       setUnreadCount(MOCK_TOTAL_UNREAD);
       return;
     }
-    const { data } = await supabase.rpc("get_total_unread_count");
-    if (typeof data === "number") setUnreadCount(data);
+    try {
+      const { data } = await supabase.rpc("get_total_unread_count");
+      if (typeof data === "number") setUnreadCount(data);
+    } catch (err) {
+      console.warn("[TopNav] fetchUnread failed:", err);
+    }
   }, []);
 
   const fetchUserRole = useCallback(async (userId: string) => {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("user_id", userId)
-      .maybeSingle();
-    setUserRole(normalizeUserRole(profile?.role ?? null));
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle();
+      setUserRole(normalizeUserRole(profile?.role ?? null));
+    } catch (err) {
+      console.warn("[TopNav] fetchUserRole failed:", err);
+    }
   }, []);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const isLoggedIn = !!data.user;
-      setLoggedIn(isLoggedIn);
-      if (isLoggedIn && data.user) {
-        fetchUnread();
-        fetchUserRole(data.user.id);
-      } else {
-        setUnreadCount(0);
-        setUserRole(null);
-      }
-    });
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      const isLoggedIn = !!session?.user;
-      setLoggedIn(isLoggedIn);
-      if (isLoggedIn && session?.user) {
-        fetchUnread();
-        fetchUserRole(session.user.id);
-      } else {
-        setUnreadCount(0);
-        setUserRole(null);
-      }
-    });
-    return () => { data.subscription.unsubscribe(); };
+    // Wrappe TOUT dans try/catch pour éviter qu'une erreur ici (Safari
+    // Private mode, storage indisponible) ne crash le composant et
+    // déclenche l'error boundary sur toute la page.
+    try {
+      supabase.auth
+        .getUser()
+        .then(({ data }) => {
+          const isLoggedIn = !!data.user;
+          setLoggedIn(isLoggedIn);
+          if (isLoggedIn && data.user) {
+            fetchUnread();
+            fetchUserRole(data.user.id);
+          } else {
+            setUnreadCount(0);
+            setUserRole(null);
+          }
+        })
+        .catch((err) => console.warn("[TopNav] auth.getUser failed:", err));
+
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        const isLoggedIn = !!session?.user;
+        setLoggedIn(isLoggedIn);
+        if (isLoggedIn && session?.user) {
+          fetchUnread();
+          fetchUserRole(session.user.id);
+        } else {
+          setUnreadCount(0);
+          setUserRole(null);
+        }
+      });
+      return () => {
+        try {
+          data.subscription.unsubscribe();
+        } catch {
+          // ignore cleanup errors
+        }
+      };
+    } catch (err) {
+      console.warn("[TopNav] init failed:", err);
+      return () => {};
+    }
   }, [fetchUnread, fetchUserRole]);
 
   // Refresh unread count when new messages arrive via Realtime

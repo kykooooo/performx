@@ -17,10 +17,15 @@ export default function FeaturedCoaches() {
 
     const fetchCoaches = async () => {
       setLoading(true);
-      const result = await getFeaturedCoaches(4);
-      if (!mounted) return;
-      setCoaches(result.data);
-      setLoading(false);
+      try {
+        const result = await getFeaturedCoaches(4);
+        if (!mounted) return;
+        setCoaches(result.data);
+      } catch (err) {
+        console.warn("[FeaturedCoaches] fetch failed:", err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
     };
 
     fetchCoaches();

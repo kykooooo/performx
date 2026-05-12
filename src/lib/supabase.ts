@@ -16,9 +16,25 @@ function getClient(): SupabaseClient | null {
   }
   // Browser: cookie-based auth so middleware can verify sessions
   // Server/test: standard client (localStorage)
-  _client = isBrowser && !isTestEnv
-    ? createBrowserClient(supabaseUrl!, supabaseAnonKey!)
-    : createClient(supabaseUrl!, supabaseAnonKey!);
+  //
+  // Wrapping en try/catch parce que createBrowserClient peut throw sur
+  // Safari iOS Private mode (storage indisponible) ou si les cookies
+  // sont bloqués. Si ça throw, on retombe sur createClient qui utilise
+  // localStorage en best-effort, et si ça throw aussi, on retourne null
+  // et le proxy noop prend le relais (mode dégradé mais site accessible).
+  try {
+    _client = isBrowser && !isTestEnv
+      ? createBrowserClient(supabaseUrl!, supabaseAnonKey!)
+      : createClient(supabaseUrl!, supabaseAnonKey!);
+  } catch (err) {
+    console.warn("[supabase] createBrowserClient failed, falling back:", err);
+    try {
+      _client = createClient(supabaseUrl!, supabaseAnonKey!);
+    } catch (err2) {
+      console.error("[supabase] createClient also failed:", err2);
+      return null;
+    }
+  }
   return _client;
 }
 

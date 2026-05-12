@@ -22,31 +22,52 @@ export default function AuthListener() {
   useEffect(() => {
     let mounted = true;
 
-    supabase.auth.getUser().then(({ data }) => {
-      if (!mounted) return;
-      if (data.user) {
-        syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
-        if (pathname.startsWith("/auth/")) {
-          const roleHint = (data.user.user_metadata?.role as string | undefined) ?? null;
-          redirectByRole(data.user.id, roleHint).catch((err) => console.warn("[PerformX]", err));
-        }
-      }
-    });
+    // Wrappe TOUT dans try/catch pour éviter qu'une erreur ici (storage
+    // bloqué sur Safari Private mode, cookies désactivés, etc.) ne crash
+    // le composant et déclenche l'error boundary sur toute la page.
+    try {
+      supabase.auth
+        .getUser()
+        .then(({ data }) => {
+          if (!mounted) return;
+          if (data.user) {
+            syncProfile(data.user).catch((err) => console.warn("[PerformX]", err));
+            if (pathname.startsWith("/auth/")) {
+              const roleHint = (data.user.user_metadata?.role as string | undefined) ?? null;
+              redirectByRole(data.user.id, roleHint).catch((err) =>
+                console.warn("[PerformX]", err),
+              );
+            }
+          }
+        })
+        .catch((err) => console.warn("[PerformX] auth.getUser failed:", err));
 
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        syncProfile(session.user).catch((err) => console.warn("[PerformX]", err));
-        if (pathname.startsWith("/auth/")) {
-          const roleHint = (session.user.user_metadata?.role as string | undefined) ?? null;
-          redirectByRole(session.user.id, roleHint).catch((err) => console.warn("[PerformX]", err));
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user) {
+          syncProfile(session.user).catch((err) => console.warn("[PerformX]", err));
+          if (pathname.startsWith("/auth/")) {
+            const roleHint = (session.user.user_metadata?.role as string | undefined) ?? null;
+            redirectByRole(session.user.id, roleHint).catch((err) =>
+              console.warn("[PerformX]", err),
+            );
+          }
         }
-      }
-    });
+      });
 
-    return () => {
-      mounted = false;
-      data.subscription.unsubscribe();
-    };
+      return () => {
+        mounted = false;
+        try {
+          data.subscription.unsubscribe();
+        } catch {
+          // ignore cleanup errors
+        }
+      };
+    } catch (err) {
+      console.warn("[PerformX] AuthListener init failed:", err);
+      return () => {
+        mounted = false;
+      };
+    }
   }, [pathname, redirectByRole]);
 
   return null;
