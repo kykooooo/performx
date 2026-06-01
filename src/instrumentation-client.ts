@@ -13,7 +13,6 @@ try {
     environment: process.env.NEXT_PUBLIC_SENTRY_ENV ?? process.env.NODE_ENV,
   });
 } catch (err) {
-  // eslint-disable-next-line no-console
   console.warn("[Sentry] init failed:", err);
 }
 

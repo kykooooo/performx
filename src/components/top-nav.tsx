@@ -7,7 +7,7 @@ import Link from "next/link";
 import Logo from "./logo";
 import NotificationBell from "./notification-bell";
 import ThemeToggle from "./theme-toggle";
-import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { isSupabaseConfigured, safeRealtimeSubscribe, supabase } from "@/lib/supabase";
 import { normalizeUserRole } from "@/lib/roles";
 import type { UserRole } from "@/lib/types";
 import {
@@ -117,18 +117,24 @@ export default function TopNav({ active }: { active?: string }) {
 
   // Refresh unread count when new messages arrive via Realtime
   // ET quand un thread est marqué comme lu (UPDATE de conversation_participants.last_read_at)
+  // safeRealtimeSubscribe : ne crash JAMAIS si Safari bloque le WebSocket
+  // (réglage anti-tracking). On dégrade silencieusement vers le refresh
+  // au changement de route (useEffect ci-dessous).
   useEffect(() => {
-    if (!loggedIn || !isSupabaseConfigured) return;
-    const channel = supabase
-      .channel("nav-unread")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
-        fetchUnread();
-      })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "conversation_participants" }, () => {
-        fetchUnread();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    if (!loggedIn) return;
+    return safeRealtimeSubscribe("nav-unread", (channel) =>
+      channel
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
+          fetchUnread();
+        })
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "conversation_participants" },
+          () => {
+            fetchUnread();
+          },
+        ),
+    );
   }, [loggedIn, fetchUnread]);
 
   // Refresh unread count à chaque changement de route : après avoir lu un

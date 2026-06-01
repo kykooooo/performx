@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { BellIcon } from "./icons";
-import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { isSupabaseConfigured, safeRealtimeSubscribe, supabase } from "@/lib/supabase";
 
 type NotificationRow = {
   id: string;
@@ -86,12 +86,13 @@ export default function NotificationBell() {
     };
   }, [fetchUnread]);
 
-  // Realtime : rafraîchit le compteur dès qu'une notif est insérée pour ce user
+  // Realtime : rafraîchit le compteur dès qu'une notif est insérée pour ce user.
+  // safeRealtimeSubscribe : ne crash pas si Safari bloque le WebSocket — on
+  // dégrade vers le fetch au mount / à l'ouverture du dropdown.
   useEffect(() => {
-    if (!loggedIn || !userId || !isSupabaseConfigured) return;
-    const channel = supabase
-      .channel(`notif-${userId}`)
-      .on(
+    if (!loggedIn || !userId) return;
+    return safeRealtimeSubscribe(`notif-${userId}`, (channel) =>
+      channel.on(
         "postgres_changes",
         {
           event: "INSERT",
@@ -103,11 +104,8 @@ export default function NotificationBell() {
           fetchUnread();
           if (open) fetchNotifications();
         },
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      ),
+    );
   }, [loggedIn, userId, fetchUnread, fetchNotifications, open]);
 
   // Ferme le dropdown si clic extérieur

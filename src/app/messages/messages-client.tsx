@@ -17,7 +17,7 @@ import type {
   MessageRecord,
 } from "@/lib/data/types";
 import { mockConversations, mockMessages } from "@/lib/mock-data";
-import { supabase } from "@/lib/supabase";
+import { safeRealtimeSubscribe, supabase } from "@/lib/supabase";
 
 /* ── Types ── */
 
@@ -241,45 +241,39 @@ export default function MessagesClient() {
 
   useEffect(() => {
     if (!userId) return;
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    try {
-      channel = supabase
-        .channel("messages-feed")
-        .on(
-          "postgres_changes",
-          { event: "INSERT", schema: "public", table: "messages" },
-          (payload) => {
-            const message = payload.new as MessageRow & { conversation_id: string };
-            if (!message) return;
+    // safeRealtimeSubscribe : Safari (réglage anti-tracking activé par défaut)
+    // bloque les WebSocket vers *.supabase.co → "The operation is insecure".
+    // Le helper avale l'erreur et le chat dégrade vers le fetch au changement
+    // de conversation (pas de temps réel, mais aucun crash).
+    return safeRealtimeSubscribe("messages-feed", (channel) =>
+      channel.on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        (payload) => {
+          const message = payload.new as MessageRow & { conversation_id: string };
+          if (!message) return;
 
-            const knownConversation = conversationsRef.current.some(
-              (conversation) => conversation.id === message.conversation_id,
-            );
-            if (!knownConversation && userId) {
-              loadConversations().catch((err) => console.warn("[PerformX]", err));
-            }
+          const knownConversation = conversationsRef.current.some(
+            (conversation) => conversation.id === message.conversation_id,
+          );
+          if (!knownConversation && userId) {
+            loadConversations().catch((err) => console.warn("[PerformX]", err));
+          }
 
-            if (message.conversation_id === activeConversationId) {
-              setMessages((prev) => {
-                if (prev.some((item) => item.id === message.id)) return prev;
-                return [...prev, message];
-              });
-            } else {
-              setUnreadCounts((prev) => ({
-                ...prev,
-                [message.conversation_id]: (prev[message.conversation_id] ?? 0) + 1,
-              }));
-            }
-          },
-        )
-        .subscribe();
-    } catch {
-      // WebSocket may fail on localhost (HTTP), works fine on HTTPS in production
-    }
-
-    return () => {
-      if (channel) supabase.removeChannel(channel);
-    };
+          if (message.conversation_id === activeConversationId) {
+            setMessages((prev) => {
+              if (prev.some((item) => item.id === message.id)) return prev;
+              return [...prev, message];
+            });
+          } else {
+            setUnreadCounts((prev) => ({
+              ...prev,
+              [message.conversation_id]: (prev[message.conversation_id] ?? 0) + 1,
+            }));
+          }
+        },
+      ),
+    );
   }, [userId, activeConversationId]);
 
   /* ── Auto-scroll ── */
